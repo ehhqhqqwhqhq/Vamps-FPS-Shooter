@@ -52,7 +52,7 @@ namespace Vamp.UI.Menus
     /// </summary>
     public sealed class ShopScreen : MenuScreen
     {
-        private static readonly string[] CategoryNames = { "ALL", "WEAPON TRAILS", "GUN SKINS", "KILL FX" };
+        private static readonly string[] CategoryNames = { "ALL", "TRACERS", "GUN SKINS", "KILL FX" };
         private static readonly string[] CategoryIcons = { "IconAll", "IconTrail", "IconGun", "IconSkull" };
 
         private int _category;
@@ -60,6 +60,8 @@ namespace Vamp.UI.Menus
         private RectTransform _cats;
         private Text _coins;
         private readonly List<ShopPreview> _previews = new List<ShopPreview>();
+        private readonly List<RectTransform> _previewCards = new List<RectTransform>();
+        private RectTransform _viewport;
 
         public override bool ShowTopBar { get { return false; } }
 
@@ -126,6 +128,7 @@ namespace Vamp.UI.Menus
             area.offsetMin = new Vector2(350f, 26f); area.offsetMax = new Vector2(-30f, -26f);
             ScrollRect scroll;
             _grid = UIKit.ScrollList(area, out scroll, 0f);
+            _viewport = scroll.viewport != null ? scroll.viewport : (RectTransform)scroll.transform;
             UIKit.Stretch((RectTransform)scroll.transform);
             Object.DestroyImmediate(_grid.GetComponent<VerticalLayoutGroup>());
             var grid = _grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -153,6 +156,23 @@ namespace Vamp.UI.Menus
         {
             foreach (var p in _previews) if (p != null) Object.Destroy(p.gameObject);
             _previews.Clear();
+            _previewCards.Clear();
+        }
+
+        private static readonly Vector3[] Corners = new Vector3[4];
+
+        public override void Tick(float dt)
+        {
+            if (_viewport == null) return;
+            _viewport.GetWorldCorners(Corners);
+            float top = Corners[1].y, bottom = Corners[0].y;
+            for (int i = 0; i < _previews.Count; i++)
+            {
+                if (_previews[i] == null || _previewCards[i] == null) continue;
+                _previewCards[i].GetWorldCorners(Corners);
+                bool visible = Corners[0].y < top && Corners[1].y > bottom;
+                _previews[i].SetActive(visible);
+            }
         }
 
         private bool InCategory(CosmeticItem item)
@@ -218,7 +238,7 @@ namespace Vamp.UI.Menus
 
         private static string TypeLabel(CosmeticType t)
         {
-            return t == CosmeticType.WeaponTrail ? "WEAPON TRAILS" : t == CosmeticType.WeaponSkin ? "GUN SKINS" : "KILL FX";
+            return t == CosmeticType.WeaponTrail ? "TRACERS" : t == CosmeticType.WeaponSkin ? "GUN SKINS" : "KILL FX";
         }
 
         private static string TypeIcon(CosmeticType t)
@@ -236,8 +256,9 @@ namespace Vamp.UI.Menus
             card.raycastTarget = true; // lets the mouse wheel / drag scroll the grid
 
             // Live preview
-            var preview = ShopPreview.Create(item);
+            var preview = ShopPreview.Create(item, 384, 192);
             _previews.Add(preview);
+            _previewCards.Add(card.rectTransform);
             var raw = new GameObject("Preview", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
             raw.transform.SetParent(card.transform, false);
             raw.texture = preview.Texture;

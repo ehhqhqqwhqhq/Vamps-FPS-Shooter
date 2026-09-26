@@ -105,7 +105,8 @@ namespace Vamp.VFX
             return _skull != null ? _skull : Dot();
         }
 
-        /// <summary>kind: "spark" (stretched, no gravity), "fall" (stretched, gravity), "glow" (soft blobs), "skull".</summary>
+        /// <summary>kind: "spark" (stretched), "fall" (stretched, gravity), "glow" (soft blobs), "rise" (blobs floating up),
+        /// "puff" (blobs that grow - smoke / gas), "skull".</summary>
         private static ParticleSystem Get(string kind)
         {
             Sys s;
@@ -127,7 +128,7 @@ namespace Vamp.VFX
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.startLifetime = 1f;
             main.startSpeed = 0f;
-            main.gravityModifier = kind == "fall" ? 1.2f : 0f;
+            main.gravityModifier = kind == "fall" ? 1.2f : kind == "rise" ? -0.35f : 0f;
             var em = ps.emission;
             em.enabled = false;
             var shape = ps.shape;
@@ -141,7 +142,9 @@ namespace Vamp.VFX
             col.color = g;
             var size = ps.sizeOverLifetime;
             size.enabled = kind != "skull";
-            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.2f));
+            size.size = kind == "puff"
+                ? new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.4f, 1f, 1.6f))
+                : new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.2f));
             var drag = ps.limitVelocityOverLifetime;
             drag.enabled = kind == "spark" || kind == "fall";
             drag.drag = 2.5f;
@@ -246,6 +249,93 @@ namespace Vamp.VFX
                         Emit("glow", p + UnityEngine.Random.insideUnitSphere * 0.6f, (UnityEngine.Random.insideUnitSphere + Vector3.up) * R(1f, 3f),
                              new Color(1f, R(0f, 0.2f), 0.1f, 0.9f), R(0.08f, 0.2f), R(0.8f, 1.6f));
                     break;
+
+                case "kfx_frost":
+                    SimpleVfx.Impact(p, new Color(0.7f, 0.9f, 1f, 0.9f), 0.8f);
+                    for (int i = 0; i < 45 * n; i++)
+                    {
+                        Vector3 v = UnityEngine.Random.onUnitSphere * R(2f, 7f);
+                        v.y = Mathf.Abs(v.y) + 1.5f;
+                        Emit("fall", p + UnityEngine.Random.insideUnitSphere * 0.5f, v, new Color(R(0.6f, 0.9f), R(0.85f, 1f), 1f), R(0.06f, 0.16f), R(0.9f, 1.5f));
+                    }
+                    for (int i = 0; i < 20; i++) Emit("glow", p + UnityEngine.Random.insideUnitSphere * 0.8f, Vector3.down * 0.5f, new Color(0.8f, 0.95f, 1f, 0.7f), R(0.05f, 0.1f), R(1f, 2f));
+                    break;
+
+                case "kfx_gold":
+                    Emit("glow", p, Vector3.zero, new Color(1f, 0.85f, 0.3f, 0.9f), 1.8f, 0.3f);
+                    for (int i = 0; i < 60 * n; i++)
+                    {
+                        Vector3 v = new Vector3(R(-1f, 1f), R(1f, 2.5f), R(-1f, 1f)).normalized * R(5f, 12f);
+                        Emit("fall", p, v, new Color(1f, R(0.7f, 0.9f), R(0.1f, 0.35f)), R(0.05f, 0.12f), R(0.8f, 1.6f));
+                    }
+                    for (int i = 0; i < 20; i++) Emit("glow", p + UnityEngine.Random.insideUnitSphere * 1.2f, Vector3.zero, new Color(1f, 0.95f, 0.6f, 1f), R(0.05f, 0.12f), R(0.4f, 1f));
+                    break;
+
+                case "kfx_void":
+                    for (int i = 0; i < 50 * n; i++)
+                    {
+                        Vector3 d = UnityEngine.Random.onUnitSphere;
+                        Emit("spark", p + d * 2.4f, -d * 5f, new Color(0.6f, R(0.1f, 0.3f), 1f), 0.07f, 0.45f); // sucked in
+                    }
+                    Emit("glow", p, Vector3.zero, new Color(0.05f, 0f, 0.1f, 1f), 1.4f, 0.6f);
+                    Emit("glow", p, Vector3.zero, new Color(0.6f, 0.1f, 1f, 0.8f), 2.8f, 0.5f);
+                    for (int i = 0; i < 40 * n; i++)
+                        Emit("spark", p, UnityEngine.Random.onUnitSphere * R(8f, 16f), new Color(0.75f, 0.3f, 1f), R(0.05f, 0.1f), R(0.3f, 0.6f));
+                    break;
+
+                case "kfx_toxic":
+                    for (int i = 0; i < 26 * n; i++)
+                        Emit("puff", p + UnityEngine.Random.insideUnitSphere * 0.7f, (UnityEngine.Random.insideUnitSphere + Vector3.up * 0.4f) * R(0.5f, 1.5f),
+                             new Color(R(0.2f, 0.4f), 1f, R(0.1f, 0.3f), 0.45f), R(0.8f, 1.4f), R(1.2f, 2.2f));
+                    for (int i = 0; i < 20 * n; i++)
+                        Emit("fall", p, UnityEngine.Random.onUnitSphere * R(2f, 5f), new Color(0.4f, 1f, 0.2f), 0.06f, R(0.6f, 1.1f));
+                    break;
+
+                case "kfx_thunder":
+                {
+                    Vector3 top = p + Vector3.up * 14f + new Vector3(R(-1.5f, 1.5f), 0f, R(-1.5f, 1.5f));
+                    Vector3 prev = top;
+                    for (int s = 1; s <= 8; s++)
+                    {
+                        Vector3 pt = Vector3.Lerp(top, p, s / 8f) + (s < 8 ? new Vector3(R(-0.8f, 0.8f), 0f, R(-0.8f, 0.8f)) : Vector3.zero);
+                        SimpleVfx.TracerLine(prev, pt, new Color(0.7f, 0.85f, 1f, 1f), 0.14f, 0.25f);
+                        SimpleVfx.TracerLine(prev, pt, new Color(1f, 1f, 1f, 1f), 0.05f, 0.2f);
+                        prev = pt;
+                    }
+                    SimpleVfx.Impact(p, new Color(0.7f, 0.85f, 1f, 1f), 1.6f);
+                    Emit("glow", p, Vector3.zero, new Color(0.5f, 0.7f, 1f, 0.9f), 3f, 0.3f);
+                    for (int i = 0; i < 40 * n; i++)
+                        Emit("spark", p, UnityEngine.Random.onUnitSphere * R(6f, 14f), new Color(0.6f, 0.8f, 1f), R(0.04f, 0.09f), R(0.2f, 0.5f));
+                    break;
+                }
+
+                case "kfx_bloodmoon":
+                    Emit("glow", p, Vector3.zero, new Color(0.9f, 0.05f, 0.1f, 0.8f), 2.2f, 0.6f);
+                    for (int i = 0; i < 48; i++)
+                    {
+                        float a = i / 48f * Mathf.PI * 2f;
+                        Emit("spark", p, new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 8f, new Color(1f, 0.05f, 0.1f), 0.12f, 0.5f);
+                    }
+                    for (int i = 0; i < 14 * n; i++)
+                        Emit("rise", p + UnityEngine.Random.insideUnitSphere * 0.8f, Vector3.up * R(0.5f, 2f), new Color(0.9f, 0.02f, 0.08f, 1f), R(0.15f, 0.3f), R(1.2f, 2f));
+                    break;
+
+                case "kfx_phoenix":
+                    Emit("glow", p, Vector3.zero, new Color(1f, 0.6f, 0.1f, 0.9f), 2f, 0.35f);
+                    for (int i = 0; i < 60 * n; i++)
+                        Emit("rise", p - Vector3.up * 0.8f + new Vector3(R(-0.5f, 0.5f), 0f, R(-0.5f, 0.5f)), Vector3.up * R(4f, 9f) + UnityEngine.Random.insideUnitSphere,
+                             new Color(1f, R(0.25f, 0.7f), R(0f, 0.1f), 1f), R(0.15f, 0.4f), R(0.6f, 1.2f));
+                    for (int i = 0; i < 30 * n; i++)
+                        Emit("spark", p, new Vector3(R(-1f, 1f), R(0.5f, 2f), R(-1f, 1f)).normalized * R(6f, 12f), new Color(1f, 0.8f, 0.3f), 0.05f, R(0.4f, 0.8f));
+                    break;
+
+                case "kfx_ghost":
+                    for (int i = 0; i < 10; i++)
+                        Emit("rise", p + UnityEngine.Random.insideUnitSphere * 0.5f, Vector3.up * R(1f, 2.5f) + UnityEngine.Random.insideUnitSphere * 0.4f,
+                             new Color(0.9f, 0.95f, 1f, 0.55f), R(0.5f, 0.9f), R(1.5f, 2.5f));
+                    for (int i = 0; i < 30 * n; i++)
+                        Emit("glow", p + UnityEngine.Random.insideUnitSphere * 0.8f, Vector3.up * R(0.5f, 2f), new Color(0.85f, 0.95f, 1f, 0.8f), R(0.05f, 0.12f), R(1f, 2f));
+                    break;
             }
         }
 
@@ -312,6 +402,76 @@ namespace Vamp.VFX
                         Vector3 at = from + n * R(0f, len);
                         Emit("spark", at, UnityEngine.Random.onUnitSphere * R(3f, 7f), new Color(1f, R(0.4f, 0.8f), R(0.6f, 0.9f)), 0.035f, R(0.12f, 0.25f));
                     }
+                    break;
+                }
+
+
+                case "trail_void":
+                    SimpleVfx.TracerLine(from, to, new Color(0.75f, 0.3f, 1f, 1f), width * 3.2f, 0.14f);
+                    SimpleVfx.TracerLine(from, to, new Color(0.08f, 0f, 0.15f, 1f), width * 1.1f, 0.14f);
+                    for (int i = 0; i < budget; i++)
+                        Emit("glow", from + n * R(0f, len), UnityEngine.Random.insideUnitSphere * 0.6f, new Color(0.7f, 0.25f, 1f, 0.9f), R(0.08f, 0.18f), R(0.25f, 0.5f));
+                    break;
+
+                case "trail_gold":
+                    SimpleVfx.TracerLine(from, to, new Color(1f, 0.82f, 0.25f, 1f), width * 1.4f, 0.1f);
+                    for (int i = 0; i < budget; i++)
+                        Emit("glow", from + n * R(0f, len), UnityEngine.Random.insideUnitSphere * 0.3f, new Color(1f, 0.95f, 0.6f, 1f), R(0.04f, 0.09f), R(0.3f, 0.7f));
+                    break;
+
+                case "trail_frost":
+                    SimpleVfx.TracerLine(from, to, new Color(0.7f, 0.92f, 1f, 1f), width * 1.3f, 0.1f);
+                    for (int i = 0; i < budget; i++)
+                        Emit("fall", from + n * R(0f, len), Vector3.down * R(0f, 0.5f) + UnityEngine.Random.insideUnitSphere * 0.3f, new Color(0.85f, 0.95f, 1f), 0.05f, R(0.6f, 1.1f));
+                    break;
+
+                case "trail_toxic":
+                    SimpleVfx.TracerLine(from, to, new Color(0.35f, 1f, 0.2f, 1f), width * 1.4f, 0.1f);
+                    for (int i = 0; i < budget; i++)
+                        Emit("fall", from + n * R(0f, len), Vector3.down * R(0.5f, 1.5f), new Color(0.4f, 1f, 0.2f), 0.06f, R(0.4f, 0.8f));
+                    break;
+
+                case "trail_plasma":
+                    SimpleVfx.TracerLine(from, to, new Color(0.2f, 0.95f, 1f, 0.8f), width * 3.2f, 0.1f);
+                    SimpleVfx.TracerLine(from, to, new Color(0.9f, 1f, 1f, 1f), width * 1f, 0.1f);
+                    for (int r = 0; r < Mathf.Min(6, budget); r++)
+                    {
+                        Vector3 at = from + n * (len * (r + 0.5f) / 6f);
+                        Vector3 side = Vector3.Cross(n, Vector3.up).normalized;
+                        if (side.sqrMagnitude < 0.01f) side = Vector3.right;
+                        Vector3 up2 = Vector3.Cross(side, n);
+                        for (int k = 0; k < 8; k++)
+                        {
+                            float a = k / 8f * Mathf.PI * 2f;
+                            Emit("glow", at, (side * Mathf.Cos(a) + up2 * Mathf.Sin(a)) * 1.5f, new Color(0.3f, 1f, 1f, 0.9f), 0.05f, 0.25f);
+                        }
+                    }
+                    break;
+
+                case "trail_hellfire":
+                    SimpleVfx.TracerLine(from, to, new Color(1f, 0.4f, 0.05f, 1f), width * 2f, 0.12f);
+                    SimpleVfx.TracerLine(from, to, new Color(1f, 0.9f, 0.4f, 1f), width * 0.7f, 0.08f);
+                    for (int i = 0; i < budget * 2; i++)
+                        Emit("rise", from + n * R(0f, len), Vector3.up * R(0.5f, 2f) + UnityEngine.Random.insideUnitSphere * 0.3f,
+                             new Color(1f, R(0.2f, 0.6f), 0.05f, 1f), R(0.06f, 0.14f), R(0.4f, 0.9f));
+                    break;
+
+                case "trail_shadow":
+                    SimpleVfx.TracerLine(from, to, new Color(0.03f, 0.03f, 0.04f, 0.95f), width * 1.8f, 0.2f);
+                    for (int i = 0; i < budget; i++)
+                        Emit("puff", from + n * R(0f, len), UnityEngine.Random.insideUnitSphere * 0.2f, new Color(0.05f, 0.05f, 0.06f, 0.5f), R(0.15f, 0.3f), R(0.6f, 1.1f));
+                    break;
+
+                case "trail_rainbow":
+                {
+                    const int segs = 7;
+                    for (int sgm = 0; sgm < segs; sgm++)
+                    {
+                        Color c = Color.HSVToRGB((sgm / (float)segs + Time.time * 0.5f) % 1f, 0.9f, 1f);
+                        SimpleVfx.TracerLine(from + dir * (sgm / (float)segs), from + dir * ((sgm + 1) / (float)segs), c, width * 1.6f, 0.12f);
+                    }
+                    for (int i = 0; i < budget; i++)
+                        Emit("glow", from + n * R(0f, len), UnityEngine.Random.insideUnitSphere * 0.5f, Color.HSVToRGB(R(0f, 1f), 0.8f, 1f), 0.05f, R(0.2f, 0.5f));
                     break;
                 }
 

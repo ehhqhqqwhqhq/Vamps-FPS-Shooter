@@ -17,7 +17,7 @@ namespace Vamp.UI.Menus
             CosmeticType.Icon, CosmeticType.Frame, CosmeticType.Banner, CosmeticType.Title, CosmeticType.KillEffect,
             CosmeticType.WeaponTrail, CosmeticType.Emote, CosmeticType.CrosshairStyle, CosmeticType.CharacterSkin
         };
-        private static readonly string[] TypeNames = { "ICONS", "FRAMES", "BANNERS", "TITLES", "KILL FX", "TRAILS", "EMOTES", "CROSSHAIR", "CHARACTER" };
+        private static readonly string[] TypeNames = { "ICONS", "FRAMES", "BANNERS", "TITLES", "KILL FX", "TRACERS", "EMOTES", "CROSSHAIR", "CHARACTER" };
         private static readonly string[] Filters = { "ALL", "OWNED", "LOCKED", "LEVEL REWARDS", "PRESTIGE", "CHALLENGES", "EVENTS" };
 
         private int _type;
@@ -26,11 +26,15 @@ namespace Vamp.UI.Menus
         private RectTransform _preview;
         private Text _owned;
         private OptionSelector _filterSel;
+        private string _focused;          // kill fx / tracers: the item being previewed
+        private ShopPreview _live;
+
+        private static bool HasLivePreview(CosmeticType t) { return t == CosmeticType.KillEffect || t == CosmeticType.WeaponTrail; }
 
         protected override void OnBuild(RectTransform root)
         {
             var col = Page(root, "CUSTOMIZE", "SHOW OFF YOUR PROGRESS · COSMETICS NEVER AFFECT GAMEPLAY", 1400f);
-            UIKit.Tabs(col, TypeNames, 0, i => { _type = i; Refresh(); }, 15);
+            UIKit.Tabs(col, TypeNames, 0, i => { _type = i; _focused = null; Refresh(); }, 15);
             var filterRow = UIKit.Row(col, 44f, 12f);
             _filterSel = UIKit.Selector(filterRow, "FILTER", Filters, 0, i => { _filter = i; Refresh(); }, 90f);
             UIKit.Size(_filterSel, 44f, 560f);
@@ -50,7 +54,7 @@ namespace Vamp.UI.Menus
             grid.padding = new RectOffset(4, 4, 4, 4);
 
             _preview = UIKit.Column(body, 10f, "Preview");
-            UIKit.Size(_preview, 560f, 300f);
+            UIKit.Size(_preview, 560f, 440f);
             UIKit.Button(col, "BACK", () => Host.Back(), UIKit.ButtonStyle.Ghost, 18, 44f);
             Refresh();
         }
@@ -69,8 +73,74 @@ namespace Vamp.UI.Menus
             }
         }
 
+        public override void OnHide()
+        {
+            ClearLive();
+        }
+
+        private void ClearLive()
+        {
+            if (_live != null) Object.Destroy(_live.gameObject);
+            _live = null;
+        }
+
+        /// <summary>Kill FX / tracers: a live 3D preview of the selected item + EQUIP, so nobody equips one blind.</summary>
+        private void LivePreview(CosmeticType type, string equipped)
+        {
+            var prog = Game.Progression;
+            if (string.IsNullOrEmpty(_focused)) _focused = equipped;
+            var item = CosmeticCatalog.Get(_focused);
+            if (item == null) return;
+            bool owned = prog.IsUnlocked(item.Id);
+
+            UIKit.Caption(_preview, "PREVIEW", 14);
+            var frame = UIKit.Panel(_preview, "PreviewFrame", new Color(0.03f, 0.02f, 0.025f, 1f));
+            frame.GetComponent<Outline>().effectColor = new Color(0.9f, 0.08f, 0.14f, 0.7f);
+            UIKit.Size(frame, 230f);
+            _live = ShopPreview.Create(item, 560, 280);
+            var raw = new GameObject("Live", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+            raw.transform.SetParent(frame.transform, false);
+            raw.texture = _live.Texture;
+            raw.raycastTarget = false;
+            UIKit.Stretch(raw.rectTransform, 2f, 2f, 2f, 2f);
+            var fit = raw.gameObject.AddComponent<AspectRatioFitter>();
+            fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            fit.aspectRatio = 2f;
+            if (item.Id == "kfx_none")
+            {
+                var none = UIKit.Label(frame.transform, "NO EFFECT", 22, UIKit.TextDim, TextAnchor.MiddleCenter);
+                UIKit.Stretch(none.rectTransform);
+            }
+
+            UIKit.Size(UIKit.Label(_preview, item.Name, 30, UIKit.Text), 38f);
+            string desc = !string.IsNullOrEmpty(item.Description) ? item.Description
+                        : item.Id == "trail_none" ? "THE WEAPON'S NORMAL TRACER." : item.Id == "kfx_none" ? "NO EFFECT ON KILLS." : "";
+            if (desc.Length > 0) { var d = UIKit.Label(_preview, desc, 15, UIKit.TextDim); d.horizontalOverflow = HorizontalWrapMode.Wrap; UIKit.Size(d, 40f); }
+
+            bool isEquipped = item.Id == equipped;
+            if (isEquipped)
+            {
+                var b = UIKit.Button(_preview, "EQUIPPED", null, UIKit.ButtonStyle.Box, 20, 52f);
+                b.interactable = false;
+            }
+            else if (owned)
+            {
+                string id = item.Id;
+                UIKit.Button(_preview, "EQUIP", () => { Game.Customization.Equip(id); Toast("EQUIPPED", item.Name); Refresh(); }, UIKit.ButtonStyle.Primary, 22, 52f);
+            }
+            else
+            {
+                var b = UIKit.Button(_preview, "LOCKED  ·  " + item.UnlockText, null, UIKit.ButtonStyle.Box, 16, 52f);
+                b.interactable = false;
+                if (item.Source == UnlockSource.Shop)
+                    UIKit.Button(_preview, "GO TO SHOP", () => Host.Push(new ShopScreen()), UIKit.ButtonStyle.Ghost, 16, 44f);
+            }
+            UIKit.Caption(_preview, "CLICK ANY TILE TO PREVIEW IT", 12);
+        }
+
         private void Refresh()
         {
+            ClearLive();
             UIKit.Clear(_grid);
             UIKit.Clear(_preview);
             var prog = Game.Progression;
@@ -89,6 +159,11 @@ namespace Vamp.UI.Menus
                 Tile(item, has, item.Id == equipped);
             }
 
+            if (HasLivePreview(type))
+            {
+                LivePreview(type, equipped);
+                return;
+            }
             // Preview: player card + title options
             UIKit.Caption(_preview, "PLAYER CARD", 14);
             var cardRow = UIKit.Row(_preview, 320f, 0f);
@@ -103,10 +178,11 @@ namespace Vamp.UI.Menus
 
         private void Tile(CosmeticItem item, bool owned, bool equipped)
         {
-            var tile = UIKit.Panel(_grid, "Tile", equipped ? new Color(0.25f, 0.02f, 0.05f, 0.9f) : new Color(0.06f, 0.06f, 0.07f, 0.9f));
+            bool focused = HasLivePreview(item.Type) && item.Id == _focused;
+            var tile = UIKit.Panel(_grid, "Tile", equipped ? new Color(0.25f, 0.02f, 0.05f, 0.9f) : focused ? new Color(0.14f, 0.1f, 0.11f, 0.95f) : new Color(0.06f, 0.06f, 0.07f, 0.9f));
             var btn = tile.gameObject.AddComponent<Button>();
             btn.targetGraphic = tile;
-            if (equipped) tile.GetComponent<Outline>().effectColor = UIKit.Red;
+            if (equipped || focused) tile.GetComponent<Outline>().effectColor = equipped ? UIKit.Red : Color.white;
             UIKit.VList(tile.transform, 4f, 10, TextAnchor.UpperCenter);
 
             var visual = UIKit.Row(tile.transform, 96f, 0f);
@@ -133,6 +209,13 @@ namespace Vamp.UI.Menus
             string id = item.Id;
             btn.onClick.AddListener(() =>
             {
+                if (HasLivePreview(item.Type))
+                {
+                    Audio.AudioController.PlayUI(Audio.SfxId.UIClick);
+                    _focused = id;
+                    Refresh();
+                    return;
+                }
                 if (!owned)
                 {
                     UIKit.Modal(Host.ModalRoot, "LOCKED", item.Name + "\n\n" + item.UnlockText, ("OK", null, UIKit.ButtonStyle.Box));

@@ -20,6 +20,15 @@ namespace Vamp.UI.Menus
         private float _timer;
         private Vector3 _center;
         public RenderTexture Texture { get; private set; }
+        private bool _active = true;
+
+        /// <summary>Only previews on screen render (the shop can have dozens of cards).</summary>
+        public void SetActive(bool on)
+        {
+            if (_active == on) return;
+            _active = on;
+            if (_cam != null) _cam.enabled = on;
+        }
 
         public static ShopPreview Create(CosmeticItem item, int width = 512, int height = 256)
         {
@@ -35,7 +44,7 @@ namespace Vamp.UI.Menus
         {
             _item = item;
             _center = transform.position;
-            Texture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) { name = "ShopPreview", antiAliasing = 2 };
+            Texture = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32) { name = "ShopPreview", antiAliasing = 2 };
             Texture.Create();
 
             var camGo = new GameObject("Camera");
@@ -97,7 +106,7 @@ namespace Vamp.UI.Menus
 
         private void Update()
         {
-            if (_item == null) return;
+            if (_item == null || !_active) return;
             float dt = Time.unscaledDeltaTime;
             _timer -= dt;
             switch (_item.Type)

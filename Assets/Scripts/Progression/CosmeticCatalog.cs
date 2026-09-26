@@ -253,18 +253,49 @@ namespace Vamp.Progression
             Camo("camo_dragonsvein", "DRAGON'S VEIN", "DragonsVein", new Color(0.95f, 0.2f, 0.05f), UnlockSource.Shop, 1, 3950)
                 .Description = "ANCIENT DRAGON-SCALE PATTERN WITH MOLTEN RED VEINS.";
 
-            // Bullet trails
+            // Bullet tracers (ids keep the old "trail_" prefix so saved profiles stay valid)
             Simple("trail_none", "STANDARD", CosmeticType.WeaponTrail, UnlockSource.Default, 1, White);
             Simple("trail_ember", "EMBER", CosmeticType.WeaponTrail, UnlockSource.Level, 12, new Color(1f, 0.45f, 0.1f));
             Shop("trail_phantom", "PHANTOM STRIKE", CosmeticType.WeaponTrail, 2450, new Color(1f, 0.1f, 0.15f),
-                 "CRIMSON PARTICLE TRAIL THAT SHREDS THROUGH THE BATTLEFIELD.");
+                 "CRIMSON PARTICLE TRACER THAT SHREDS THROUGH THE BATTLEFIELD.");
             Shop("trail_razor", "RAZOR WHIP", CosmeticType.WeaponTrail, 2450, new Color(1f, 0.2f, 0.3f),
-                 "HIGH-SPEED SLASH TRAIL WITH ELECTRIC CRIMSON SPARKS.");
+                 "HIGH-SPEED SLASH TRACER WITH ELECTRIC CRIMSON SPARKS.");
+            Camo("camo_neongrid", "NEON GRID", "NeonGrid", new Color(0.1f, 0.9f, 1f), UnlockSource.Shop, 1, 2950).Description = "GLOWING CYAN AND MAGENTA CIRCUIT GRID.";
+            Camo("camo_carbon", "MIDNIGHT CARBON", "Carbon", new Color(0.15f, 0.15f, 0.17f), UnlockSource.Shop, 1, 1950).Description = "WOVEN CARBON FIBRE WITH A DARK SHEEN.";
+            Camo("camo_arctic", "ARCTIC FROST", "Arctic", new Color(0.75f, 0.9f, 1f), UnlockSource.Shop, 1, 2950).Description = "CRACKED GLACIER ICE, FROZEN SOLID.";
+            Camo("camo_solar", "SOLAR FLARE", "Solar", new Color(1f, 0.6f, 0.1f), UnlockSource.Shop, 1, 3450).Description = "SWIRLING PLASMA TORN FROM THE SUN.";
+            Camo("camo_venom", "VENOM", "Venom", new Color(0.6f, 0.2f, 0.9f), UnlockSource.Shop, 1, 2950).Description = "PURPLE HIDE WITH DRIPPING ACID GREEN.";
+            Camo("camo_damascus", "GOLD DAMASCUS", "Damascus", new Color(1f, 0.8f, 0.3f), UnlockSource.Shop, 1, 4950).Description = "FOLDED GOLD STEEL. PURE FLEX.";
+            Camo("camo_bloodmoon", "BLOOD MOON", "BloodMoon", new Color(0.6f, 0.05f, 0.05f), UnlockSource.Shop, 1, 3450).Description = "CRATERED CRIMSON MOON SURFACE.";
+            Camo("camo_digital", "DIGITAL HUNTER", "Digital", new Color(0.3f, 0.5f, 0.25f), UnlockSource.Shop, 1, 1950).Description = "CLASSIC PIXEL CAMO IN FOREST TONES.";
+            Camo("camo_marble", "PHANTOM MARBLE", "Marble", new Color(0.9f, 0.9f, 0.92f), UnlockSource.Shop, 1, 3950).Description = "POLISHED WHITE MARBLE WITH GREY VEINS.";
+            Camo("camo_storm", "ELECTRIC STORM", "Storm", new Color(0.3f, 0.6f, 1f), UnlockSource.Shop, 1, 3950).Description = "BLUE LIGHTNING CRACKING ACROSS A DARK SKY.";
+
+            // More shop tracers
+            Shop("trail_void", "VOID BEAM", CosmeticType.WeaponTrail, 2950, new Color(0.5f, 0.1f, 0.9f), "A DARK PURPLE BEAM WITH A BLACK HOLE CORE.");
+            Shop("trail_gold", "GOLDEN ARROW", CosmeticType.WeaponTrail, 3450, new Color(1f, 0.8f, 0.2f), "GOLD TRACER THAT LEAVES A SPARKLE BEHIND.");
+            Shop("trail_frost", "FROSTBITE", CosmeticType.WeaponTrail, 2450, new Color(0.6f, 0.9f, 1f), "ICY TRACER THAT SHEDS FALLING SNOWFLAKES.");
+            Shop("trail_toxic", "TOXIC SPIT", CosmeticType.WeaponTrail, 1950, new Color(0.3f, 1f, 0.2f), "ACID-GREEN TRACER THAT DRIPS AS IT FLIES.");
+            Shop("trail_plasma", "PLASMA", CosmeticType.WeaponTrail, 2950, new Color(0.2f, 0.95f, 1f), "THICK CYAN PLASMA BOLT WITH ENERGY RINGS.");
+            Shop("trail_hellfire", "HELLFIRE", CosmeticType.WeaponTrail, 3450, new Color(1f, 0.35f, 0.05f), "BURNING TRACER THAT THROWS RISING EMBERS.");
+            Shop("trail_shadow", "SHADOW", CosmeticType.WeaponTrail, 1950, new Color(0.1f, 0.1f, 0.12f), "A BLACK SMOKY STREAK THAT LINGERS.");
+            Shop("trail_rainbow", "RAINBOW RUSH", CosmeticType.WeaponTrail, 4450, new Color(1f, 0.4f, 0.8f), "EVERY COLOUR AT ONCE. IMPOSSIBLE TO MISS.");
+
             // Shop kill effects
             Shop("kfx_crimson_eruption", "CRIMSON ERUPTION", CosmeticType.KillEffect, 2950, Red,
                  "EXPLOSIVE ELIMINATION EFFECT WITH A SHATTERING IMPACT.");
             Shop("kfx_soul_reap", "SOUL REAP", CosmeticType.KillEffect, 2950, new Color(1f, 0.15f, 0.2f),
                  "DEMONIC ENERGY BURST THAT CLAIMS EVERY ELIMINATION.");
+            // More shop kill effects
+            Shop("kfx_frost", "FROST SHATTER", CosmeticType.KillEffect, 2450, new Color(0.6f, 0.9f, 1f), "YOUR TARGET BREAKS APART INTO FALLING ICE.");
+            Shop("kfx_gold", "GOLDEN BURST", CosmeticType.KillEffect, 3950, new Color(1f, 0.8f, 0.2f), "A FOUNTAIN OF GOLD SPARKS. EXPENSIVE TASTE.");
+            Shop("kfx_void", "VOID COLLAPSE", CosmeticType.KillEffect, 3450, new Color(0.5f, 0.1f, 0.9f), "EVERYTHING GETS PULLED IN - THEN BLOWS OUT.");
+            Shop("kfx_toxic", "TOXIC CLOUD", CosmeticType.KillEffect, 1950, new Color(0.3f, 1f, 0.2f), "A BILLOWING CLOUD OF GREEN GAS.");
+            Shop("kfx_thunder", "THUNDERSTRIKE", CosmeticType.KillEffect, 3950, new Color(0.4f, 0.7f, 1f), "A LIGHTNING BOLT CALLED DOWN FROM THE SKY.");
+            Shop("kfx_bloodmoon", "BLOOD MOON", CosmeticType.KillEffect, 2950, new Color(0.8f, 0.05f, 0.1f), "A CRIMSON RING WITH RISING BLOOD ORBS.");
+            Shop("kfx_phoenix", "PHOENIX", CosmeticType.KillEffect, 4450, new Color(1f, 0.45f, 0.05f), "A COLUMN OF FIRE RISES FROM THE ASHES.");
+            Shop("kfx_ghost", "GHOST", CosmeticType.KillEffect, 2450, new Color(0.9f, 0.95f, 1f), "PALE SPIRITS DRIFT UP AND FADE AWAY.");
+
 
             Simple("char_default", "OPERATIVE", CosmeticType.CharacterSkin, UnlockSource.Default, 1, Steel);
             Simple("char_night", "NIGHT OPS", CosmeticType.CharacterSkin, UnlockSource.Level, 21, Dark);
