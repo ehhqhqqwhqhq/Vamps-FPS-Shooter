@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Arc_Energy
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: arc
-  displayName: ARC
+  displayName: SCAR
   slot: 0
   fireMode: 1
   delivery: 0

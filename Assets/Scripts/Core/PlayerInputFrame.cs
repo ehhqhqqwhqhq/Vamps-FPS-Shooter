@@ -32,6 +32,8 @@ namespace Vamp.Core
 
         /// <summary>-1 = no switch requested, otherwise loadout slot index (0 = primary, 1 = secondary, 2 = melee/third).</summary>
         public int WeaponSlotPressed;
+        /// <summary>Mouse wheel weapon cycling: +1 next, -1 previous, 0 none.</summary>
+        public int WeaponCycle;
 
         public bool ScoreboardHeld;
         public bool VoiceHeld;

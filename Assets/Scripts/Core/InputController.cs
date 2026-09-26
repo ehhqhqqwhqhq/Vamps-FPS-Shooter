@@ -15,6 +15,7 @@ namespace Vamp.Core
     [DefaultExecutionOrder(-100)]
     public sealed class InputController : MonoBehaviour
     {
+        private float _nextCycle;
         // Local persistence for now. In the Settings/Account phase this JSON moves into the
         // account-synced settings blob ("keybinds") and PlayerPrefs becomes the offline fallback.
         public const string BindingOverridesPrefsKey = "vamp.input.bindingOverrides";
@@ -161,6 +162,17 @@ namespace Vamp.Core
             if (_primary.WasPressedThisFrame()) f.WeaponSlotPressed = 0;
             else if (_secondary.WasPressedThisFrame()) f.WeaponSlotPressed = 1;
             else if (_melee.WasPressedThisFrame()) f.WeaponSlotPressed = 2;
+            // Mouse wheel: scroll down = next weapon, up = previous (one step per notch burst).
+            var mouse = Mouse.current;
+            if (!cursorFree && mouse != null && f.WeaponSlotPressed < 0 && Time.unscaledTime >= _nextCycle)
+            {
+                float wheel = mouse.scroll.ReadValue().y;
+                if (Mathf.Abs(wheel) > 0.01f)
+                {
+                    f.WeaponCycle = wheel < 0f ? 1 : -1;
+                    _nextCycle = Time.unscaledTime + 0.12f;
+                }
+            }
 
             f.ScoreboardHeld = _scoreboard.IsPressed();
             f.VoiceHeld = _voice.IsPressed();

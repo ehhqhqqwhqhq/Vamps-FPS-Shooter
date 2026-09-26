@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Blast_RocketLauncher
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: blast
-  displayName: BLAST
+  displayName: ROCKET LAUNCHER
   slot: 0
   fireMode: 0
   delivery: 1
@@ -40,10 +40,19 @@ MonoBehaviour:
   viewKick: 3
   screenShake: 0.3
   airborneSelfKnockback: 0
+  usesHeat: 0
+  heatPerShot: 0.04
+  heatCoolRate: 0.45
+  heatCoolDelay: 0.4
+  overheatLockout: 1.4
+  meleeRange: 2.4
+  meleeRadius: 0.6
+  backstabMultiplier: 2
   canAim: 0
   adsFovMultiplier: 0.8
   adsTime: 0.15
   isSniper: 0
+  scopeOverlay: 0
   projectileSpeed: 42
   projectileGravity: 0
   projectileLifetime: 5

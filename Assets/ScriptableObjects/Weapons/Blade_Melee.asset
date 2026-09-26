@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Blade_Melee
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: blade
-  displayName: BLADE
+  displayName: MACHETE
   slot: 2
   fireMode: 0
   delivery: 2
@@ -43,6 +43,7 @@ MonoBehaviour:
   usesHeat: 0
   heatPerShot: 0.04
   heatCoolRate: 0.45
+  heatCoolDelay: 0.4
   overheatLockout: 1.4
   meleeRange: 2.4
   meleeRadius: 0.6

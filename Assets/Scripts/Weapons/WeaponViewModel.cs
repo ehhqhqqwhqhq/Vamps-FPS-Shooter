@@ -56,6 +56,10 @@ namespace Vamp.Weapons
         private Vector3 _rGrip, _lGrip;
         private Quaternion _rGripRot = Quaternion.identity, _lGripRot = Quaternion.identity;
         private bool _hasLeft;
+        // Reload animation (magazine / shells / pump)
+        private WeaponParts _parts;
+        private float _shellBlend, _pumpT = 1f;
+        private Transform _shell;
         private static bool _loadedArt;
 
         /// <summary>True while the inspect animation plays.</summary>
@@ -89,6 +93,7 @@ namespace Vamp.Weapons
             _inspectT = -1f; // firing cancels an inspect
             if (d.delivery == DeliveryType.Melee) { _stab = 1f; return; }
             _kick = Mathf.Min(1.5f, _kick + (d.pelletsPerShot > 1 || d.delivery == DeliveryType.Projectile ? 1f : 0.45f));
+            if (_parts != null && _parts.HasPump) _pumpT = -0.08f; // rack the pump just after the shot
         }
 
         private void Rebuild(WeaponData d)
@@ -100,6 +105,10 @@ namespace Vamp.Weapons
             if (_gunArmsGo != null) Destroy(_gunArmsGo);
             _gunArmsGo = null;
             _gunArms = null;
+            _parts = null;
+            _shell = null;
+            _shellBlend = 0f;
+            _pumpT = 1f;
             _inspectT = -1f;
             _data = d;
             if (d == null) return;
@@ -171,6 +180,8 @@ namespace Vamp.Weapons
             else if (_balisong == null) AttachArms(root.transform, d);
             _stab = 0f;
             _model = root.transform;
+            _parts = root.GetComponent<WeaponParts>();
+            if (_parts != null) _parts.ResetParts();
             _model.localPosition = _hip;
             _model.localRotation = Quaternion.identity;
 
@@ -207,6 +218,19 @@ namespace Vamp.Weapons
             var muzzle = new GameObject("Muzzle").transform;
             muzzle.SetParent(root, false);
             muzzle.localPosition = new Vector3(0f, 0f, length * 0.85f);
+
+            // Reloadable placeholders get a box magazine under the body (reload animation).
+            if (d.delivery != DeliveryType.Melee && !d.usesHeat)
+            {
+                var parts = root.gameObject.AddComponent<WeaponParts>();
+                var socket = new GameObject("MagSocket").transform;
+                socket.SetParent(root, false);
+                socket.localPosition = new Vector3(0f, -height * 0.5f, 0.09f);
+                socket.localRotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+                Part(socket, "Mag", new Vector3(0f, 0f, 0.05f), new Vector3(0.04f, 0.05f, 0.1f), accentMaterial);
+                parts.MagSocket = socket;
+                parts.MagLength = 0.1f;
+            }
         }
 
         private static void Part(Transform parent, string name, Vector3 pos, Vector3 scale, Material mat)
@@ -240,11 +264,33 @@ namespace Vamp.Weapons
             float bobScale = Mathf.Clamp01(speed / 10f) * (1f - weapons.AimBlend * 0.8f);
             Vector3 bob = new Vector3(Mathf.Cos(_bobPhase) * bobAmount, Mathf.Abs(Mathf.Sin(_bobPhase)) * bobAmount, 0f) * bobScale;
 
-            float reload = weapons.IsReloading ? Mathf.Sin(weapons.ReloadProgress * Mathf.PI) : 0f;
+            // Reload: real choreography when the arms and moving parts exist, otherwise the old dip.
+            bool animReload = _gunArms != null && _parts != null && (_parts.HasMag || _data.reloadPerShell);
+            float reload = weapons.IsReloading && !animReload ? Mathf.Sin(weapons.ReloadProgress * Mathf.PI) : 0f;
+            var rp = ReloadAnim.Idle(_lGrip, _lGripRot);
+            if (animReload)
+            {
+                if (_data.reloadPerShell)
+                {
+                    _shellBlend = Mathf.MoveTowards(_shellBlend, weapons.IsReloading ? 1f : 0f, dt * 6f);
+                    if (_shellBlend > 0f) rp = ReloadAnim.Shell(_parts, weapons.IsReloading ? weapons.ReloadProgress : 0f, _shellBlend, _lGrip, _lGripRot);
+                }
+                else if (weapons.IsReloading) rp = ReloadAnim.Magazine(_parts, weapons.ReloadProgress, _lGrip, _lGripRot);
+                _parts.SetMag(rp.MagOut, rp.MagExtra, rp.MagExtraEuler, rp.MagVisible);
+            }
+            if (_parts != null && _parts.HasPump)
+            {
+                if (_pumpT < 1f) _pumpT = Mathf.Min(1f, _pumpT + dt / 0.42f);
+                float pump = ReloadAnim.Pump(_pumpT);
+                _parts.SetPump(pump);
+                if (_shellBlend < 0.5f) rp.LeftPos += Vector3.back * (_parts.PumpTravel * pump); // left hand rides the pump
+            }
+            if (_gunArms != null) UpdateShell(rp);
 
             Vector3 pos = Vector3.Lerp(_hip, _ads, weapons.AimBlend) + bob;
             pos.z -= _kick * kickBack;
             pos.y -= (reload * 0.12f) + _equipLower * 0.25f;
+            pos += rp.GunPos;
             // Melee: quick forward stab (out fast, back slower).
             float stab = 0f;
             if (_melee && _stab > 0f)
@@ -297,17 +343,41 @@ namespace Vamp.Weapons
             if (_arms != null) rot *= Quaternion.Euler(-6f * stab, -4f * stab, 0f);
             else if (_melee) rot *= Quaternion.Euler(Mathf.Lerp(-22f, 4f, stab), Mathf.Lerp(-28f, -8f, stab), Mathf.Lerp(-35f, -10f, stab));
             rot *= Quaternion.Euler(inspectEuler);
+            rot *= Quaternion.Euler(rp.GunEuler);
             _model.localRotation = rot;
             bool scoped = weapons.ShowScope;
             if (_model.gameObject.activeSelf == scoped) _model.gameObject.SetActive(!scoped);
             if (_gunArmsGo != null)
             {
                 if (_gunArmsGo.activeSelf == scoped) _gunArmsGo.SetActive(!scoped);
-                if (!scoped && _gunArms != null) _gunArms.Solve(_model, _rGrip, _rGripRot, _hasLeft, _lGrip, _lGripRot);
+                if (!scoped && _gunArms != null) _gunArms.Solve(_model, _rGrip, _rGripRot, _hasLeft, rp.LeftPos, rp.LeftRot);
             }
         }
 
         // ------------------------------------------------------------------ Arms / hands
+
+        /// <summary>The shotgun shell in the left hand while feeding the tube.</summary>
+        private void UpdateShell(ReloadAnim.Pose rp)
+        {
+            if (_shell == null)
+            {
+                if (!rp.ShellVisible) return;
+                var g = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                g.name = "Shell";
+                Destroy(g.GetComponent<Collider>());
+                g.layer = 2;
+                var r = g.GetComponent<Renderer>();
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                var sh = Shader.Find("Universal Render Pipeline/Lit");
+                r.sharedMaterial = new Material(sh != null ? sh : Shader.Find("Standard")) { color = new Color(0.7f, 0.06f, 0.08f) };
+                _shell = g.transform;
+                _shell.SetParent(_model, false);
+                _shell.localScale = new Vector3(0.019f, 0.032f, 0.019f);
+                _shell.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            }
+            if (_shell.gameObject.activeSelf != rp.ShellVisible) _shell.gameObject.SetActive(rp.ShellVisible);
+            _shell.localPosition = rp.ShellPos;
+        }
 
         private static void LoadArt()
         {

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: V9_Pistol
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: v9
-  displayName: V-9
+  displayName: USP
   slot: 1
   fireMode: 0
   delivery: 0

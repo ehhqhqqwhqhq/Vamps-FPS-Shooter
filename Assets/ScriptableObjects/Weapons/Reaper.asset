@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Reaper
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: reaper
-  displayName: REAPER
+  displayName: M1911
   slot: 1
   fireMode: 0
   delivery: 0

@@ -111,6 +111,7 @@ namespace Vamp.EditorTools
             var knife = B.LoadOrCreateWeapon("Knife_Melee", ConfigureKnife);
             var balisong = B.LoadOrCreateWeapon("Balisong_Melee", ConfigureBalisong);
             ArcHeat(arc);
+            foreach (var w in new[] { brute, v9, blast, ripper, havoc, widow, arc, reaper, blade, knife, balisong }) RealName(w);
 
             string catPath = ResourcesFolder + "/VampWeaponCatalog.asset";
             var cat = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(catPath);
@@ -133,6 +134,22 @@ namespace Vamp.EditorTools
 
             AssetDatabase.SaveAssets();
             return a;
+        }
+
+        /// <summary>Weapons are named after what they are (ids stay the same - saves, loadouts and online use them).</summary>
+        private static readonly Dictionary<string, string> RealNames = new Dictionary<string, string>
+        {
+            { "havoc", "AK-47" }, { "ripper", "VECTOR" }, { "arc", "SCAR" }, { "widow", "AWP" }, { "brute", "PUMP SHOTGUN" },
+            { "v9", "USP" }, { "reaper", "M1911" }, { "blast", "ROCKET LAUNCHER" }, { "blade", "MACHETE" },
+            { "knife", "COMBAT KNIFE" }, { "balisong", "BUTTERFLY" },
+        };
+
+        private static void RealName(WeaponData w)
+        {
+            string n;
+            if (w == null || !RealNames.TryGetValue(w.id, out n) || w.displayName == n) return;
+            w.displayName = n;
+            EditorUtility.SetDirty(w);
         }
 
         private static void ConfigureRipper(WeaponData w)

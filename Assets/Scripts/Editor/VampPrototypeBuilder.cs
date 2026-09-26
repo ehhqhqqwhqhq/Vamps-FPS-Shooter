@@ -307,7 +307,7 @@ namespace Vamp.EditorTools
             }
             // Tall wall next to the 14 m tower to rocket off
             Block("RocketWall", towers, new Vector3(70f, 9f, 60f), new Vector3(8f, 18f, 1f), _metal);
-            Sign(towers, "ROCKET JUMP ZONE  ·  PRESS 3 FOR BLAST", new Vector3(64f, 6f, 30f), 0.3f, faceDir: Vector3.right);
+            Sign(towers, "ROCKET JUMP ZONE  ·  PRESS 3 FOR THE ROCKET LAUNCHER", new Vector3(64f, 6f, 30f), 0.3f, faceDir: Vector3.right);
             AddTeleport(teleports, "Rocket Towers", towers, new Vector3(64f, 0.05f, 20f), 90f);
 
             // ---------- Mini vertical arena (preview of VERTEX flow), behind spawn

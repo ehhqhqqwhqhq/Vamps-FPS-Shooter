@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Brute_Shotgun
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: brute
-  displayName: BRUTE
+  displayName: PUMP SHOTGUN
   slot: 0
   fireMode: 0
   delivery: 0

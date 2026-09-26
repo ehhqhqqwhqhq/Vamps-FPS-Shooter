@@ -319,10 +319,117 @@ namespace Vamp.EditorTools
                 r.sharedMaterials = mats;
             }
 
+            SetupParts(root, inst.transform, model, length, verts);
+
             string path = WeaponPrefabs + "/" + model + ".prefab";
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        // ================================================================== Moving parts (reload animation)
+
+        /// <summary>Which sub-object of each model is the magazine / the pump (checked by rendering the parts).</summary>
+        private static readonly Dictionary<string, string> MagParts = new Dictionary<string, string>
+        {
+            { "AK47", "Cube.003" }, { "SCAR", "Cube.002" }, { "Vector", "Cube.004" }, { "AWP", "Cube.004" },
+            { "USP", "Cube.003" }, { "1911", "Cube.005" },
+        };
+        private static readonly Dictionary<string, string> PumpParts = new Dictionary<string, string> { { "PumpShotgun", "Cylinder" } };
+
+        private static Transform FindDeep(Transform t, string name)
+        {
+            if (t.name == name) return t;
+            foreach (Transform c in t)
+            {
+                var r = FindDeep(c, name);
+                if (r != null) return r;
+            }
+            return null;
+        }
+
+        private static void SetupParts(GameObject root, Transform inst, string model, float length, List<Vector3> allVerts)
+        {
+            var parts = root.AddComponent<WeaponParts>();
+            parts.Pistol = length < 0.3f;
+            // Parts get re-parented onto sockets, which a connected model instance doesn't allow.
+            if (PrefabUtility.IsPartOfPrefabInstance(inst.gameObject))
+                PrefabUtility.UnpackPrefabInstance(PrefabUtility.GetOutermostPrefabInstanceRoot(inst.gameObject), PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            var grip = root.transform.Find("Grip");
+            float gripY = grip != null ? grip.localPosition.y : 0f;
+
+            string magName;
+            var mag = MagParts.TryGetValue(model, out magName) ? FindDeep(inst, magName) : null;
+            if (mag != null)
+            {
+                var mv = Collect(mag, root.transform);
+                if (mv.Count > 0)
+                {
+                    Vector3 c = Vector3.zero;
+                    foreach (var v in mv) c += v;
+                    c /= mv.Count;
+                    Vector3 outDir;
+                    if (parts.Pistol) outDir = new Vector3(0f, -0.95f, -0.3f).normalized;   // along the raked grip
+                    else
+                    {
+                        // Principal axis of the mag (power iteration on the covariance), pointing down.
+                        float xx = 0, xy = 0, xz = 0, yy = 0, yz = 0, zz = 0;
+                        foreach (var v in mv)
+                        {
+                            var d = v - c;
+                            xx += d.x * d.x; xy += d.x * d.y; xz += d.x * d.z; yy += d.y * d.y; yz += d.y * d.z; zz += d.z * d.z;
+                        }
+                        outDir = new Vector3(0.1f, -1f, 0.2f);
+                        for (int i = 0; i < 30; i++)
+                            outDir = new Vector3(xx * outDir.x + xy * outDir.y + xz * outDir.z,
+                                                 xy * outDir.x + yy * outDir.y + yz * outDir.z,
+                                                 xz * outDir.x + yz * outDir.y + zz * outDir.z).normalized;
+                        outDir.x = 0f;
+                        outDir.Normalize();
+                        if (outDir.y > 0f) outDir = -outDir;
+                    }
+                    float lo = float.MaxValue, hi = float.MinValue;
+                    foreach (var v in mv) { float t = Vector3.Dot(v - c, outDir); lo = Mathf.Min(lo, t); hi = Mathf.Max(hi, t); }
+                    var socket = new GameObject("MagSocket").transform;
+                    socket.SetParent(root.transform, false);
+                    socket.localPosition = c + outDir * lo;
+                    socket.localRotation = Quaternion.LookRotation(outDir, Vector3.forward);
+                    mag.SetParent(socket, true);
+                    float len = hi - lo;
+                    if (parts.Pistol && len < 0.05f)
+                    {
+                        // Only the base plate is modelled: add the magazine body that hides inside the grip.
+                        float w = 0.02f, dpt = 0.03f;
+                        var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        body.name = "MagBody";
+                        Object.DestroyImmediate(body.GetComponent<Collider>());
+                        body.transform.SetParent(socket, false);
+                        body.transform.localPosition = new Vector3(0f, 0f, -0.045f);
+                        body.transform.localScale = new Vector3(w, dpt, 0.09f);
+                        body.GetComponent<Renderer>().sharedMaterial = _gunMetal;
+                        len += 0.09f;
+                    }
+                    parts.MagSocket = socket;
+                    parts.MagLength = Mathf.Max(0.05f, len);
+                }
+            }
+
+            string pumpName;
+            var pump = PumpParts.TryGetValue(model, out pumpName) ? FindDeep(inst, pumpName) : null;
+            if (pump != null)
+            {
+                var ps = new GameObject("PumpSocket").transform;
+                ps.SetParent(root.transform, false);
+                pump.SetParent(ps, true);
+                parts.PumpSocket = ps;
+                parts.PumpTravel = 0.07f;
+            }
+
+            // Shell port: underside of the receiver just ahead of the trigger.
+            float minY = float.MaxValue;
+            foreach (var v in allVerts)
+                if (v.z > 0.09f && v.z < 0.16f && v.y > gripY + 0.02f && Mathf.Abs(v.x) < 0.03f) minY = Mathf.Min(minY, v.y);
+            parts.LoadPort = new Vector3(0f, minY < float.MaxValue ? minY - 0.005f : gripY + 0.05f, 0.12f);
         }
 
         // ================================================================== Combat knife (Asset Store: "Free Modern Combat Knife")

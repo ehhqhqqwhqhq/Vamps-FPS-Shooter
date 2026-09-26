@@ -79,6 +79,8 @@ namespace Vamp.EditorTools
                 var knife = Find(a.transform, "KnifeMesh");
                 if (knife != null) knife.gameObject.SetActive(false);
                 GloveSkins.Apply(a, "glove_tactical");
+                // Several renders per editor frame: make skinning follow every pose change.
+                foreach (var smr in a.GetComponentsInChildren<SkinnedMeshRenderer>(true)) smr.forceMatrixRecalculationPerRender = true;
                 var fp = FirstPersonArms.Create(a);
                 Vector3 rp, lp; Quaternion rr, lr; bool left;
                 ArmsFitting.Compute(root.transform, d, out rp, out rr, out left, out lp, out lr);
@@ -106,6 +108,55 @@ namespace Vamp.EditorTools
                 File.WriteAllBytes(Path.Combine(outDir, d.id + ".png"), sheet.EncodeToPNG());
                 Object.DestroyImmediate(sheet);
                 names.Add(d.id);
+
+                // Reload strip: four moments of the reload from the player's eye (+ a wider view of the same moment).
+                var parts = root.GetComponent<WeaponParts>();
+                if (parts != null && d.delivery != DeliveryType.Melee && !d.usesHeat && left)
+                {
+                    var rs = new Texture2D(W * 4, H * 2, TextureFormat.RGB24, false);
+                    float[] ps = d.reloadPerShell ? new[] { 0.2f, 0.55f, 0.8f, -1f } : new[] { 0.1f, 0.24f, 0.5f, 0.66f };
+                    Vector3 hip = root.transform.localPosition;
+                    Quaternion baseRot = root.transform.localRotation;
+                    GameObject shell = null;
+                    for (int k = 0; k < ps.Length; k++)
+                    {
+                        ReloadAnim.Pose pose;
+                        float pump = 0f;
+                        if (ps[k] < 0f) { pose = ReloadAnim.Idle(lp, lr); pump = 1f; }
+                        else pose = d.reloadPerShell ? ReloadAnim.Shell(parts, ps[k], 1f, lp, lr) : ReloadAnim.Magazine(parts, ps[k], lp, lr);
+                        parts.SetPump(pump);
+                        if (pump > 0f) pose.LeftPos += Vector3.back * parts.PumpTravel;
+                        root.transform.localPosition = hip + pose.GunPos;
+                        root.transform.localRotation = baseRot * Quaternion.Euler(pose.GunEuler);
+                        parts.SetMag(pose.MagOut, pose.MagExtra, pose.MagExtraEuler, pose.MagVisible);
+                        if (shell == null)
+                        {
+                            shell = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                            Object.DestroyImmediate(shell.GetComponent<Collider>());
+                            shell.GetComponent<Renderer>().sharedMaterial = accent;
+                            shell.transform.SetParent(root.transform, false);
+                            shell.transform.localScale = new Vector3(0.019f, 0.032f, 0.019f);
+                            shell.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                        }
+                        shell.SetActive(pose.ShellVisible);
+                        shell.transform.localPosition = pose.ShellPos;
+                        fp.Solve(root.transform, rp, rr, true, pose.LeftPos, pose.LeftRot);
+                        log.Add(d.id + " reload p=" + ps[k] + " magTop " + parts.MagTop.ToString("F3") + " out " + parts.MagOutDir.ToString("F2") + " len " + parts.MagLength.ToString("F3")
+                                + " magOut " + pose.MagOut.ToString("F3") + " left " + pose.LeftPos.ToString("F3") + " rest " + lp.ToString("F3") + " port " + parts.LoadPort.ToString("F3")
+                                + " | " + fp.Describe(root.transform, true));
+                        Shot(cam, rt, rs, k, 1, eye.position, eye.rotation, 58.7f);
+                        Vector3 f2 = root.transform.TransformPoint(new Vector3(0f, -0.05f, 0.1f));
+                        Vector3 wide = f2 - eye.right * 0.55f + eye.up * 0.05f - eye.forward * 0.1f;
+                        Shot(cam, rt, rs, k, 0, wide, Quaternion.LookRotation(f2 - wide, eye.up), 40f);
+                    }
+                    rs.Apply();
+                    File.WriteAllBytes(Path.Combine(outDir, d.id + "_reload.png"), rs.EncodeToPNG());
+                    Object.DestroyImmediate(rs);
+                    root.transform.localPosition = hip;
+                    root.transform.localRotation = baseRot;
+                    parts.ResetParts();
+                    if (shell != null) shell.SetActive(false);
+                }
             }
             File.WriteAllLines(Path.Combine(outDir, "log.txt"), log.ToArray());
             cam.targetTexture = null;

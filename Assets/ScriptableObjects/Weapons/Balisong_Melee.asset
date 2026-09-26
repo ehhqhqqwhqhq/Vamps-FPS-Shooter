@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Balisong_Melee
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: balisong
-  displayName: BUTTERFLY KNIFE
+  displayName: BUTTERFLY
   slot: 2
   fireMode: 0
   delivery: 2

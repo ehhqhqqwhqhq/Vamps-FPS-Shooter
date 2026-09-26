@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Havoc_AR
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: havoc
-  displayName: HAVOC
+  displayName: AK-47
   slot: 0
   fireMode: 1
   delivery: 0

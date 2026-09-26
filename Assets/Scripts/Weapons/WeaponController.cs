@@ -178,6 +178,8 @@ namespace Vamp.Weapons
             if (_current < 0 || aimOrigin == null) return;
 
             if (input.WeaponSlotPressed >= 0) Equip(input.WeaponSlotPressed);
+            else if (input.WeaponCycle != 0 && _states.Length > 1)
+                Equip(((_current + input.WeaponCycle) % _states.Length + _states.Length) % _states.Length);
 
             var state = _states[_current];
             var d = state.Data;

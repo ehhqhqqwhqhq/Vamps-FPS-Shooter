@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Widow_Sniper
   m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
   id: widow
-  displayName: WIDOW
+  displayName: AWP
   slot: 0
   fireMode: 0
   delivery: 0
