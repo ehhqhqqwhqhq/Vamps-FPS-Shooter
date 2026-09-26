@@ -53,7 +53,7 @@ namespace Vamp.UI.Menus
             UIKit.Stretch(vignette.rectTransform);
             var leftShade = UIKit.Image(root, "LeftShade", new Color(0f, 0f, 0f, 0.55f));
             var lrt = leftShade.rectTransform;
-            lrt.anchorMin = new Vector2(0f, 0f); lrt.anchorMax = new Vector2(0.55f, 1f);
+            lrt.anchorMin = new Vector2(0f, 0f); lrt.anchorMax = new Vector2(0.34f, 1f); // just behind the menu - keeps the wall sign visible
             lrt.offsetMin = lrt.offsetMax = Vector2.zero;
 
             _content = UIKit.StretchNode("Content", root);

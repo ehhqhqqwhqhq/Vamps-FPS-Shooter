@@ -48,7 +48,7 @@ namespace Vamp.UI.Menus
             {
                 var data = w;
                 bool isEq = data.id == eq;
-                var b = UIKit.Button(_list, (isEq ? "▶  " : "") + data.displayName, () =>
+                var b = UIKit.Button(_list, (isEq ? "▶  " : "") + data.displayName + "   ·   LV " + Game.Progression.WeaponLevel(data.id), () =>
                 {
                     Game.Customization.SetLoadoutWeapon(slot, data.id);
                     Refresh();
@@ -63,23 +63,10 @@ namespace Vamp.UI.Menus
             if (w == null) return;
             UIKit.Heading(_details, w.displayName, 40);
             UIKit.Caption(_details, Describe(w), 15);
-            UIKit.Divider(_details);
-
-            float dps = w.damage * w.pelletsPerShot * w.fireRate / 60f;
-            Stat("DAMAGE", w.delivery == DeliveryType.Projectile ? (w.explosionDamage + w.damage) : w.damage * w.pelletsPerShot, 150f,
-                 w.pelletsPerShot > 1 ? w.pelletsPerShot + " × " + w.damage : Mathf.RoundToInt(w.delivery == DeliveryType.Projectile ? w.explosionDamage + w.damage : w.damage).ToString());
-            Stat("FIRE RATE", w.fireRate, 1000f, Mathf.RoundToInt(w.fireRate) + " RPM");
-            Stat("DPS", dps, 300f, Mathf.RoundToInt(dps).ToString());
-            Stat("RANGE", w.falloffEnd, 80f, Mathf.RoundToInt(w.falloffStart) + "–" + Mathf.RoundToInt(w.falloffEnd) + " M");
-            Stat("ACCURACY", 6f - Mathf.Min(6f, w.hipSpread), 6f, w.hipSpread.ToString("0.0") + "°");
-            Stat("MAGAZINE", w.magazineSize, 40f, w.usesHeat ? "HEAT" : w.magazineSize.ToString());
-            Stat("HEADSHOT", w.headshotMultiplier, 3f, "×" + w.headshotMultiplier.ToString("0.0#"));
-
             // Weapon level (kills on real players in quick match / ranked) → camo unlocks for this weapon.
             var prog = Game.Progression;
             int wlvl = prog.WeaponLevel(w.id), into, needed;
             prog.WeaponLevelProgress(w.id, out into, out needed);
-            UIKit.Spacer(_details, 6f);
             var lvlRow = UIKit.Row(_details, 26f, 12f);
             var lvlLabel = UIKit.Label(lvlRow, "WEAPON LEVEL " + wlvl + (wlvl >= ProgressionService.MaxWeaponLevel ? "  ·  MAX" : ""), 16, UIKit.Text);
             UIKit.Size(lvlLabel, -1, 230f);
@@ -91,7 +78,17 @@ namespace Vamp.UI.Menus
             lvlFill.rectTransform.offsetMin = lvlFill.rectTransform.offsetMax = Vector2.zero;
             var lvlXp = UIKit.Label(lvlRow, needed > 0 ? into + " / " + needed + " XP" : "", 13, UIKit.TextDim, TextAnchor.MiddleRight);
             UIKit.Size(lvlXp, -1, 120f);
-            UIKit.Caption(_details, "EARN WEAPON XP BY KILLING REAL PLAYERS IN QUICK MATCH AND RANKED (BOTS DON'T COUNT)", 11);
+            UIKit.Divider(_details);
+
+            float dps = w.damage * w.pelletsPerShot * w.fireRate / 60f;
+            Stat("DAMAGE", w.delivery == DeliveryType.Projectile ? (w.explosionDamage + w.damage) : w.damage * w.pelletsPerShot, 150f,
+                 w.pelletsPerShot > 1 ? w.pelletsPerShot + " × " + w.damage : Mathf.RoundToInt(w.delivery == DeliveryType.Projectile ? w.explosionDamage + w.damage : w.damage).ToString());
+            Stat("FIRE RATE", w.fireRate, 1000f, Mathf.RoundToInt(w.fireRate) + " RPM");
+            Stat("DPS", dps, 300f, Mathf.RoundToInt(dps).ToString());
+            Stat("RANGE", w.falloffEnd, 80f, Mathf.RoundToInt(w.falloffStart) + "–" + Mathf.RoundToInt(w.falloffEnd) + " M");
+            Stat("ACCURACY", 6f - Mathf.Min(6f, w.hipSpread), 6f, w.hipSpread.ToString("0.0") + "°");
+            Stat("MAGAZINE", w.magazineSize, 40f, w.usesHeat ? "HEAT" : w.magazineSize.ToString());
+            Stat("HEADSHOT", w.headshotMultiplier, 3f, "×" + w.headshotMultiplier.ToString("0.0#"));
 
             UIKit.Spacer(_details, 4f);
             UIKit.Caption(_details, "CAMO (COSMETIC)", 14);
@@ -137,7 +134,7 @@ namespace Vamp.UI.Menus
 
         private void Stat(string label, float value, float max, string text)
         {
-            var row = UIKit.Row(_details, 26f, 12f);
+            var row = UIKit.Row(_details, 22f, 12f);
             var l = UIKit.Label(row, label, 14, UIKit.TextDim);
             UIKit.Size(l, -1, 130f);
             var barBg = UIKit.Image(row, "Bar", new Color(1f, 1f, 1f, 0.1f));

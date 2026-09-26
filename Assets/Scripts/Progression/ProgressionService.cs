@@ -32,7 +32,7 @@ namespace Vamp.Progression
             _config = ProgressionConfig.Load();
             accounts.AccountCreated += a => CreateDefaults(a);
             accounts.LoggedIn += a => Load(a);
-            accounts.LoggedOut += () => { Profile = null; Stats = null; Challenges = null; _accountId = null; };
+            accounts.LoggedOut += () => { Profile = null; Stats = null; Challenges = null; _accountId = null; IsTester = false; };
         }
 
         private string Dir { get { return "accounts/" + _accountId + "/"; } }
@@ -52,6 +52,7 @@ namespace Vamp.Progression
         private void Load(AccountRecord account)
         {
             _accountId = account.id;
+            IsTester = IsTesterName(account.username);
             PlayerProfileData p;
             PlayerStatsData s;
             ChallengeSaveData c;
@@ -82,6 +83,7 @@ namespace Vamp.Progression
             if (Stats.milestones == null) Stats.milestones = new List<string>();
             if (Challenges.states == null) Challenges.states = new List<ChallengeState>();
 
+            if (IsTester) ApplyTesterPerks();
             Profile.level = Mathf.Clamp(Profile.level, 1, _config.maxLevel);
             Profile.prestige_level = Mathf.Clamp(Profile.prestige_level, 0, _config.maxPrestige);
             Profile.xp = Mathf.Clamp(Profile.xp, 0, Mathf.Max(0, _config.XpToNext(Profile.level) - 1));

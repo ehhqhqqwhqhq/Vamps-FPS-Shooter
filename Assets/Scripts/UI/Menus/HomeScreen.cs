@@ -31,6 +31,7 @@ namespace Vamp.UI.Menus
 
             UIKit.Button(col, "PLAY", () => Host.Push(new PlayScreen()), UIKit.ButtonStyle.Menu, 40, 64f);
             UIKit.Button(col, "LOADOUT", () => Host.Push(new LoadoutScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
+            UIKit.Button(col, "WEAPON LEVELS", () => Host.Push(new WeaponLevelsScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "CUSTOMIZE", () => Host.Push(new CustomizeScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "SHOP", () => Host.Push(new ShopScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "PROFILE", () => Host.Push(new ProfileScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
@@ -43,11 +44,13 @@ namespace Vamp.UI.Menus
 
             // Lobby cards (your party) - center bottom
             _cards = UIKit.Node("LobbyCards", root);
-            _cards.anchorMin = _cards.anchorMax = new Vector2(0.52f, 0f);
-            _cards.pivot = new Vector2(0.5f, 0f);
-            _cards.anchoredPosition = new Vector2(0f, 60f);
+            // Smaller, bottom-right (left of the social panel) so the VAMP sign on the wall stays visible.
+            _cards.anchorMin = _cards.anchorMax = new Vector2(1f, 0f);
+            _cards.pivot = new Vector2(1f, 0f);
+            _cards.anchoredPosition = new Vector2(-392f, 36f);
             _cards.sizeDelta = new Vector2(620f, 330f);
-            var h = UIKit.HList(_cards, 16f, 0, TextAnchor.LowerCenter);
+            _cards.localScale = new Vector3(0.68f, 0.68f, 1f);
+            var h = UIKit.HList(_cards, 16f, 0, TextAnchor.LowerRight);
             h.childControlHeight = false;
             h.childControlWidth = false;
 

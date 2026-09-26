@@ -59,6 +59,43 @@ namespace Vamp.Progression
 
         public event System.Action<string, CosmeticItem> CamoUnlocked; // weapon id, camo
 
+        // ------------------------------------------------------------------ Test accounts
+
+        /// <summary>
+        /// Developer test accounts (local account names): level 100, unlimited ranked coins and every weapon at max level,
+        /// so everything can be tried out. Remove a name here to turn it off.
+        /// </summary>
+        private static readonly string[] TesterNames = { "vampp" };
+        public const int TesterCoins = 9999999;
+
+        public bool IsTester { get; private set; }
+
+        public static bool IsTesterName(string username)
+        {
+            string n = (username ?? "").Trim().ToLowerInvariant();
+            return System.Array.IndexOf(TesterNames, n) >= 0;
+        }
+
+        private void ApplyTesterPerks()
+        {
+            Profile.level = _config.maxLevel;
+            Profile.xp = 0;
+            Profile.ranked_coins = TesterCoins;
+            if (Game.Weapons != null)
+            {
+                int total = 0;
+                for (int l = 1; l < MaxWeaponLevel; l++) total += WeaponXpToNext(l);
+                foreach (var w in Game.Weapons.weapons)
+                {
+                    if (w == null) continue;
+                    IdCount entry = null;
+                    foreach (var c in Profile.weapon_xp) if (c.id == w.id) entry = c;
+                    if (entry == null) { entry = new IdCount { id = w.id }; Profile.weapon_xp.Add(entry); }
+                    entry.count = Mathf.Max(entry.count, total);
+                }
+            }
+        }
+
         // ------------------------------------------------------------------ Weapon levels
 
         public static int WeaponXpToNext(int level) { return 300 + 100 * (level - 1); }
@@ -162,7 +199,7 @@ namespace Vamp.Progression
             if (Profile == null || item == null || item.Source != UnlockSource.Shop) { error = "NOT FOR SALE"; return false; }
             if (Profile.unlocked.Contains(itemId)) { error = "ALREADY OWNED"; return false; }
             if (Profile.ranked_coins < item.Price) { error = "NOT ENOUGH COINS - WIN RANKED MATCHES TO EARN MORE"; return false; }
-            Profile.ranked_coins -= item.Price;
+            if (!IsTester) Profile.ranked_coins -= item.Price; // test accounts: unlimited coins
             Grant(itemId, true);
             RaiseChanged();
             return true;

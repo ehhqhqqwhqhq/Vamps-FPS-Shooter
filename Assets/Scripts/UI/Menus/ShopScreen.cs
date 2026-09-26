@@ -196,6 +196,7 @@ namespace Vamp.UI.Menus
             bool on = index == _category;
             var bg = ShopArt.Sliced(_cats, "Cat_" + CategoryNames[index], on ? "CatButtonOn" : "CatButton", 26f);
             UIKit.Size(bg, 86f);
+            bg.raycastTarget = true; // UIKit images don't catch clicks by default
             var btn = bg.gameObject.AddComponent<Button>();
             btn.targetGraphic = bg;
             var cb = btn.colors;
@@ -232,6 +233,7 @@ namespace Vamp.UI.Menus
             bool equipped = owned && Game.Customization.Equipped(item.Type) == item.Id;
 
             var card = ShopArt.Sliced(_grid, "Card_" + item.Id, "ShopCard", 60f);
+            card.raycastTarget = true; // lets the mouse wheel / drag scroll the grid
 
             // Live preview
             var preview = ShopPreview.Create(item);
@@ -279,6 +281,7 @@ namespace Vamp.UI.Menus
             string label = !owned ? "BUY" : item.Type == CosmeticType.WeaponSkin ? "LOADOUT" : equipped ? "EQUIPPED" : "EQUIP";
             var buyBg = ShopArt.Sliced(card.transform, "Buy", owned ? "OwnedButton" : "BuyButton", 22f);
             ShopArt.Place(buyBg.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-22f, 22f), new Vector2(160f, 58f));
+            buyBg.raycastTarget = true;
             var buy = buyBg.gameObject.AddComponent<Button>();
             buy.targetGraphic = buyBg;
             var bcb = buy.colors;
