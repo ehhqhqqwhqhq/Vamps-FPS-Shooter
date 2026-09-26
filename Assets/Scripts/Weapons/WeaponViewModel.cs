@@ -49,7 +49,13 @@ namespace Vamp.Weapons
         private float _balEquip = 1f;
         // Butterfly knife with animated arms ("FPS Butterfly Knife" by BURNER, CC BY)
         private Animation _arms;
-        private static GameObject _armsPrefab, _handR, _handL;
+        private static GameObject _armsPrefab;
+        // Skinned arms holding every other weapon (IK onto the grip points)
+        private GameObject _gunArmsGo;
+        private FirstPersonArms _gunArms;
+        private Vector3 _rGrip, _lGrip;
+        private Quaternion _rGripRot = Quaternion.identity, _lGripRot = Quaternion.identity;
+        private bool _hasLeft;
         private static bool _loadedArt;
 
         /// <summary>True while the inspect animation plays.</summary>
@@ -91,6 +97,9 @@ namespace Vamp.Weapons
             _model = null;
             _balisong = null;
             _arms = null;
+            if (_gunArmsGo != null) Destroy(_gunArmsGo);
+            _gunArmsGo = null;
+            _gunArms = null;
             _inspectT = -1f;
             _data = d;
             if (d == null) return;
@@ -158,7 +167,8 @@ namespace Vamp.Weapons
             if (_arms == null) camoTarget = root;
             if (camoTarget != null) WeaponCamo.Apply(camoTarget, WeaponCamo.LocalFor(d));
             _melee = d.delivery == DeliveryType.Melee;
-            if (_arms == null && _balisong == null) AttachHands(root.transform, d);
+            if (_arms != null) GloveSkins.Apply(root, GloveSkins.Local);
+            else if (_balisong == null) AttachArms(root.transform, d);
             _stab = 0f;
             _model = root.transform;
             _model.localPosition = _hip;
@@ -286,6 +296,11 @@ namespace Vamp.Weapons
             _model.localRotation = rot;
             bool scoped = weapons.ShowScope;
             if (_model.gameObject.activeSelf == scoped) _model.gameObject.SetActive(!scoped);
+            if (_gunArmsGo != null)
+            {
+                if (_gunArmsGo.activeSelf == scoped) _gunArmsGo.SetActive(!scoped);
+                if (!scoped && _gunArms != null) _gunArms.Solve(_model, _rGrip, _rGripRot, _hasLeft, _lGrip, _lGripRot);
+            }
         }
 
         // ------------------------------------------------------------------ Arms / hands
@@ -295,8 +310,6 @@ namespace Vamp.Weapons
             if (_loadedArt) return;
             _loadedArt = true;
             _armsPrefab = Resources.Load<GameObject>("ButterflyArms");
-            _handR = Resources.Load<GameObject>("Hands/Hand_R");
-            _handL = Resources.Load<GameObject>("Hands/Hand_L");
         }
 
         private void PlayArms(string clip, float fade, float speed)
@@ -327,51 +340,53 @@ namespace Vamp.Weapons
         }
 
         /// <summary>
-        /// Gloved hands on every weapon: right hand round the grip, left hand on the handguard (rifles), cupping the
-        /// right hand (pistols) or off screen (knives). Hand origin = centre of what it grips (see VampArmsBuilder).
+        /// Skinned arms (with the equipped gloves) on every weapon: the right hand grips the pistol grip, the left
+        /// holds the handguard (long guns) or wraps the right hand (pistols). Knives: hammer grip, left hand in guard.
         /// </summary>
-        private void AttachHands(Transform root, WeaponData d)
+        private void AttachArms(Transform root, WeaponData d)
         {
-            if (_handR == null) return;
+            if (_armsPrefab == null) return;
+            _gunArmsGo = Instantiate(_armsPrefab, transform);
+            _gunArmsGo.name = "VM_arms";
+            var knife = FindDeep(_gunArmsGo.transform, "KnifeMesh");
+            if (knife != null) knife.gameObject.SetActive(false);
+            GloveSkins.Apply(_gunArmsGo, GloveSkins.Local);
+            _gunArms = FirstPersonArms.Create(_gunArmsGo);
+            if (!_gunArms.Ready) { Destroy(_gunArmsGo); _gunArmsGo = null; _gunArms = null; return; }
+
             var gripT = root.Find("Grip");
             var muzzleT = root.Find("Muzzle");
             var offT = root.Find("Offhand");
             Vector3 grip = gripT != null ? gripT.localPosition : new Vector3(0f, -0.06f, 0f);
             Vector3 muzzle = muzzleT != null ? muzzleT.localPosition : new Vector3(0f, 0.03f, 0.45f);
-            bool melee = d.delivery == DeliveryType.Melee;
 
-            if (melee)
+            if (d.delivery == DeliveryType.Melee)
             {
-                // Hammer grip round the handle (+Z): index finger by the guard, wrist below.
-                Hand(_handR, root, grip, Quaternion.AngleAxis(180f, new Vector3(0f, 1f, 1f)));
+                // Knuckles up, index finger towards the blade; the left hand stays up in a guard.
+                _rGrip = grip;
+                _rGripRot = Quaternion.LookRotation(Vector3.up, Vector3.forward);
+                _hasLeft = false;
                 return;
             }
-            // Right hand: grip axis up, raked back a little like a real pistol grip.
-            Hand(_handR, root, grip, Quaternion.Euler(14f, 0f, 0f));
-            if (_handL == null) return;
+            // Right: pinky→index along the grip (raked like a real pistol grip), knuckles forward.
+            _rGrip = grip;
+            _rGripRot = Quaternion.Euler(14f, 0f, 0f);
+            _hasLeft = true;
             float length = muzzle.z - grip.z;
             if (length < 0.3f)
             {
-                // Pistol: left hand wraps the right hand from the left side.
-                Hand(_handL, root, grip + new Vector3(-0.004f, -0.012f, 0.012f), Quaternion.LookRotation(Vector3.up, Vector3.right));
+                // Pistol: left hand wraps the right from the left side, palm facing the grip.
+                _lGrip = grip + new Vector3(-0.03f, -0.012f, 0.004f);
+                _lGripRot = Quaternion.Euler(14f, 0f, 0f) * Quaternion.LookRotation(Vector3.up, Vector3.right);
             }
             else
             {
-                // The Offhand point sits under the barrel line; the hand grips the handguard centre a little higher.
-                Vector3 off = offT != null ? offT.localPosition + new Vector3(0f, 0.035f, 0f) : new Vector3(0f, muzzle.y - 0.01f, muzzle.z * 0.5f);
-                off.z = Mathf.Min(off.z, grip.z + 0.36f); // keep it within arm's reach on long rifles
-                Hand(_handL, root, off, Quaternion.identity);
+                // Long gun: palm up under the handguard, index finger forward.
+                Vector3 off = offT != null ? offT.localPosition + new Vector3(0f, 0.01f, 0f) : new Vector3(0f, muzzle.y - 0.03f, muzzle.z * 0.5f);
+                off.z = Mathf.Clamp(off.z, grip.z + 0.16f, grip.z + 0.34f);
+                _lGrip = off;
+                _lGripRot = Quaternion.identity;
             }
-        }
-
-        private static void Hand(GameObject prefab, Transform root, Vector3 pos, Quaternion rot)
-        {
-            var h = Instantiate(prefab, root);
-            h.transform.localPosition = pos;
-            h.transform.localRotation = rot;
-            // The weapon may be scaled; hands keep their real size.
-            var s = root.lossyScale;
-            if (s.x > 0.0001f) h.transform.localScale = new Vector3(1f / s.x, 1f / s.y, 1f / s.z);
         }
 
         // ------------------------------------------------------------------ Inspect animations

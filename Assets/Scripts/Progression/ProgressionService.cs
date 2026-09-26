@@ -73,6 +73,7 @@ namespace Vamp.Progression
             if (Profile.loadout.weaponSkins == null) Profile.loadout.weaponSkins = new List<IdPair>();
             if (Profile.weapon_xp == null) Profile.weapon_xp = new List<IdCount>();
             if (string.IsNullOrEmpty(Profile.weapon_trail)) Profile.weapon_trail = "trail_none";
+            if (string.IsNullOrEmpty(Profile.gloves)) Profile.gloves = "glove_tactical";
             // Camos are earned per weapon now: drop any equipped camo that weapon hasn't unlocked yet.
             foreach (var pair in Profile.loadout.weaponSkins)
                 if (!IsCamoUnlocked(pair.key, pair.value)) pair.value = "skin_default";
@@ -101,6 +102,7 @@ namespace Vamp.Progression
             Profile.title = OwnedOr(Profile.title, "title_rookie");
             Profile.kill_effect = OwnedOr(Profile.kill_effect, "kfx_none");
             Profile.weapon_trail = OwnedOr(Profile.weapon_trail, "trail_none");
+            Profile.gloves = OwnedOr(Profile.gloves, "glove_tactical");
             if (Profile.title_auto) Profile.title = CosmeticCatalog.TierTitleId(Profile.level);
         }
 

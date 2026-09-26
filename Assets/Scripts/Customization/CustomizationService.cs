@@ -37,6 +37,7 @@ namespace Vamp.Customization
                 case CosmeticType.UITheme: return P.ui_theme;
                 case CosmeticType.KillFeedStyle: return P.killfeed_style;
                 case CosmeticType.WeaponTrail: return P.weapon_trail;
+                case CosmeticType.Gloves: return P.gloves;
                 default: return null;
             }
         }
@@ -59,6 +60,7 @@ namespace Vamp.Customization
                 case CosmeticType.UITheme: P.ui_theme = itemId; break;
                 case CosmeticType.KillFeedStyle: P.killfeed_style = itemId; break;
                 case CosmeticType.WeaponTrail: P.weapon_trail = itemId; break;
+                case CosmeticType.Gloves: P.gloves = itemId; break;
                 default: return false; // weapon skins go through SetWeaponSkin
             }
             Commit();

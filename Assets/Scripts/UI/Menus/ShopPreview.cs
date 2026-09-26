@@ -61,6 +61,24 @@ namespace Vamp.UI.Menus
             AddLight(new Vector3(-1.2f, 1.2f, -1.6f), new Color(1f, 0.95f, 0.9f), 2.2f, 6f);
             AddLight(new Vector3(1.4f, 0.4f, 1.2f), new Color(1f, 0.1f, 0.15f), 4f, 6f);
 
+            if (item.Type == CosmeticType.Gloves)
+            {
+                // The butterfly-knife arms idling with these gloves on.
+                var armsPrefab = Resources.Load<GameObject>("ButterflyArms");
+                if (armsPrefab != null)
+                {
+                    var arms = Instantiate(armsPrefab, transform);
+                    arms.transform.localPosition = Vector3.zero;
+                    GloveSkins.Apply(arms, item.Id);
+                    var anim = arms.GetComponentInChildren<Animation>();
+                    if (anim != null && anim["Idle"] != null) anim.Play("Idle");
+                }
+                camGo.transform.localPosition = new Vector3(0.0f, -0.04f, -0.16f);
+                camGo.transform.LookAt(transform.position + new Vector3(0.13f, -0.02f, 0.3f));
+                _cam.fieldOfView = 26f;
+                _cam.nearClipPlane = 0.02f;
+                return;
+            }
             if (item.Type == CosmeticType.KillEffect)
             {
                 camGo.transform.localPosition = new Vector3(0f, 0.1f, -6.2f);

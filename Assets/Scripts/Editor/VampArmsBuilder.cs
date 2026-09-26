@@ -30,7 +30,6 @@ namespace Vamp.EditorTools
         {
             B.EnsureFolder("Assets/Resources");
             B.EnsureFolder("Assets/Resources/Hands");
-            BuildHands();
             BuildButterflyArms();
         }
 
@@ -303,8 +302,31 @@ namespace Vamp.EditorTools
                 else AssetDatabase.CreateAsset(clip, clipPath);
                 result.Add(clip);
             }
+            // GunPose: right hand from a tight fist (frame 330), left side from the two-handed stance (frame 700).
+            {
+                var clip = new AnimationClip { name = "GunPose", legacy = true, frameRate = fps, wrapMode = WrapMode.ClampForever };
+                for (int i = 0; i < count; i++)
+                {
+                    if (bones[i] == null) continue;
+                    bool leftSide = names[i].Contains("Left") || names[i].EndsWith("_l") || names[i].Contains(".l");
+                    int f = Mathf.Min(leftSide ? 700 : 330, frames - 1);
+                    var k = data[i, f];
+                    string path = AnimationUtility.CalculateTransformPath(bones[i], rig);
+                    Vector3 pp = Vector3.Scale(bestSign, k.T) * bestK;
+                    Quaternion q = ConvRot(k.R, bestSign, det);
+                    Set(clip, path, "localPosition.x", Two(pp.x)); Set(clip, path, "localPosition.y", Two(pp.y)); Set(clip, path, "localPosition.z", Two(pp.z));
+                    Set(clip, path, "localRotation.x", Two(q.x)); Set(clip, path, "localRotation.y", Two(q.y)); Set(clip, path, "localRotation.z", Two(q.z)); Set(clip, path, "localRotation.w", Two(q.w));
+                }
+                string clipPath = clipDir + "/GunPose.anim";
+                var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+                if (existing != null) { EditorUtility.CopySerialized(clip, existing); clip = existing; EditorUtility.SetDirty(existing); }
+                else AssetDatabase.CreateAsset(clip, clipPath);
+                result.Add(clip);
+            }
             return result;
         }
+
+        private static Keyframe[] Two(float v) { return new[] { new Keyframe(0f, v), new Keyframe(0.04f, v) }; }
 
         private static Key10 ReadKey(System.IO.BinaryReader br)
         {

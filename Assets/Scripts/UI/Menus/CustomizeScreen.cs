@@ -15,9 +15,9 @@ namespace Vamp.UI.Menus
         private static readonly CosmeticType[] Types =
         {
             CosmeticType.Icon, CosmeticType.Frame, CosmeticType.Banner, CosmeticType.Title, CosmeticType.KillEffect,
-            CosmeticType.WeaponTrail, CosmeticType.Emote, CosmeticType.CrosshairStyle, CosmeticType.CharacterSkin
+            CosmeticType.WeaponTrail, CosmeticType.Gloves, CosmeticType.Emote, CosmeticType.CrosshairStyle, CosmeticType.CharacterSkin
         };
-        private static readonly string[] TypeNames = { "ICONS", "FRAMES", "BANNERS", "TITLES", "KILL FX", "TRACERS", "EMOTES", "CROSSHAIR", "CHARACTER" };
+        private static readonly string[] TypeNames = { "ICONS", "FRAMES", "BANNERS", "TITLES", "KILL FX", "TRACERS", "GLOVES", "EMOTES", "CROSSHAIR", "CHARACTER" };
         private static readonly string[] Filters = { "ALL", "OWNED", "LOCKED", "LEVEL REWARDS", "PRESTIGE", "CHALLENGES", "EVENTS" };
 
         private int _type;
@@ -29,7 +29,7 @@ namespace Vamp.UI.Menus
         private string _focused;          // kill fx / tracers: the item being previewed
         private ShopPreview _live;
 
-        private static bool HasLivePreview(CosmeticType t) { return t == CosmeticType.KillEffect || t == CosmeticType.WeaponTrail; }
+        private static bool HasLivePreview(CosmeticType t) { return t == CosmeticType.KillEffect || t == CosmeticType.WeaponTrail || t == CosmeticType.Gloves; }
 
         protected override void OnBuild(RectTransform root)
         {

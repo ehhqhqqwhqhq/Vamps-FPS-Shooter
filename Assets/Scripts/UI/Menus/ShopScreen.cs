@@ -52,8 +52,8 @@ namespace Vamp.UI.Menus
     /// </summary>
     public sealed class ShopScreen : MenuScreen
     {
-        private static readonly string[] CategoryNames = { "ALL", "TRACERS", "GUN SKINS", "KILL FX" };
-        private static readonly string[] CategoryIcons = { "IconAll", "IconTrail", "IconGun", "IconSkull" };
+        private static readonly string[] CategoryNames = { "ALL", "TRACERS", "GUN SKINS", "KILL FX", "GLOVES" };
+        private static readonly string[] CategoryIcons = { "IconAll", "IconTrail", "IconGun", "IconSkull", "IconGlove" };
 
         private int _category;
         private RectTransform _grid;
@@ -182,6 +182,7 @@ namespace Vamp.UI.Menus
                 case 1: return item.Type == CosmeticType.WeaponTrail;
                 case 2: return item.Type == CosmeticType.WeaponSkin;
                 case 3: return item.Type == CosmeticType.KillEffect;
+                case 4: return item.Type == CosmeticType.Gloves;
                 default: return true;
             }
         }
@@ -208,7 +209,7 @@ namespace Vamp.UI.Menus
 
         private static int Order(CosmeticType t)
         {
-            return t == CosmeticType.WeaponTrail ? 0 : t == CosmeticType.WeaponSkin ? 1 : 2;
+            return t == CosmeticType.WeaponTrail ? 0 : t == CosmeticType.WeaponSkin ? 1 : t == CosmeticType.KillEffect ? 2 : 3;
         }
 
         private void CategoryButton(int index)
@@ -238,12 +239,12 @@ namespace Vamp.UI.Menus
 
         private static string TypeLabel(CosmeticType t)
         {
-            return t == CosmeticType.WeaponTrail ? "TRACERS" : t == CosmeticType.WeaponSkin ? "GUN SKINS" : "KILL FX";
+            return t == CosmeticType.WeaponTrail ? "TRACERS" : t == CosmeticType.WeaponSkin ? "GUN SKINS" : t == CosmeticType.Gloves ? "GLOVES" : "KILL FX";
         }
 
         private static string TypeIcon(CosmeticType t)
         {
-            return t == CosmeticType.WeaponTrail ? "IconTrail" : t == CosmeticType.WeaponSkin ? "IconGun" : "IconSkull";
+            return t == CosmeticType.WeaponTrail ? "IconTrail" : t == CosmeticType.WeaponSkin ? "IconGun" : t == CosmeticType.Gloves ? "IconGlove" : "IconSkull";
         }
 
         private void Card(CosmeticItem item)

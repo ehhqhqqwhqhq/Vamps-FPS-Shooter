@@ -6,7 +6,7 @@ namespace Vamp.Progression
     public enum CosmeticType
     {
         Icon, Frame, Banner, Title, KillEffect, Emote, CrosshairStyle, WeaponSkin, CharacterSkin, ProfileBackground, UITheme, KillFeedStyle,
-        WeaponTrail
+        WeaponTrail, Gloves
     }
 
     /// <summary>WeaponLevel = camo unlocked per weapon at that weapon's level. Shop = bought with ranked coins.</summary>
@@ -296,6 +296,21 @@ namespace Vamp.Progression
             Shop("kfx_phoenix", "PHOENIX", CosmeticType.KillEffect, 4450, new Color(1f, 0.45f, 0.05f), "A COLUMN OF FIRE RISES FROM THE ASHES.");
             Shop("kfx_ghost", "GHOST", CosmeticType.KillEffect, 2450, new Color(0.9f, 0.95f, 1f), "PALE SPIRITS DRIFT UP AND FADE AWAY.");
 
+
+            // Gloves (first-person hands)
+            Simple("glove_tactical", "TACTICAL", CosmeticType.Gloves, UnlockSource.Default, 1, new Color(0.1f, 0.1f, 0.11f));
+            Simple("glove_none", "BARE HANDS", CosmeticType.Gloves, UnlockSource.Default, 1, new Color(0.85f, 0.65f, 0.55f));
+            Shop("glove_fingerless", "FINGERLESS", CosmeticType.Gloves, 950, new Color(0.12f, 0.12f, 0.13f), "CUT-OFF TACTICAL GLOVES. BETTER TRIGGER FEEL, OR SO THEY SAY.");
+            Shop("glove_desert", "DESERT OPS", CosmeticType.Gloves, 950, new Color(0.62f, 0.5f, 0.34f), "SAND-TAN FIELD GLOVES.");
+            Shop("glove_crimson", "CRIMSON LEATHER", CosmeticType.Gloves, 1450, new Color(0.55f, 0.04f, 0.06f), "BLOOD-RED LEATHER. VERY VAMP.");
+            Shop("glove_arctic", "ARCTIC", CosmeticType.Gloves, 1450, new Color(0.85f, 0.87f, 0.9f), "CLEAN WHITE COLD-WEATHER GLOVES.");
+            Shop("glove_woodland", "WOODLAND CAMO", CosmeticType.Gloves, 1950, new Color(0.3f, 0.33f, 0.2f), "CLASSIC GREEN AND BROWN CAMO.");
+            Shop("glove_urban", "URBAN CAMO", CosmeticType.Gloves, 1950, new Color(0.55f, 0.56f, 0.58f), "GREY CITY CAMO.");
+            Shop("glove_toxic", "TOXIC", CosmeticType.Gloves, 1950, new Color(0.25f, 0.9f, 0.1f), "RADIOACTIVE GREEN SPLATTER.");
+            Shop("glove_carbon", "CARBON FIBER", CosmeticType.Gloves, 2450, new Color(0.2f, 0.2f, 0.22f), "WOVEN CARBON WEAVE.");
+            Shop("glove_vamp", "VAMP CIRCUIT", CosmeticType.Gloves, 2950, new Color(0.9f, 0.05f, 0.1f), "BLACK GLOVES LACED WITH RED CIRCUIT LINES.");
+            Shop("glove_void", "VOID", CosmeticType.Gloves, 2950, new Color(0.4f, 0.08f, 0.75f), "SWIRLING PURPLE NEBULA.");
+            Shop("glove_gold", "GOLD PLATED", CosmeticType.Gloves, 3950, new Color(1f, 0.78f, 0.25f), "SOLID GOLD. SUBTLE.");
 
             Simple("char_default", "OPERATIVE", CosmeticType.CharacterSkin, UnlockSource.Default, 1, Steel);
             Simple("char_night", "NIGHT OPS", CosmeticType.CharacterSkin, UnlockSource.Level, 21, Dark);

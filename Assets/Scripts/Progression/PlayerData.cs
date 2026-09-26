@@ -74,6 +74,8 @@ namespace Vamp.Progression
 
         /// <summary>Equipped bullet trail (cosmetic).</summary>
         public string weapon_trail = "trail_none";
+        /// <summary>Equipped first-person gloves (cosmetic).</summary>
+        public string gloves = "glove_tactical";
         /// <summary>Weapon id → total weapon XP (weapon levels unlock camos for that weapon).</summary>
         public List<IdCount> weapon_xp = new List<IdCount>();
 
