@@ -42,6 +42,9 @@ namespace Vamp.Bots
         public static List<Vector3> RoamPoints = new List<Vector3>();
         public static bool Active = true;
 
+        /// <summary>origin, end of the first pellet, weapon - lets the online host replay bot shots on clients.</summary>
+        public event System.Action<Vector3, Vector3, WeaponData> ShotFired;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() { All = new List<Participant>(); RoamPoints = new List<Vector3>(); Active = true; }
 
@@ -108,7 +111,8 @@ namespace Vamp.Bots
         {
             Participant best = null;
             float bestD = float.MaxValue;
-            foreach (var p in All)
+            // Players AND bots (the old list only held bots, so offline bots never went after the player).
+            foreach (var p in Participant.Active)
             {
                 if (p == null || p == _self || !p.Alive || !_self.IsEnemyOf(p)) continue;
                 float d = Vector3.Distance(transform.position, p.transform.position);
@@ -227,9 +231,11 @@ namespace Vamp.Bots
                 if (!RaycastSkipSelf(origin, d, range, out hit))
                 {
                     if (i == 0 && Weapon.showTracers) SimpleVfx.TracerLine(origin + d * 0.5f, origin + d * range, Weapon.tracerColor, 0.02f);
+                    if (i == 0) hitPoint = origin + d * range;
                     continue;
                 }
                 if (i == 0 && Weapon.showTracers) SimpleVfx.TracerLine(origin + d * 0.5f, hit.point, Weapon.tracerColor, 0.02f);
+                if (i == 0) hitPoint = hit.point;
                 var hb = hit.collider.GetComponent<Hitbox>();
                 var dmg = hb != null ? hb.Owner : hit.collider.GetComponentInParent<IDamageable>();
                 if (dmg == null || !dmg.IsAlive || dmg.Owner == gameObject) { SimpleVfx.Impact(hit.point, new Color(1f, 0.85f, 0.6f), 0.1f); continue; }
@@ -241,6 +247,7 @@ namespace Vamp.Bots
                 hitPoint = hit.point;
             }
 
+            if (ShotFired != null) ShotFired(origin, hitPoint, Weapon);
             SimpleVfx.MuzzleFlash(origin + dir * 0.6f, 0.2f);
             AudioController.Play(WeaponController.SoundFor(Weapon), origin, 0.8f, Random.Range(0.95f, 1.05f));
 

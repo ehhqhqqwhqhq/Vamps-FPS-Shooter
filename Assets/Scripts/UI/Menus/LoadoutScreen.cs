@@ -19,7 +19,7 @@ namespace Vamp.UI.Menus
 
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "LOADOUT", "ANY GUN CAN BE YOUR PRIMARY OR SECONDARY · NOTHING IS LOCKED · CAMOS ARE COSMETIC", 1100f);
+            var col = Page(root, "LOADOUT", "ANY GUN CAN BE YOUR PRIMARY OR SECONDARY · NOTHING IS LOCKED · LEVEL A WEAPON TO UNLOCK ITS CAMOS", 1100f);
             _tabs = UIKit.Tabs(col, SlotNames, 0, i => { _slot = i; Refresh(); });
             var body = UIKit.Row(col, 520f, 24f, "Body");
             ScrollRect scroll;
@@ -75,25 +75,45 @@ namespace Vamp.UI.Menus
             Stat("MAGAZINE", w.magazineSize, 40f, w.usesHeat ? "HEAT" : w.magazineSize.ToString());
             Stat("HEADSHOT", w.headshotMultiplier, 3f, "×" + w.headshotMultiplier.ToString("0.0#"));
 
-            UIKit.Spacer(_details, 8f);
+            // Weapon level (kills on real players in quick match / ranked) → camo unlocks for this weapon.
+            var prog = Game.Progression;
+            int wlvl = prog.WeaponLevel(w.id), into, needed;
+            prog.WeaponLevelProgress(w.id, out into, out needed);
+            UIKit.Spacer(_details, 6f);
+            var lvlRow = UIKit.Row(_details, 26f, 12f);
+            var lvlLabel = UIKit.Label(lvlRow, "WEAPON LEVEL " + wlvl + (wlvl >= ProgressionService.MaxWeaponLevel ? "  ·  MAX" : ""), 16, UIKit.Text);
+            UIKit.Size(lvlLabel, -1, 230f);
+            var lvlBg = UIKit.Image(lvlRow, "Bar", new Color(1f, 1f, 1f, 0.1f));
+            UIKit.Size(lvlBg, 6f, -1, 1f);
+            var lvlFill = UIKit.Image(lvlBg.transform, "Fill", UIKit.Red);
+            lvlFill.rectTransform.anchorMin = Vector2.zero;
+            lvlFill.rectTransform.anchorMax = new Vector2(needed > 0 ? Mathf.Clamp01(into / (float)needed) : 1f, 1f);
+            lvlFill.rectTransform.offsetMin = lvlFill.rectTransform.offsetMax = Vector2.zero;
+            var lvlXp = UIKit.Label(lvlRow, needed > 0 ? into + " / " + needed + " XP" : "", 13, UIKit.TextDim, TextAnchor.MiddleRight);
+            UIKit.Size(lvlXp, -1, 120f);
+            UIKit.Caption(_details, "EARN WEAPON XP BY KILLING REAL PLAYERS IN QUICK MATCH AND RANKED (BOTS DON'T COUNT)", 11);
+
+            UIKit.Spacer(_details, 4f);
             UIKit.Caption(_details, "CAMO (COSMETIC)", 14);
             var skins = CosmeticCatalog.OfType(CosmeticType.WeaponSkin);
             var names = new List<string>();
             int idx = 0;
-            string current = Game.Progression.Profile.loadout.SkinFor(w.id);
+            string current = prog.Profile.loadout.SkinFor(w.id);
             for (int i = 0; i < skins.Count; i++)
             {
-                bool owned = Game.Progression.IsUnlocked(skins[i].Id);
-                names.Add(skins[i].Name + (owned ? "" : "  (LV " + skins[i].UnlockLevel + ")"));
+                bool owned = prog.IsCamoUnlocked(w.id, skins[i].Id);
+                string lockText = skins[i].Source == UnlockSource.Shop ? "  (RANKED SHOP)" : "  (WEAPON LV " + skins[i].UnlockLevel + ")";
+                names.Add(skins[i].Name + (owned ? "" : lockText));
                 if (skins[i].Id == current) idx = i;
             }
             string weaponId = w.id;
+            _swatchWeapon = w.id;
             RawImage swatch = null;
             UIKit.Selector(_details, "CAMO", names, idx, i =>
             {
                 if (!Game.Customization.SetWeaponSkin(weaponId, skins[i].Id))
                     Toast("LOCKED", skins[i].UnlockText, true);
-                else ShowSwatch(swatch, skins[i]);
+                ShowSwatch(swatch, skins[i]);
             });
             var sw = new GameObject("CamoSwatch", typeof(RectTransform), typeof(RawImage));
             sw.transform.SetParent(_details, false);
@@ -102,6 +122,8 @@ namespace Vamp.UI.Menus
             ShowSwatch(swatch, skins[idx]);
         }
 
+        private static string _swatchWeapon;
+
         private static void ShowSwatch(RawImage img, CosmeticItem skin)
         {
             if (img == null || skin == null) return;
@@ -109,6 +131,8 @@ namespace Vamp.UI.Menus
             img.texture = tex;
             img.uvRect = new Rect(0f, 0f, 1f, 0.12f);
             img.color = tex != null ? Color.white : (skin.Id == "skin_default" ? new Color(0.16f, 0.16f, 0.17f) : skin.Color);
+            if (Game.Progression != null && _swatchWeapon != null && !Game.Progression.IsCamoUnlocked(_swatchWeapon, skin.Id))
+                img.color = new Color(img.color.r * 0.35f, img.color.g * 0.35f, img.color.b * 0.35f, 1f); // locked: dimmed preview
         }
 
         private void Stat(string label, float value, float max, string text)

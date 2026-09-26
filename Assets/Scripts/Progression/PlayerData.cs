@@ -71,6 +71,19 @@ namespace Vamp.Progression
         public List<string> unlocked = new List<string>();
         public List<string> seen_unlocks = new List<string>();
         public LoadoutData loadout = new LoadoutData();
+
+        /// <summary>Equipped bullet trail (cosmetic).</summary>
+        public string weapon_trail = "trail_none";
+        /// <summary>Weapon id → total weapon XP (weapon levels unlock camos for that weapon).</summary>
+        public List<IdCount> weapon_xp = new List<IdCount>();
+
+        // ---- Ranked (online)
+        public int rank_points = 0;
+        public int ranked_coins = 0;
+        public int ranked_wins = 0;
+        public int ranked_losses = 0;
+        public int ranked_matches = 0;
+        public int best_rank_points = 0;
     }
 
     /// <summary>Spec `player_stats` plus movement statistics and per-weapon / per-map breakdowns.</summary>

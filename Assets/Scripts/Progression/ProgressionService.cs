@@ -12,7 +12,7 @@ namespace Vamp.Progression
     /// levels or unlocks themselves - they only display what the server returns. Even offline, every match report
     /// goes through <see cref="Sanitize"/> so obviously invalid values can't be banked.
     /// </summary>
-    public sealed class ProgressionService
+    public sealed partial class ProgressionService
     {
         private readonly ProgressionConfig _config;
         private string _accountId;
@@ -70,6 +70,13 @@ namespace Vamp.Progression
             if (Profile.seen_unlocks == null) Profile.seen_unlocks = new List<string>();
             if (Profile.loadout == null) Profile.loadout = new LoadoutData();
             if (Profile.loadout.weaponSkins == null) Profile.loadout.weaponSkins = new List<IdPair>();
+            if (Profile.weapon_xp == null) Profile.weapon_xp = new List<IdCount>();
+            if (string.IsNullOrEmpty(Profile.weapon_trail)) Profile.weapon_trail = "trail_none";
+            // Camos are earned per weapon now: drop any equipped camo that weapon hasn't unlocked yet.
+            foreach (var pair in Profile.loadout.weaponSkins)
+                if (!IsCamoUnlocked(pair.key, pair.value)) pair.value = "skin_default";
+            Profile.rank_points = Mathf.Max(0, Profile.rank_points);
+            Profile.ranked_coins = Mathf.Max(0, Profile.ranked_coins);
             if (Stats.weapon_kills == null) Stats.weapon_kills = new List<IdCount>();
             if (Stats.map_plays == null) Stats.map_plays = new List<IdCount>();
             if (Stats.milestones == null) Stats.milestones = new List<string>();
@@ -90,6 +97,8 @@ namespace Vamp.Progression
             Profile.icon_frame = OwnedOr(Profile.icon_frame, "frame_basic");
             Profile.banner = OwnedOr(Profile.banner, "banner_default");
             Profile.title = OwnedOr(Profile.title, "title_rookie");
+            Profile.kill_effect = OwnedOr(Profile.kill_effect, "kfx_none");
+            Profile.weapon_trail = OwnedOr(Profile.weapon_trail, "trail_none");
             if (Profile.title_auto) Profile.title = CosmeticCatalog.TierTitleId(Profile.level);
         }
 

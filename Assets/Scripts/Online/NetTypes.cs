@@ -17,6 +17,9 @@ namespace Vamp.Online
         public bool Ready;
         public int Kills;
         public int Deaths;
+        public bool Bot;
+        public bool Matched;
+        public int HumanKills;
 
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
@@ -27,12 +30,15 @@ namespace Vamp.Online
             s.SerializeValue(ref Ready);
             s.SerializeValue(ref Kills);
             s.SerializeValue(ref Deaths);
+            s.SerializeValue(ref Bot);
+            s.SerializeValue(ref Matched);
+            s.SerializeValue(ref HumanKills);
         }
 
         public bool Equals(NetMember o)
         {
             return ClientId == o.ClientId && Name.Equals(o.Name) && Level == o.Level && Team == o.Team && Ready == o.Ready
-                   && Kills == o.Kills && Deaths == o.Deaths;
+                   && Kills == o.Kills && Deaths == o.Deaths && Bot == o.Bot && Matched == o.Matched && HumanKills == o.HumanKills;
         }
     }
 
@@ -46,6 +52,8 @@ namespace Vamp.Online
         public byte Flags;     // 1 grounded, 2 sliding, 4 wall running, 8 wall on right, 16 crouched
         public sbyte Weapon;   // index into the weapon catalog (-1 none)
         public byte Camo;      // WeaponCamo index of the held weapon (0 default)
+        public byte Fx;        // kill effect index (Cosmetics.KillFxIndex)
+        public byte Trail;     // bullet trail index (Cosmetics.TrailIndex)
 
         public const byte Grounded = 1, Sliding = 2, WallRunning = 4, WallRight = 8, Crouched = 16;
 
@@ -58,11 +66,13 @@ namespace Vamp.Online
             s.SerializeValue(ref Flags);
             s.SerializeValue(ref Weapon);
             s.SerializeValue(ref Camo);
+            s.SerializeValue(ref Fx);
+            s.SerializeValue(ref Trail);
         }
 
         public bool Equals(NetMotion o)
         {
-            return Position == o.Position && Velocity == o.Velocity && Yaw == o.Yaw && Pitch == o.Pitch && Flags == o.Flags && Weapon == o.Weapon && Camo == o.Camo;
+            return Position == o.Position && Velocity == o.Velocity && Yaw == o.Yaw && Pitch == o.Pitch && Flags == o.Flags && Weapon == o.Weapon && Camo == o.Camo && Fx == o.Fx && Trail == o.Trail;
         }
     }
 }

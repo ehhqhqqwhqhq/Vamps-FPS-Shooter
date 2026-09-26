@@ -85,6 +85,11 @@ namespace Vamp.Weapons
         public int Magazine { get { return HasCurrent ? _states[_current].Mag : 0; } }
         public int Reserve { get { return HasCurrent ? _states[_current].Reserve : 0; } }
         public bool InfiniteReserve { get { return infiniteReserve; } }
+
+        /// <summary>Online proxies of other players: their equipped bullet trail (set by NetPlayer).</summary>
+        public bool IsProxy { get; set; }
+        public string ProxyTrail { get; set; }
+        private string TrailId { get { return IsProxy ? ProxyTrail : CosmeticFx.LocalTrail; } }
         public bool IsReloading { get { return _reloading; } }
         public float ReloadProgress
         {
@@ -312,7 +317,7 @@ namespace Vamp.Weapons
                 }
                 else end = origin + dir * d.range;
 
-                if (d.showTracers) SimpleVfx.TracerLine(muzzlePos, end, d.tracerColor, pellets > 1 ? 0.015f : 0.025f);
+                if (d.showTracers) CosmeticFx.Tracer(muzzlePos, end, d, TrailId, pellets);
             }
 
             // One damage event per target per shot (all pellets combined) = one clean hit marker.
@@ -425,7 +430,7 @@ namespace Vamp.Weapons
                     Vector3 dir = SpreadDirection(forward, d.hipSpread, p, pellets, d.fixedPelletPattern);
                     RaycastHit hit;
                     Vector3 end = RaycastIgnoringSelf(origin, dir, d.range, out hit) ? hit.point : origin + dir * d.range;
-                    if (d.showTracers) SimpleVfx.TracerLine(muzzlePos, end, d.tracerColor, pellets > 1 ? 0.015f : 0.025f);
+                    if (d.showTracers) CosmeticFx.Tracer(muzzlePos, end, d, TrailId, pellets);
                     if (hit.collider != null) SimpleVfx.Impact(hit.point, new Color(1f, 0.85f, 0.6f, 1f), 0.1f);
                 }
             }

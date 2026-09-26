@@ -41,6 +41,15 @@ namespace Vamp.Match
 
         private readonly Dictionary<Participant, float> _damagers = new Dictionary<Participant, float>();
 
+        /// <summary>Every active participant (players AND bots) - what bots pick their targets from.</summary>
+        public static readonly List<Participant> Active = new List<Participant>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() { Active.Clear(); }
+
+        private void OnEnable() { if (!Active.Contains(this)) Active.Add(this); }
+        private void OnDisable() { Active.Remove(this); }
+
         private void Awake()
         {
             Health = GetComponent<HealthController>();

@@ -9,6 +9,7 @@ using Vamp.Movement;
 using Vamp.Player;
 using Vamp.Progression;
 using Vamp.UI;
+using Vamp.VFX;
 using Vamp.Weapons;
 
 namespace Vamp.Online
@@ -84,6 +85,15 @@ namespace Vamp.Online
             gameObject.name = (IsOwner ? "NetPlayer (You) " : "NetPlayer ") + name;
             _yaw = transform.eulerAngles.y;
 
+            // Participant: lets the host's bots find this player as a target.
+            var part = GetComponent<Participant>();
+            if (part == null) part = gameObject.AddComponent<Participant>();
+            part.IsBot = false;
+            part.IsLocalPlayer = IsOwner;
+            part.DisplayName = name;
+            part.Team = session != null && session.Config.IsTeamMode ? session.TeamOf(OwnerClientId) : -1;
+            if (identity != null) identity.DisplayName = name;
+
             if (IsOwner) SetupOwner(session);
             else SetupProxy(session);
 
@@ -129,6 +139,7 @@ namespace Vamp.Online
 
         private void SetupProxy(NetSession session)
         {
+            Weapons.IsProxy = true;
             _pc.enabled = false;
             _pc.Input.enabled = false;
             _pc.View.enabled = false;
@@ -212,13 +223,19 @@ namespace Vamp.Online
                 Pitch = _pc.View.Pitch,
                 Flags = flags,
                 Weapon = (sbyte)WeaponIndex(Weapons.Current),
-                Camo = Vamp.Weapons.WeaponCamo.ToIndex(Vamp.Weapons.WeaponCamo.LocalFor(Weapons.Current))
+                Camo = Vamp.Weapons.WeaponCamo.ToIndex(Vamp.Weapons.WeaponCamo.LocalFor(Weapons.Current)),
+                Fx = CosmeticFx.ToIndex(CosmeticType.KillEffect, CosmeticFx.LocalKillFx),
+                Trail = CosmeticFx.ToIndex(CosmeticType.WeaponTrail, CosmeticFx.LocalTrail)
             };
         }
+
+        /// <summary>This player's equipped kill effect (replicated).</summary>
+        public string KillFx { get { return IsOwner ? CosmeticFx.LocalKillFx : CosmeticFx.FromIndex(CosmeticType.KillEffect, _motion.Value.Fx); } }
 
         private void UpdateProxy(float dt)
         {
             var m = _motion.Value;
+            Weapons.ProxyTrail = CosmeticFx.FromIndex(CosmeticType.WeaponTrail, m.Trail);
             if (m.Position == Vector3.zero && m.Velocity == Vector3.zero) return; // nothing received yet
             Vector3 target = m.Position + m.Velocity * 0.05f;
             if (_snapNext || (transform.position - target).sqrMagnitude > 25f)
@@ -288,21 +305,38 @@ namespace Vamp.Online
         /// <summary>Installed as HealthController.Intercept while online.</summary>
         public static bool InterceptDamage(HealthController target, DamageInfo info)
         {
-            var victim = target.GetComponent<NetPlayer>();
-            if (victim == null || !victim.IsSpawned) return false;         // not a networked player: normal rules
+            var victimPlayer = target.GetComponent<NetPlayer>();
+            var victimBot = victimPlayer == null ? target.GetComponent<NetBot>() : null;
+            if ((victimPlayer == null || !victimPlayer.IsSpawned) && (victimBot == null || !victimBot.IsSpawned)) return false; // not networked
+
+            // Bots only run on the host: their shots are applied there directly.
+            var botShooter = info.Instigator != null ? info.Instigator.GetComponent<NetBot>() : null;
+            if (botShooter != null)
+            {
+                if (botShooter.IsServer && NetSession.Instance != null && NetSession.Instance.State == NetState.InMatch)
+                {
+                    var session = NetSession.Instance;
+                    if (session.Config.IsTeamMode && !session.Config.friendlyFire &&
+                        session.TeamOf(botShooter.MemberId) == session.TeamOf(victimPlayer != null ? victimPlayer.OwnerClientId : victimBot.MemberId)) return true;
+                    int w = WeaponIndex(Game.Weapons != null ? Game.Weapons.Get(info.WeaponId) : null);
+                    if (victimPlayer != null) victimPlayer.ServerTakeHit(info, botShooter.MemberId, botShooter.NetworkObjectId, w, false, session);
+                    else victimBot.ServerTakeHit(info, botShooter.MemberId, botShooter.NetworkObjectId, w, session);
+                }
+                return true;
+            }
+
             var me = LocalPlayer;
             if (me == null) return true;
             bool mine = info.Instigator != null && info.Instigator == me.gameObject;
-            bool world = info.Instigator == null && victim == me;          // kill plane etc. on my own player
-            if (mine || world) me.ClaimHit(victim, info, world);
+            bool world = info.Instigator == null && victimPlayer == me;      // kill plane etc. on my own player
+            if (mine || world)
+            {
+                var d = Game.Weapons != null ? Game.Weapons.Get(info.WeaponId) : null;
+                ulong victimId = victimPlayer != null ? victimPlayer.NetworkObjectId : victimBot.NetworkObjectId;
+                me.HitToHostRpc(victimId, info.Amount, (byte)info.Type, info.IsHeadshot, info.Point, info.Direction,
+                                info.Distance, WeaponIndex(d), world);
+            }
             return true;                                                   // host applies + replicates
-        }
-
-        private void ClaimHit(NetPlayer victim, DamageInfo info, bool world)
-        {
-            var d = Game.Weapons != null ? Game.Weapons.Get(info.WeaponId) : null;
-            HitToHostRpc(victim.NetworkObjectId, info.Amount, (byte)info.Type, info.IsHeadshot, info.Point, info.Direction,
-                         info.Distance, WeaponIndex(d), world);
         }
 
         [Rpc(SendTo.Server)]
@@ -313,11 +347,15 @@ namespace Vamp.Online
             NetworkObject no;
             if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(victimId, out no)) return;
             var victim = no.GetComponent<NetPlayer>();
-            if (victim == null || !victim.Health.IsAlive) return;
+            var bot = victim == null ? no.GetComponent<NetBot>() : null;
+            if (victim == null && bot == null) return;
+            var vHealth = victim != null ? victim.Health : bot.Health;
+            if (vHealth == null || !vHealth.IsAlive) return;
             bool self = victim == this;
             if (world && !self) return;
+            ulong victimMember = victim != null ? victim.OwnerClientId : bot.MemberId;
 
-            // ---- Validation (light anti-cheat for friendly custom games)
+            // ---- Validation (light anti-cheat)
             var d = WeaponByIndex(weapon);
             if (!world)
             {
@@ -326,9 +364,9 @@ namespace Vamp.Online
                                       d.explosionDamage, d.damage * Mathf.Max(1f, d.backstabMultiplier)) * 1.25f + 1f;
                 amount = Mathf.Clamp(amount, 0f, cap);
                 float reach = d.delivery == DeliveryType.Projectile ? 400f : d.delivery == DeliveryType.Melee ? d.meleeRange + 4f : d.range + 8f;
-                if (!self && Vector3.Distance(transform.position, victim.transform.position) > reach + 10f) return;
+                if (!self && Vector3.Distance(transform.position, no.transform.position) > reach + 10f) return;
                 var cfg = session.Config;
-                if (!self && cfg.IsTeamMode && !cfg.friendlyFire && session.TeamOf(OwnerClientId) == session.TeamOf(victim.OwnerClientId)) return;
+                if (!self && cfg.IsTeamMode && !cfg.friendlyFire && session.TeamOf(OwnerClientId) == session.TeamOf(victimMember)) return;
             }
             if (amount <= 0f) return;
 
@@ -343,13 +381,28 @@ namespace Vamp.Online
                 IsHeadshot = head,
                 Distance = distance
             };
-            var r = victim.Health.ApplyAuthoritative(info);   // raises events on the host's copy
+            ulong instigatorObj = world ? ulong.MaxValue : NetworkObjectId;
+            ulong killer = world ? victimMember : OwnerClientId;
+            if (victim != null) victim.ServerTakeHit(info, killer, instigatorObj, weapon, world, session);
+            else bot.ServerTakeHit(info, killer, instigatorObj, weapon, session);
+        }
+
+        /// <summary>Host: apply a validated hit to this player and mirror it to everyone.</summary>
+        internal void ServerTakeHit(DamageInfo info, ulong killerMember, ulong instigatorObjectId, int weapon, bool world, NetSession session)
+        {
+            if (!Health.IsAlive) return;
+            var r = Health.ApplyAuthoritative(info);   // raises events on the host's copy
             if (r.TotalDamage <= 0f && !r.Killed) return;
-            victim._hp.Value = new Vector2(victim.Health.Health, victim.Health.Armor);
-            if (IsOwner && !world) Weapons.ReportExternal(victim.Health, r, info); // host is the shooter
-            victim.DamageRpc(world ? ulong.MaxValue : NetworkObjectId, amount, type, head, point, dir, distance, weapon,
-                             r.HealthDamage, r.ArmorDamage, r.Killed, victim.Health.Health, victim.Health.Armor);
-            if (r.Killed) session.ServerRecordKill(world ? victim.OwnerClientId : OwnerClientId, victim.OwnerClientId);
+            _hp.Value = new Vector2(Health.Health, Health.Armor);
+            var local = LocalPlayer;
+            if (local != null && !world && info.Instigator == local.gameObject && local != this)
+            {
+                local.Weapons.ReportExternal(Health, r, info); // the host is the shooter
+                if (r.Killed) NetMatchTally.HumanKill(info.WeaponId, info.IsHeadshot);
+            }
+            DamageRpc(instigatorObjectId, info.Amount, (byte)info.Type, info.IsHeadshot, info.Point, info.Direction, info.Distance, weapon,
+                      r.HealthDamage, r.ArmorDamage, r.Killed, Health.Health, Health.Armor);
+            if (r.Killed && session != null) session.ServerRecordKill(killerMember, OwnerClientId);
         }
 
         /// <summary>Host → clients: mirror a hit on this (victim) player.</summary>
@@ -369,7 +422,10 @@ namespace Vamp.Online
             var result = new DamageResult { HealthDamage = healthDamage, ArmorDamage = armorDamage, Killed = killed, IsHeadshot = head };
             Health.ApplyReplicated(info, result, health, armor);
             if (LocalPlayer != null && instigator == LocalPlayer.gameObject && LocalPlayer != this)
+            {
                 LocalPlayer.Weapons.ReportExternal(Health, result, info);
+                if (killed) NetMatchTally.HumanKill(info.WeaponId, head); // a kill on a REAL player (weapon XP)
+            }
         }
 
         private void OnHpChanged(Vector2 previous, Vector2 current)

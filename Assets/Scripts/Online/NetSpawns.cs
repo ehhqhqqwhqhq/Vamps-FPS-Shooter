@@ -27,11 +27,21 @@ namespace Vamp.Online
             return new SpawnChoice { Valid = true, Position = best.transform.position, Yaw = best.transform.eulerAngles.y };
         }
 
+        /// <summary>Positions of every living player and bot.</summary>
+        public static List<Vector3> EveryoneAlive()
+        {
+            var l = new List<Vector3>();
+            foreach (var p in NetPlayer.All) if (p != null && p.Health != null && p.Health.IsAlive) l.Add(p.transform.position);
+            foreach (var b in NetBot.All) if (b != null && b.Health != null && b.Health.IsAlive) l.Add(b.transform.position);
+            return l;
+        }
+
         /// <summary>Positions of every other living player (for the owner's own respawn choice).</summary>
         public static List<Vector3> OthersAlive(NetPlayer self)
         {
             var l = new List<Vector3>();
             foreach (var p in NetPlayer.All) if (p != null && p != self && p.Health != null && p.Health.IsAlive) l.Add(p.transform.position);
+            foreach (var b in NetBot.All) if (b != null && b.Health != null && b.Health.IsAlive) l.Add(b.transform.position);
             return l;
         }
     }

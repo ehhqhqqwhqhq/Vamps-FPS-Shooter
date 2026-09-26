@@ -33,6 +33,29 @@ namespace Vamp.Core
         public int Kills;
         public int Deaths;
         public int Score;
+        /// <summary>Filled-in bot (quick match backfill). Kills on bots never give XP or coins.</summary>
+        public bool IsBot;
+        /// <summary>Joined through matchmaking (not part of the host's party).</summary>
+        public bool Matched;
+        /// <summary>Kills on real players this match.</summary>
+        public int HumanKills;
+    }
+
+    /// <summary>One row of the ranked leaderboard.</summary>
+    public sealed class LeaderboardRow
+    {
+        public int Rank;
+        public string Name;
+        public int Points;
+        public bool IsLocal;
+    }
+
+    /// <summary>Online ranked leaderboard (Unity Leaderboards). Set by the online assembly; null offline.</summary>
+    public interface ILeaderboardService
+    {
+        void Submit(int rankPoints);
+        /// <summary>ok, error, top rows, the local player's row (null if unranked).</summary>
+        void Fetch(int count, Action<bool, string, List<LeaderboardRow>, LeaderboardRow> done);
     }
 
     /// <summary>
@@ -72,5 +95,18 @@ namespace Vamp.Core
         void Kick(ulong clientId);
         void ReturnToLobby();
         void Leave();
+
+        // ---- Matchmaking (QUICK MATCH / RANKED with real players)
+        bool Searching { get; }
+        Playlist SearchPlaylist { get; }
+        /// <summary>"SEARCHING...", "MATCH FOUND - WAITING FOR PLAYERS", ...</summary>
+        string SearchStatus { get; }
+        float SearchSeconds { get; }
+        /// <summary>Host-replicated status line for party members ("SEARCHING FOR PLAYERS 3/8").</summary>
+        string LobbyStatus { get; }
+        /// <summary>Quick: one of <paramref name="choices"/> is played (empty slots filled with bots after 30 s).
+        /// Ranked: 1V1/2V2/3V3 decided by how many players are searching - real players only.</summary>
+        void FindMatch(Playlist playlist, List<MatchConfig> choices, Action<bool, string> done);
+        void CancelSearch();
     }
 }

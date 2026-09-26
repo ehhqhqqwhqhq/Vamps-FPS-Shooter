@@ -10,7 +10,8 @@
         "Unity.Services.Friends",
         "Unity.Collections",
         "Unity.InputSystem",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.Services.Leaderboards"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

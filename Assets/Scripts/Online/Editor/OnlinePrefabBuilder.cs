@@ -17,13 +17,15 @@ namespace Vamp.Online.EditorTools
         private const string PlayerPrefabPath = "Assets/Prefabs/Players/Player.prefab";
         private const string NetPlayerPath = "Assets/Resources/VampNetPlayer.prefab";
         private const string NetSessionPath = "Assets/Resources/VampNetSession.prefab";
+        private const string NetBotPath = "Assets/Resources/VampNetBot.prefab";
 
         static OnlinePrefabBuilder()
         {
             EditorApplication.delayCall += () =>
             {
                 if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-                if (AssetDatabase.LoadAssetAtPath<GameObject>(NetPlayerPath) == null || AssetDatabase.LoadAssetAtPath<GameObject>(NetSessionPath) == null)
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(NetPlayerPath) == null || AssetDatabase.LoadAssetAtPath<GameObject>(NetSessionPath) == null
+                    || AssetDatabase.LoadAssetAtPath<GameObject>(NetBotPath) == null)
                     Build();
             };
         }
@@ -54,8 +56,15 @@ namespace Vamp.Online.EditorTools
             PrefabUtility.SaveAsPrefabAsset(s, NetSessionPath);
             Object.DestroyImmediate(s);
 
+            // Bot (quick match backfill): the body is built at spawn time (host = AI, clients = proxy).
+            var b = new GameObject("VampNetBot");
+            b.AddComponent<NetworkObject>();
+            b.AddComponent<NetBot>();
+            PrefabUtility.SaveAsPrefabAsset(b, NetBotPath);
+            Object.DestroyImmediate(b);
+
             AssetDatabase.SaveAssets();
-            Debug.Log("[VAMP] Online prefabs built: " + NetPlayerPath + ", " + NetSessionPath);
+            Debug.Log("[VAMP] Online prefabs built: " + NetPlayerPath + ", " + NetSessionPath + ", " + NetBotPath);
         }
     }
 }

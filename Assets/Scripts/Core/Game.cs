@@ -38,6 +38,8 @@ namespace Vamp.Core
         public static SceneFlow Scenes { get; private set; }
         /// <summary>Online multiplayer (set by the Vamp.Online assembly; null if it isn't installed).</summary>
         public static IOnlineService Online { get; set; }
+        /// <summary>Ranked leaderboard (set by the Vamp.Online assembly; null if unavailable).</summary>
+        public static ILeaderboardService Leaderboard { get; set; }
 
         public static bool IsLoggedIn { get { return Accounts != null && Accounts.IsLoggedIn; } }
         public static string Username { get { return IsLoggedIn ? Accounts.Current.username : "GUEST"; } }
@@ -47,7 +49,7 @@ namespace Vamp.Core
         {
             Initialized = false;
             Notifications = null; Settings = null; Accounts = null; Progression = null; Customization = null;
-            Social = null; Party = null; Matchmaking = null; Weapons = null; Scenes = null; Online = null;
+            Social = null; Party = null; Matchmaking = null; Weapons = null; Scenes = null; Online = null; Leaderboard = null;
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 

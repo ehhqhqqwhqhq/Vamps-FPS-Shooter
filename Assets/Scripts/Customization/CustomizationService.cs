@@ -36,6 +36,7 @@ namespace Vamp.Customization
                 case CosmeticType.ProfileBackground: return P.profile_background;
                 case CosmeticType.UITheme: return P.ui_theme;
                 case CosmeticType.KillFeedStyle: return P.killfeed_style;
+                case CosmeticType.WeaponTrail: return P.weapon_trail;
                 default: return null;
             }
         }
@@ -57,6 +58,7 @@ namespace Vamp.Customization
                 case CosmeticType.ProfileBackground: P.profile_background = itemId; break;
                 case CosmeticType.UITheme: P.ui_theme = itemId; break;
                 case CosmeticType.KillFeedStyle: P.killfeed_style = itemId; break;
+                case CosmeticType.WeaponTrail: P.weapon_trail = itemId; break;
                 default: return false; // weapon skins go through SetWeaponSkin
             }
             Commit();
@@ -81,7 +83,7 @@ namespace Vamp.Customization
         public bool SetWeaponSkin(string weaponId, string skinId)
         {
             var item = CosmeticCatalog.Get(skinId);
-            if (P == null || item == null || item.Type != CosmeticType.WeaponSkin || !_progression.IsUnlocked(skinId)) return false;
+            if (P == null || item == null || item.Type != CosmeticType.WeaponSkin || !_progression.IsCamoUnlocked(weaponId, skinId)) return false;
             P.loadout.SetSkin(weaponId, skinId);
             Commit();
             return true;

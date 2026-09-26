@@ -21,6 +21,7 @@ namespace Vamp.Online
         private RectTransform _rows;
         private Text _title;
         private Text _sub;
+        private Text _reward;
         private RectTransform _buttons;
         private GameObject _waiting;
         private bool _results;
@@ -46,6 +47,8 @@ namespace Vamp.Online
             UIKit.Size(_title, 56f);
             _sub = UIKit.Label(_board, "", 18, UIKit.TextDim, TextAnchor.MiddleLeft, FontStyle.Normal);
             UIKit.Size(_sub, 26f);
+            _reward = UIKit.Label(_board, "", 18, UIKit.Red, TextAnchor.MiddleLeft);
+            UIKit.Size(_reward, 26f);
             var head = UIKit.Row(_board, 26f, 10f);
             Col(head, "PLAYER", -1, 1f, UIKit.TextFaint, 14);
             Col(head, "TEAM", 120f, -1, UIKit.TextFaint, 14);
@@ -98,8 +101,8 @@ namespace Vamp.Online
             else _title.text = "SCOREBOARD";
             int[] s = online.TeamScores;
             _sub.text = (cfg != null ? cfg.ModeLabel + "  ·  " + MapCatalog.Get(cfg.mapId).DisplayName : "")
-                        + (teams ? "  ·  TEAM A " + s[0] + " — " + s[1] + " TEAM B" : "")
-                        + (_results && _xpLine.Length > 0 ? "  ·  " + _xpLine : "");
+                        + (teams ? "  ·  TEAM A " + s[0] + " — " + s[1] + " TEAM B" : "");
+            _reward.text = _results ? _xpLine : "";
 
             UIKit.Clear(_rows);
             var members = new List<OnlineMember>(online.Members);
@@ -110,7 +113,7 @@ namespace Vamp.Online
                 var bg = row.gameObject.AddComponent<Image>();
                 bg.color = m.IsLocal ? new Color(0.78f, 0.05f, 0.11f, 0.25f) : new Color(1f, 1f, 1f, 0.03f);
                 bg.raycastTarget = false;
-                Col(row, "  [" + m.Level + "] " + m.Name + (m.IsHost ? "  (HOST)" : ""), -1, 1f, UIKit.Text, 18);
+                Col(row, "  [" + m.Level + "] " + m.Name + (m.IsBot ? "  (BOT)" : m.IsHost ? "  (HOST)" : ""), -1, 1f, m.IsBot ? UIKit.TextDim : UIKit.Text, 18);
                 Col(row, teams ? (m.Team == 0 ? "A" : "B") : "-", 120f, -1, teams ? (m.Team == 0 ? UIKit.AllyColor() : UIKit.EnemyColor()) : UIKit.TextDim, 18);
                 Col(row, m.Kills.ToString(), 100f, -1, UIKit.Text, 18);
                 Col(row, m.Deaths.ToString(), 100f, -1, UIKit.Text, 18);
@@ -122,22 +125,42 @@ namespace Vamp.Online
         {
             _results = true;
             UIKit.Clear(_buttons);
-            if (online.IsHost)
+            var cfg = online.Config;
+            bool matchmade = cfg != null && cfg.playlist != Playlist.Custom;
+            bool party = false;
+            foreach (var m in online.Members) if (!m.IsBot && !m.Matched && !m.IsHost) party = true;
+
+            if (online.IsHost && (!matchmade || party))
             {
                 var back = UIKit.Button(_buttons, "BACK TO LOBBY", () => online.ReturnToLobby(), UIKit.ButtonStyle.Primary, 20, 50f);
                 UIKit.Size(back, 50f, -1, 1f);
             }
-            else
+            else if (!online.IsHost && !matchmade)
             {
                 var wait = UIKit.Label(_buttons, "WAITING FOR THE HOST...", 16, UIKit.TextDim, TextAnchor.MiddleCenter);
                 UIKit.Size(wait, -1, -1, 1f);
             }
-            var leave = UIKit.Button(_buttons, "LEAVE LOBBY", () => online.Leave(), UIKit.ButtonStyle.Ghost, 18, 50f);
+            else
+            {
+                var again = UIKit.Button(_buttons, "FIND ANOTHER MATCH", () =>
+                {
+                    var playlist = cfg.playlist;
+                    var choice = cfg.Clone();
+                    choice.bots = 0;
+                    online.Leave();
+                    Vamp.UI.Menus.MenuController.PendingSearch = new Vamp.UI.Menus.PendingSearchRequest { Playlist = playlist, Config = choice };
+                }, UIKit.ButtonStyle.Primary, 20, 50f);
+                UIKit.Size(again, 50f, -1, 1f);
+            }
+            var leave = UIKit.Button(_buttons, matchmade ? "BACK TO MENU" : "LEAVE LOBBY", () => online.Leave(), UIKit.ButtonStyle.Ghost, 18, 50f);
             UIKit.Size(leave, 50f, 240f);
             AwardXp(online);
         }
 
-        /// <summary>Online matches award XP like offline ones (placement, K/D, completion). Cosmetic progression only.</summary>
+        /// <summary>
+        /// XP only in QUICK MATCH and RANKED, and only for kills on REAL players (bots never count).
+        /// Weapon XP (camo unlocks) per weapon from those kills. RANKED: rank points + coins for the ranked shop.
+        /// </summary>
         private void AwardXp(IOnlineService online)
         {
             if (_xpGiven || Game.Progression == null || Game.Progression.Profile == null) return;
@@ -149,32 +172,65 @@ namespace Vamp.Online
             int place = 1;
             for (int i = 0; i < list.Count; i++) if (list[i].IsLocal) { me = list[i]; place = i + 1; }
             if (me == null || cfg == null) return;
-            bool won;
+            if (!cfg.GivesXp)
+            {
+                _xpLine = "NO XP IN CUSTOM LOBBIES";
+                return;
+            }
+
+            bool won, draw = false;
             if (cfg.IsTeamMode)
             {
                 int[] s = online.TeamScores;
-                won = s[Mathf.Clamp(me.Team, 0, 1)] > s[1 - Mathf.Clamp(me.Team, 0, 1)];
+                int mine = Mathf.Clamp(me.Team, 0, 1);
+                won = s[mine] > s[1 - mine];
+                draw = s[mine] == s[1 - mine];
             }
-            else won = place == 1;
+            else won = place == 1 && (list.Count < 2 || list[0].Kills > list[1].Kills);
+            bool realOpponent = false;
+            foreach (var m in list)
+                if (!m.IsBot && !m.IsLocal && (!cfg.IsTeamMode || m.Team != me.Team)) realOpponent = true;
+
+            int humanKills = me.HumanKills; // counted by the host: kills on real players only
             var report = new MatchReport
             {
                 mode = cfg.mode.ToString(),
                 map = cfg.mapId,
                 completed = true,
-                won = won,
+                won = won && realOpponent,        // beating only bots isn't a win for XP
                 placement = place,
-                kills = me.Kills,
+                kills = humanKills,               // bot kills give nothing
+                headshots = Mathf.Min(NetMatchTally.TotalHeadshots, humanKills),
                 deaths = me.Deaths,
-                score = me.Kills * 100,
-                durationSeconds = cfg.timeLimitMinutes * 60f
+                score = humanKills * 100,
+                durationSeconds = Mathf.Max(60f, cfg.timeLimitMinutes * 60f)
             };
             var xp = Game.Progression.ApplyMatch(report);
-            if (xp != null)
+            var parts = new List<string>();
+            if (xp != null) parts.Add("+" + xp.Total + " XP");
+
+            // Weapon levels → camos
+            int camos = 0;
+            foreach (var kv in NetMatchTally.Kills)
             {
-                _xpLine = "+" + xp.Total + " XP";
-                if (xp.LevelsGained > 0 && Game.Notifications != null)
-                    Game.Notifications.Push(NotificationKind.Info, "LEVEL UP", "LEVEL " + xp.NewLevel);
+                int heads;
+                NetMatchTally.Headshots.TryGetValue(kv.Key, out heads);
+                camos += Game.Progression.AddWeaponXp(kv.Key, kv.Value, heads).Count;
             }
+            if (NetMatchTally.TotalKills > 0) parts.Add("+" + (NetMatchTally.TotalKills * ProgressionService.WeaponXpPerKill) + " WEAPON XP");
+            if (camos > 0) parts.Add(camos + " NEW CAMO" + (camos > 1 ? "S" : ""));
+
+            if (cfg.playlist == Playlist.Ranked)
+            {
+                var r = Game.Progression.ApplyRanked(won, draw, humanKills);
+                parts.Add((r.RpDelta >= 0 ? "+" : "") + r.RpDelta + " RP (" + r.NewTier + " " + r.NewRp + ")");
+                parts.Add("+" + r.CoinsEarned + " COINS");
+                if (Game.Leaderboard != null) Game.Leaderboard.Submit(r.NewRp);
+            }
+            Game.Progression.Save();
+            _xpLine = string.Join("  ·  ", parts.ToArray());
+            if (xp != null && xp.LevelsGained > 0 && Game.Notifications != null)
+                Game.Notifications.Push(NotificationKind.Info, "LEVEL UP", "LEVEL " + xp.NewLevel);
         }
     }
 }

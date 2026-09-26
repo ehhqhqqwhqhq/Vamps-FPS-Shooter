@@ -19,10 +19,12 @@ namespace Vamp.Online
     /// Public lobbies are listed in the SERVER BROWSER; private ones are joined with the lobby code.
     /// Joining checks the game VERSION so players on old builds are told to update.
     /// </summary>
-    public sealed class OnlineService : IOnlineService
+    public sealed partial class OnlineService : IOnlineService
     {
         private static readonly IReadOnlyList<OnlineMember> NoMembers = new List<OnlineMember>();
         private const string KeyMode = "mode", KeyMap = "map", KeyVersion = "ver", KeyHost = "host";
+        // Indexed (searchable) properties for matchmaking.
+        private const string KeyQueue = "q", KeyQVersion = "qv", KeyQMode = "qm";
 
         private readonly NetworkManager _nm;
         private ISession _session;
@@ -30,6 +32,7 @@ namespace Vamp.Online
         private bool _leaving;
         private readonly Dictionary<ulong, string> _pendingNames = new Dictionary<ulong, string>();
         private readonly Dictionary<ulong, int> _pendingLevels = new Dictionary<ulong, int>();
+        private readonly Dictionary<ulong, bool> _pendingMatched = new Dictionary<ulong, bool>();
         private NetSession _hooked;
 
         public event Action Changed;
@@ -129,7 +132,12 @@ namespace Vamp.Online
 
         // ------------------------------------------------------------------ Host
 
-        public async void Host(MatchConfig config, string lobbyName, Action<bool, string> done)
+        public void Host(MatchConfig config, string lobbyName, Action<bool, string> done)
+        {
+            HostSession(config, lobbyName, "none", done);
+        }
+
+        private async void HostSession(MatchConfig config, string lobbyName, string queueTag, Action<bool, string> done)
         {
             if (_busy || InSession) { Done(done, false, "ALREADY IN A LOBBY"); return; }
             if (config.mode != GameMode.FreeForAll && config.mode != GameMode.TeamDeathmatch)
@@ -141,7 +149,7 @@ namespace Vamp.Online
                 await SignIn();
                 var cfg = config.Clone();
                 cfg.bots = 0;
-                cfg.isCustom = true;
+                cfg.isCustom = cfg.playlist == Playlist.Custom;
                 cfg.maxPlayers = Mathf.Clamp(cfg.maxPlayers, 2, 12);
                 var map = MapCatalog.Get(cfg.mapId);
                 string name = string.IsNullOrEmpty(lobbyName) ? Game.Username + "'S LOBBY" : lobbyName;
@@ -158,11 +166,15 @@ namespace Vamp.Online
                         { KeyMap, new SessionProperty(map != null ? map.DisplayName : cfg.mapId, VisibilityPropertyOptions.Public) },
                         { KeyVersion, new SessionProperty(Application.version, VisibilityPropertyOptions.Public) },
                         { KeyHost, new SessionProperty(Game.Username, VisibilityPropertyOptions.Public) },
+                        { KeyQueue, new SessionProperty(queueTag, VisibilityPropertyOptions.Public, PropertyIndex.String1) },
+                        { KeyQVersion, new SessionProperty(Application.version, VisibilityPropertyOptions.Public, PropertyIndex.String2) },
+                        { KeyQMode, new SessionProperty(cfg.ModeLabel, VisibilityPropertyOptions.Public, PropertyIndex.String3) },
                     }
                 }.WithRelayNetwork();
 
                 MatchController.SuppressOffline = true;
                 _session = await MultiplayerService.Instance.CreateSessionAsync(options);
+                _sessionCreatedUtc = DateTime.UtcNow;
                 if (!await WaitFor(() => _nm.IsServer, 10f)) throw new Exception("THE HOST COULD NOT START");
 
                 var go = UnityEngine.Object.Instantiate(OnlineBootstrap.SessionPrefab);
@@ -198,7 +210,7 @@ namespace Vamp.Online
             Join(() => MultiplayerService.Instance.JoinSessionByIdAsync(lobbyId), done);
         }
 
-        private async void Join(Func<Task<ISession>> joinCall, Action<bool, string> done)
+        private async void Join(Func<Task<ISession>> joinCall, Action<bool, string> done, bool matched = false)
         {
             if (_busy || InSession) { Done(done, false, "ALREADY IN A LOBBY"); return; }
             _busy = true;
@@ -206,7 +218,7 @@ namespace Vamp.Online
             try
             {
                 await SignIn();
-                _nm.NetworkConfig.ConnectionData = OnlineBootstrap.Payload(Game.Username, LocalLevel());
+                _nm.NetworkConfig.ConnectionData = OnlineBootstrap.Payload(Game.Username, LocalLevel(), matched);
                 MatchController.SuppressOffline = true;
                 _session = await joinCall();
                 if (!await WaitFor(() => _nm.IsConnectedClient && NetSession.Instance != null, 20f))
@@ -311,6 +323,7 @@ namespace Vamp.Online
             if (_nm != null && _nm.IsListening) _nm.Shutdown();
             _pendingNames.Clear();
             _pendingLevels.Clear();
+            _pendingMatched.Clear();
             MatchController.SuppressOffline = false;
             Player.PlayerController.Local = null;
             UI.HUDController.ExternalMatchInfo = null;
@@ -333,18 +346,19 @@ namespace Vamp.Online
 
             string version, name;
             int level;
-            if (!OnlineBootstrap.ParsePayload(request.Payload, out version, out name, out level))
+            bool matched;
+            if (!OnlineBootstrap.ParsePayload(request.Payload, out version, out name, out level, out matched))
             { response.Approved = false; response.Reason = "INVALID CONNECTION"; return; }
             if (version != Application.version)
             { response.Approved = false; response.Reason = "VERSION MISMATCH - HOST HAS v" + Application.version + ", YOU HAVE v" + version + ". UPDATE FROM THE LAUNCHER."; return; }
             var n = NetSession.Instance;
             if (n != null && n.State != NetState.Lobby)
             { response.Approved = false; response.Reason = "MATCH IN PROGRESS - TRY AGAIN AFTER IT ENDS"; return; }
-            if (n != null && n.Config != null && n.MemberViews.Count >= n.Config.maxPlayers)
+            if (n != null && n.Config != null && n.HumanCount >= n.Config.maxPlayers)
             { response.Approved = false; response.Reason = "LOBBY IS FULL"; return; }
-
             _pendingNames[request.ClientNetworkId] = name;
             _pendingLevels[request.ClientNetworkId] = level;
+            _pendingMatched[request.ClientNetworkId] = matched;
             response.Approved = true;
         }
 
@@ -355,8 +369,10 @@ namespace Vamp.Online
             int level;
             if (!_pendingNames.TryGetValue(clientId, out name)) name = "PLAYER";
             if (!_pendingLevels.TryGetValue(clientId, out level)) level = 1;
+            bool matched;
+            if (!_pendingMatched.TryGetValue(clientId, out matched)) matched = false;
             var n = NetSession.Instance;
-            if (n != null) n.ServerAddMember(clientId, name, level);
+            if (n != null) n.ServerAddMember(clientId, name, level, matched);
         }
 
         private void OnClientDisconnected(ulong clientId)
@@ -365,6 +381,17 @@ namespace Vamp.Online
             // We (a client) lost the host, or were kicked / rejected.
             if (_busy || _leaving) return;
             string reason = !string.IsNullOrEmpty(_nm.DisconnectReason) ? _nm.DisconnectReason : "THE HOST ENDED THE SESSION";
+            var net = NetSession.Instance;
+            bool afterMatch = net != null && net.State == NetState.PostMatch;
+            if (reason == ReasonRequeue) { Requeue(); return; }                 // ranked: odd one out searches again
+            if (reason == ReasonMatchOver || afterMatch) { StopSearchState(); Leave(); return; } // normal end of a matched game
+            if (_search != null && _search.JoinedAsClient && net != null && net.State == NetState.Lobby)
+            {
+                // The lobby we joined closed before starting: keep searching.
+                Requeue();
+                return;
+            }
+            StopSearchState();
             Say("DISCONNECTED", reason);
             Leave();
         }

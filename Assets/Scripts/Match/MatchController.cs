@@ -149,7 +149,8 @@ namespace Vamp.Match
             return cfg;
         }
 
-        private void BuildNavMesh()
+        /// <summary>Bakes the map's NavMesh at runtime (bots). Also used by the online host.</summary>
+        public static void BuildNavMesh()
         {
             var surface = FindAnyObjectByType<NavMeshSurface>();
             if (surface == null)
@@ -175,6 +176,7 @@ namespace Vamp.Match
 
             Local = Player.GetComponent<Participant>();
             if (Local == null) Local = Player.gameObject.AddComponent<Participant>();
+            PlayerController.Local = Player;
             Local.IsLocalPlayer = true;
             Local.IsBot = false;
             Local.DisplayName = Game.Username;
@@ -659,7 +661,9 @@ namespace Vamp.Match
             if (_stats != null && Config.mode != GameMode.Training)
             {
                 outcome.Report = _stats.BuildReport(Config, Elapsed, won, placement);
-                if (Game.Progression != null && Game.Progression.IsLoaded) outcome.Xp = Game.Progression.ApplyMatch(outcome.Report);
+                // Offline / custom / private matches are against bots: career stats only, no XP.
+                // XP, weapon levels and ranked rewards come from online QUICK MATCH and RANKED (kills on real players).
+                if (Game.Progression != null && Game.Progression.IsLoaded) Game.Progression.RecordStatsOnly(outcome.Report);
             }
             Outcome = outcome;
 

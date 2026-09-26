@@ -32,6 +32,7 @@ namespace Vamp.UI.Menus
             UIKit.Button(col, "PLAY", () => Host.Push(new PlayScreen()), UIKit.ButtonStyle.Menu, 40, 64f);
             UIKit.Button(col, "LOADOUT", () => Host.Push(new LoadoutScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "CUSTOMIZE", () => Host.Push(new CustomizeScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
+            UIKit.Button(col, "SHOP", () => Host.Push(new ShopScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "PROFILE", () => Host.Push(new ProfileScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "SETTINGS", () => Host.Push(new SettingsScreen()), UIKit.ButtonStyle.Menu, 28, 50f);
             UIKit.Button(col, "CAREER", () => Host.Push(new CareerScreen()), UIKit.ButtonStyle.Menu, 28, 50f);

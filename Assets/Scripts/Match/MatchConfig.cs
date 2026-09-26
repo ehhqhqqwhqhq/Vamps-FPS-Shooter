@@ -5,6 +5,8 @@ namespace Vamp.Match
 {
     public enum GameMode { FreeForAll, TeamDeathmatch, GunGame, MovementRace, Elimination, Training }
     public enum BotDifficulty { Easy, Normal, Hard, Brutal }
+    /// <summary>Custom = custom / private / offline (no XP). Quick = online quick match. Ranked = online ranked.</summary>
+    public enum Playlist { Custom, Quick, Ranked }
 
     /// <summary>
     /// Everything a match needs, including CUSTOM GAME host options. In multiplayer the server owns this object;
@@ -35,6 +37,10 @@ namespace Vamp.Match
         public int teamSize = 0;
         /// <summary>Run the graphics benchmark instead of a normal match.</summary>
         public bool benchmark = false;
+        /// <summary>Which playlist this match belongs to (XP / ranked rewards only for Quick and Ranked).</summary>
+        public Playlist playlist = Playlist.Custom;
+
+        public bool GivesXp { get { return playlist == Playlist.Quick || playlist == Playlist.Ranked; } }
 
         public static string ModeName(GameMode m)
         {
@@ -86,7 +92,7 @@ namespace Vamp.Match
         public bool IsTeamMode { get { return mode == GameMode.TeamDeathmatch || mode == GameMode.Elimination; } }
 
         /// <summary>Name shown to players ("2V2" for arena modes).</summary>
-        public string ModeLabel { get { return teamSize > 0 ? teamSize + "V" + teamSize : ModeName(mode); } }
+        public string ModeLabel { get { return (playlist == Playlist.Ranked ? "RANKED " : "") + (teamSize > 0 ? teamSize + "V" + teamSize : ModeName(mode)); } }
 
         public string ModeLabelDescription
         {

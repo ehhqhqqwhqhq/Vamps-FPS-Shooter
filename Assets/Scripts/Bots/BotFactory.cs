@@ -35,7 +35,27 @@ namespace Vamp.Bots
             return m;
         }
 
+        public static string NameFor(int index)
+        {
+            return Names[index % Names.Length] + (index >= Names.Length ? (index / Names.Length).ToString() : "");
+        }
+
         public static Participant Create(int index, int team, BotDifficulty difficulty, WeaponData weapon, bool allyOfLocal, Vector3 position, float yaw)
+        {
+            var root = new GameObject("Bot_" + Names[index % Names.Length]);
+            NavMeshHit nh;
+            if (NavMesh.SamplePosition(position, out nh, 4f, NavMesh.AllAreas)) position = nh.position;
+            root.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+            var p = Build(root, NameFor(index), Random.Range(3, 90), team, difficulty, weapon, allyOfLocal, true);
+            return p;
+        }
+
+        /// <summary>
+        /// Builds a bot onto an existing object. <paramref name="brain"/> = NavMesh agent + AI (offline, or the online
+        /// host); without it the bot is a network proxy that only shows the character and takes hits.
+        /// </summary>
+        public static Participant Build(GameObject root, string displayName, int level, int team, BotDifficulty difficulty, WeaponData weapon,
+                                        bool allyOfLocal, bool brain)
         {
             if (_body == null)
             {
@@ -45,18 +65,17 @@ namespace Vamp.Bots
                 _visorAlly = Mat(new Color(0.3f, 0.6f, 1f), new Color(0.4f, 0.9f, 2.5f));
             }
 
-            var root = new GameObject("Bot_" + Names[index % Names.Length]);
-            NavMeshHit nh;
-            if (NavMesh.SamplePosition(position, out nh, 4f, NavMesh.AllAreas)) position = nh.position;
-            root.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
-            var agent = root.AddComponent<NavMeshAgent>();
-            agent.baseOffset = 0f;
-            root.AddComponent<HealthController>();
+            if (brain)
+            {
+                var agent = root.AddComponent<NavMeshAgent>();
+                agent.baseOffset = 0f;
+            }
+            if (root.GetComponent<HealthController>() == null) root.AddComponent<HealthController>();
             var p = root.AddComponent<Participant>();
             p.IsBot = true;
             p.Team = team;
-            p.DisplayName = Names[index % Names.Length] + (index >= Names.Length ? (index / Names.Length).ToString() : "");
-            p.Level = Random.Range(3, 90);
+            p.DisplayName = displayName;
+            p.Level = level;
             p.Ping = 0;
             var icons = CosmeticCatalog.OfType(CosmeticType.Icon);
             var eligible = icons.FindAll(i => i.Source == UnlockSource.Level && i.UnlockLevel <= p.Level);
@@ -106,10 +125,13 @@ namespace Vamp.Bots
             eye.SetParent(root.transform, false);
             eye.localPosition = new Vector3(0f, 1.65f, 0.2f);
 
-            var bot = root.AddComponent<BotController>();
-            bot.Difficulty = difficulty;
-            bot.Weapon = weapon;
-            bot.Eye = eye;
+            if (brain)
+            {
+                var bot = root.AddComponent<BotController>();
+                bot.Difficulty = difficulty;
+                bot.Weapon = weapon;
+                bot.Eye = eye;
+            }
 
             var plate = new GameObject("NamePlate");
             plate.transform.SetParent(root.transform, false);

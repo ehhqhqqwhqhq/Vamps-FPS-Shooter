@@ -15,9 +15,9 @@ namespace Vamp.UI.Menus
         private static readonly CosmeticType[] Types =
         {
             CosmeticType.Icon, CosmeticType.Frame, CosmeticType.Banner, CosmeticType.Title, CosmeticType.KillEffect,
-            CosmeticType.Emote, CosmeticType.CrosshairStyle, CosmeticType.CharacterSkin
+            CosmeticType.WeaponTrail, CosmeticType.Emote, CosmeticType.CrosshairStyle, CosmeticType.CharacterSkin
         };
-        private static readonly string[] TypeNames = { "ICONS", "FRAMES", "BANNERS", "TITLES", "KILL FX", "EMOTES", "CROSSHAIR", "CHARACTER" };
+        private static readonly string[] TypeNames = { "ICONS", "FRAMES", "BANNERS", "TITLES", "KILL FX", "TRAILS", "EMOTES", "CROSSHAIR", "CHARACTER" };
         private static readonly string[] Filters = { "ALL", "OWNED", "LOCKED", "LEVEL REWARDS", "PRESTIGE", "CHALLENGES", "EVENTS" };
 
         private int _type;

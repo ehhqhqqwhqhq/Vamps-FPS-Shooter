@@ -4,20 +4,20 @@ using UnityEngine;
 using UnityEngine.UI;
 using Vamp.Core;
 using Vamp.Maps;
+using Vamp.Progression;
 using Vamp.Match;
 using Vamp.Matchmaking;
 
 namespace Vamp.UI.Menus
 {
-    /// <summary>PLAY: QUICK PLAY · RANKED · CUSTOM GAME · PRIVATE MATCH · SERVER BROWSER · TRAINING.</summary>
+    /// <summary>PLAY: QUICK MATCH · RANKED · CUSTOM GAME · PRIVATE MATCH · SERVER BROWSER · TRAINING.</summary>
     public sealed class PlayScreen : MenuScreen
     {
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "PLAY", "OFFLINE BUILD · MATCHES ARE PLAYED AGAINST BOTS", 560f);
-            UIKit.Button(col, "QUICK PLAY", () => Host.Push(new QuickPlayScreen()), UIKit.ButtonStyle.Menu, 32, 58f);
-            var ranked = UIKit.Button(col, "RANKED  ·  REQUIRES ONLINE", null, UIKit.ButtonStyle.Menu, 32, 58f);
-            ranked.interactable = false;
+            var col = Page(root, "PLAY", "QUICK MATCH AND RANKED ARE ONLINE AND GIVE XP · CUSTOM / PRIVATE / BOT MATCHES DON'T", 640f);
+            UIKit.Button(col, "QUICK MATCH", () => Host.Push(new QuickPlayScreen()), UIKit.ButtonStyle.Menu, 32, 58f);
+            UIKit.Button(col, "RANKED", () => Host.Push(new RankedScreen(false)), UIKit.ButtonStyle.Menu, 32, 58f);
             UIKit.Button(col, "CUSTOM GAME", () => Host.Push(new CustomGameScreen(false)), UIKit.ButtonStyle.Menu, 32, 58f);
             UIKit.Button(col, "PRIVATE MATCH", () => Host.Push(new CustomGameScreen(true)), UIKit.ButtonStyle.Menu, 32, 58f);
             UIKit.Button(col, "SERVER BROWSER", () => Host.Push(new ServerBrowserScreen()), UIKit.ButtonStyle.Menu, 32, 58f);
@@ -31,150 +31,200 @@ namespace Vamp.UI.Menus
         }
     }
 
-    /// <summary>QUICK PLAY: preferred modes, region, max ping → SEARCHING... PLAYERS FOUND 8/10 · PING.</summary>
+    /// <summary>Bottom-center "SEARCHING..." panel shared by quick match and ranked.</summary>
+    internal sealed class SearchPanel
+    {
+        private readonly RectTransform _panel;
+        private readonly Text _title, _status, _time;
+        private bool _shown;
+
+        public SearchPanel(RectTransform root, Action onCancel)
+        {
+            var panel = UIKit.Panel(root, "Searching", new Color(0.04f, 0.04f, 0.05f, 0.96f));
+            _panel = panel.rectTransform;
+            _panel.anchorMin = _panel.anchorMax = new Vector2(0.5f, 0f);
+            _panel.pivot = new Vector2(0.5f, 0f);
+            _panel.anchoredPosition = new Vector2(80f, 60f);
+            _panel.sizeDelta = new Vector2(640f, 200f);
+            UIKit.VList(_panel, 6f, 22, TextAnchor.UpperCenter);
+            _title = UIKit.Label(_panel, "SEARCHING...", 34, UIKit.Text, TextAnchor.MiddleCenter);
+            UIKit.Size(_title, 44f);
+            _status = UIKit.Label(_panel, "", 18, UIKit.TextDim, TextAnchor.MiddleCenter);
+            UIKit.Size(_status, 28f);
+            _time = UIKit.Label(_panel, "", 14, UIKit.TextFaint, TextAnchor.MiddleCenter, FontStyle.Normal);
+            UIKit.Size(_time, 20f);
+            UIKit.Button(_panel, "CANCEL", () => { if (onCancel != null) onCancel(); }, UIKit.ButtonStyle.Ghost, 16, 38f);
+            _panel.gameObject.SetActive(false);
+        }
+
+        /// <summary>Returns true while a search is shown.</summary>
+        public bool Tick(Playlist playlist)
+        {
+            var o = Game.Online;
+            bool searching = o != null && o.Searching && o.SearchPlaylist == playlist;
+            bool partySearch = o != null && o.InSession && !o.IsHost && !string.IsNullOrEmpty(o.LobbyStatus) && o.State == OnlineState.InLobby;
+            bool show = searching || partySearch;
+            if (show != _shown) { _shown = show; _panel.gameObject.SetActive(show); }
+            if (!show) return false;
+            string status = searching ? o.SearchStatus : o.LobbyStatus;
+            bool found = status.StartsWith("MATCH FOUND") || status.StartsWith("MATCH STARTING");
+            _title.text = found ? "MATCH FOUND" : "SEARCHING" + new string('.', 1 + (int)(Time.unscaledTime * 2f) % 3);
+            _title.color = found ? UIKit.Red : UIKit.Text;
+            _status.text = status;
+            _time.text = (playlist == Playlist.Ranked ? "RANKED · REAL PLAYERS ONLY" : "QUICK MATCH · EMPTY SLOTS GET BOTS AFTER 30s (BOT KILLS GIVE NO XP)")
+                         + "  ·  " + Mathf.FloorToInt(searching ? o.SearchSeconds : 0f) + "s";
+            return true;
+        }
+    }
+
+    /// <summary>QUICK MATCH: pick modes → matched with other real players searching; bots fill the rest after 30 s.</summary>
     public sealed class QuickPlayScreen : MenuScreen
     {
-        private readonly QuickPlayPreferences _prefs = new QuickPlayPreferences();
-        private RectTransform _searchPanel;
-        private Text _searchTitle, _found, _ping, _time;
+        private readonly MatchConfig _preselect;
+        private readonly Dictionary<string, bool> _picked = new Dictionary<string, bool>();
+        private SearchPanel _panel;
         private Button _findButton;
-        private float _autoStart = -1f;
+        private bool _autoStart;
 
-        private static readonly GameMode[] QuickModes = { GameMode.FreeForAll, GameMode.TeamDeathmatch, GameMode.GunGame, GameMode.Elimination };
-        private static readonly int[] Pings = { 40, 60, 80, 120, 200 };
+        private static MatchConfig[] Choices()
+        {
+            return new[]
+            {
+                MatchConfig.Defaults(GameMode.FreeForAll), MatchConfig.Defaults(GameMode.TeamDeathmatch),
+                MatchConfig.Arena(1), MatchConfig.Arena(2), MatchConfig.Arena(3)
+            };
+        }
+
+        public QuickPlayScreen(MatchConfig preselect = null)
+        {
+            _preselect = preselect;
+            _autoStart = preselect != null;
+        }
 
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "QUICK PLAY", "FIND A MATCH AUTOMATICALLY", 720f);
-            UIKit.Caption(col, "PREFERRED MODES", 14);
-            foreach (var mode in QuickModes)
+            var col = Page(root, "QUICK MATCH", "PLAY WITH OTHER PLAYERS WHO ARE SEARCHING · XP, WEAPON LEVELS AND CAMOS FROM KILLS ON REAL PLAYERS", 760f);
+            UIKit.Caption(col, "MODES YOU WANT TO PLAY", 14);
+            foreach (var c in Choices())
             {
-                var m = mode;
-                UIKit.Toggle(col, MatchConfig.ModeName(m), _prefs.modes.Contains(m), on =>
-                {
-                    if (on && !_prefs.modes.Contains(m)) _prefs.modes.Add(m);
-                    if (!on) _prefs.modes.Remove(m);
-                });
+                string label = c.ModeLabel;
+                bool on = _preselect != null ? _preselect.ModeLabel == label : label != "3V3";
+                _picked[label] = on;
+                UIKit.Toggle(col, label + (c.teamSize > 0 ? " ARENA" : ""), on, v => _picked[label] = v);
             }
-            for (int size = 1; size <= 3; size++)
-            {
-                int s = size;
-                UIKit.Toggle(col, s + "V" + s + " ARENA", _prefs.arenaSizes.Contains(s), on =>
-                {
-                    if (on && !_prefs.arenaSizes.Contains(s)) _prefs.arenaSizes.Add(s);
-                    if (!on) _prefs.arenaSizes.Remove(s);
-                });
-            }
-            UIKit.Selector(col, "REGION", MatchmakingService.Regions, 0, i => _prefs.region = MatchmakingService.Regions[i]);
-            var pingNames = new List<string>();
-            foreach (var p in Pings) pingNames.Add(p + " MS");
-            UIKit.Selector(col, "MAXIMUM PING", pingNames, 2, i => _prefs.maxPing = Pings[i]);
-            UIKit.Spacer(col, 10f);
+            UIKit.Spacer(col, 6f);
+            UIKit.Caption(col, "NOT ENOUGH PLAYERS AFTER 30 SECONDS? THE LOBBY IS FILLED WITH BOTS - KILLS ON BOTS GIVE NO XP.", 13);
+            UIKit.Spacer(col, 6f);
             _findButton = UIKit.Button(col, "FIND MATCH", Find, UIKit.ButtonStyle.Primary, 24, 58f);
             UIKit.Button(col, "BACK", () => Host.Back(), UIKit.ButtonStyle.Ghost, 18, 44f);
-
-            // Searching overlay (bottom-center)
-            var panel = UIKit.Panel(root, "Searching", new Color(0.04f, 0.04f, 0.05f, 0.95f));
-            _searchPanel = panel.rectTransform;
-            _searchPanel.anchorMin = _searchPanel.anchorMax = new Vector2(0.5f, 0f);
-            _searchPanel.pivot = new Vector2(0.5f, 0f);
-            _searchPanel.anchoredPosition = new Vector2(80f, 60f);
-            _searchPanel.sizeDelta = new Vector2(520f, 210f);
-            UIKit.VList(_searchPanel, 6f, 24, TextAnchor.UpperCenter);
-            _searchTitle = UIKit.Label(_searchPanel, "SEARCHING...", 34, UIKit.Text, TextAnchor.MiddleCenter);
-            UIKit.Size(_searchTitle, 44f);
-            _found = UIKit.Label(_searchPanel, "", 20, UIKit.TextDim, TextAnchor.MiddleCenter);
-            UIKit.Size(_found, 28f);
-            _ping = UIKit.Label(_searchPanel, "", 16, UIKit.TextDim, TextAnchor.MiddleCenter, FontStyle.Normal);
-            UIKit.Size(_ping, 24f);
-            _time = UIKit.Label(_searchPanel, "", 14, UIKit.TextFaint, TextAnchor.MiddleCenter, FontStyle.Normal);
-            UIKit.Size(_time, 20f);
-            UIKit.Button(_searchPanel, "CANCEL", Cancel, UIKit.ButtonStyle.Ghost, 16, 38f);
-            _searchPanel.gameObject.SetActive(false);
+            _panel = new SearchPanel(root, Cancel);
         }
 
         private void Find()
         {
-            if (_prefs.modes.Count == 0 && _prefs.arenaSizes.Count == 0)
-            {
-                Toast("SELECT AT LEAST ONE MODE", "", true);
-                return;
-            }
             var online = Game.Online;
-            if (online != null && online.InSession)
-            {
-                // In a party: the leader starts an online match for the whole party with one of the picked modes.
-                if (!online.IsHost) { Toast("PARTY", "ONLY THE PARTY LEADER CAN START A MATCH", true); return; }
-                var rng = new System.Random();
-                var choices = new List<MatchConfig>();
-                foreach (var m in _prefs.modes) if (m == GameMode.FreeForAll || m == GameMode.TeamDeathmatch) choices.Add(MatchConfig.Defaults(m));
-                foreach (var size in _prefs.arenaSizes)
-                    if (size * 2 >= online.Members.Count) choices.Add(MatchConfig.Arena(size)); // the whole party must fit
-                if (choices.Count == 0) { Toast("PARTY", "ONLINE PARTIES PLAY FREE FOR ALL, TEAM DEATHMATCH OR 1V1-3V3", true); return; }
-                var cfg = choices[rng.Next(choices.Count)];
-                cfg.mapId = MapCatalog.RandomBattleMap(rng, cfg.teamSize > 0);
-                cfg.isCustom = true;
-                cfg.isPrivate = online.Config != null && online.Config.isPrivate;
-                online.SetConfig(cfg);
-                online.StartMatch();
-                Toast("PARTY MATCH", cfg.ModeLabel + " · " + MapCatalog.Get(cfg.mapId).DisplayName);
-                return;
-            }
-            Game.Matchmaking.StartQuickPlay(_prefs);
-            _searchPanel.gameObject.SetActive(true);
-            _findButton.interactable = false;
-            _autoStart = -1f;
+            if (online == null) { Toast("ONLINE UNAVAILABLE", "QUICK MATCH NEEDS THE ONLINE BUILD", true); return; }
+            var list = new List<MatchConfig>();
+            foreach (var c in Choices()) if (_picked[c.ModeLabel]) list.Add(c);
+            if (list.Count == 0) { Toast("SELECT AT LEAST ONE MODE", "", true); return; }
+            online.FindMatch(Playlist.Quick, list, (ok, msg) => { if (!ok) Toast("QUICK MATCH", msg, true); });
         }
 
         private void Cancel()
         {
-            Game.Matchmaking.Cancel();
-            _searchPanel.gameObject.SetActive(false);
-            _findButton.interactable = true;
-            _autoStart = -1f;
+            if (Game.Online != null) Game.Online.CancelSearch();
         }
 
         public override void Tick(float dt)
         {
-            var mm = Game.Matchmaking;
-            if (mm == null || _searchPanel == null || !_searchPanel.gameObject.activeSelf) return;
-            _found.text = "PLAYERS FOUND: " + mm.PlayersFound + "/" + mm.PlayersNeeded;
-            _ping.text = "PING: LOCAL  ·  REGION: " + _prefs.region;
-            _time.text = "OFFLINE: EMPTY SLOTS ARE FILLED WITH BOTS  ·  " + Mathf.FloorToInt(mm.SearchTime) + "s";
-
-            if (mm.State == MatchmakingState.MatchFound)
-            {
-                if (_autoStart < 0f)
-                {
-                    _autoStart = 2f;
-                    _searchTitle.text = "MATCH FOUND";
-                    _searchTitle.color = UIKit.Red;
-                    Audio.AudioController.PlayUI(Audio.SfxId.CountdownGo);
-                }
-                _autoStart -= dt;
-                _time.text = mm.FoundMatch.ModeLabel + "  ·  " + MapCatalog.Get(mm.FoundMatch.mapId).DisplayName;
-                if (_autoStart <= 0f)
-                {
-                    _autoStart = 999f;
-                    Game.Scenes.StartMatch(mm.FoundMatch);
-                }
-            }
-            else
-            {
-                _searchTitle.text = "SEARCHING" + new string('.', 1 + (int)(Time.unscaledTime * 2f) % 3);
-                _searchTitle.color = UIKit.Text;
-            }
+            if (_autoStart) { _autoStart = false; Find(); }
+            bool searching = _panel != null && _panel.Tick(Playlist.Quick);
+            if (_findButton != null) _findButton.interactable = !searching;
         }
 
         public override bool OnBack()
         {
-            if (Game.Matchmaking != null && Game.Matchmaking.State == MatchmakingState.Searching) { Cancel(); return true; }
+            if (Game.Online != null && Game.Online.Searching) { Cancel(); return true; }
             return false;
         }
 
         public override void OnHide()
         {
-            if (Game.Matchmaking != null && Game.Matchmaking.State == MatchmakingState.Searching) Game.Matchmaking.Cancel();
+            if (Game.Online != null && Game.Online.Searching && Game.Online.State != OnlineState.Loading) Game.Online.CancelSearch();
+        }
+    }
+
+    /// <summary>RANKED: rank card, FIND RANKED MATCH (1V1/2V2/3V3 decided by who's searching), leaderboard, ranked shop.</summary>
+    public sealed class RankedScreen : MenuScreen
+    {
+        private readonly bool _autoSearch;
+        private SearchPanel _panel;
+        private Button _findButton;
+        private bool _pendingAuto;
+
+        public RankedScreen(bool autoSearch)
+        {
+            _autoSearch = autoSearch;
+            _pendingAuto = autoSearch;
+        }
+
+        protected override void OnBuild(RectTransform root)
+        {
+            var col = Page(root, "RANKED", "1V1 · 2V2 · 3V3 - THE SIZE IS PICKED FROM WHO'S SEARCHING · REAL PLAYERS ONLY, NO BOTS", 760f);
+            var prof = Game.Progression.Profile;
+            int rp = prof.rank_points;
+
+            var card = UIKit.Panel(col, "RankCard", new Color(0.06f, 0.02f, 0.03f, 0.95f));
+            card.GetComponent<Outline>().effectColor = new Color(0.9f, 0.08f, 0.14f, 0.7f);
+            UIKit.Size(card, 170f);
+            UIKit.VList(card.transform, 6f, 18);
+            var tier = UIKit.Label(card.transform, RankTiers.Name(rp), 52, RankTiers.TierColor(rp));
+            UIKit.Size(tier, 60f);
+            var rpRow = UIKit.Row(card.transform, 24f, 10f);
+            UIKit.Size(UIKit.Label(rpRow, rp + " RP", 20, UIKit.Text), -1, 160f);
+            var bg = UIKit.Image(rpRow, "Bar", new Color(1f, 1f, 1f, 0.1f));
+            UIKit.Size(bg, 8f, -1, 1f);
+            var fill = UIKit.Image(bg.transform, "Fill", RankTiers.TierColor(rp));
+            fill.rectTransform.anchorMin = Vector2.zero;
+            fill.rectTransform.anchorMax = new Vector2(RankTiers.Progress(rp), 1f);
+            fill.rectTransform.offsetMin = fill.rectTransform.offsetMax = Vector2.zero;
+            UIKit.Size(UIKit.Label(rpRow, "NEXT " + RankTiers.NextFloor(rp), 14, UIKit.TextDim, TextAnchor.MiddleRight), -1, 120f);
+            UIKit.Label(card.transform, "WINS " + prof.ranked_wins + "   ·   LOSSES " + prof.ranked_losses + "   ·   MATCHES " + prof.ranked_matches
+                                        + "   ·   COINS " + prof.ranked_coins.ToString("N0"), 16, UIKit.TextDim);
+
+            UIKit.Caption(col, "WIN +30 RP (+2 PER KILL, MAX +10) · LOSS -20 RP · EARN 200 COINS PER WIN + 20 PER KILL FOR THE RANKED SHOP", 13);
+            UIKit.Spacer(col, 4f);
+            _findButton = UIKit.Button(col, "FIND RANKED MATCH", Find, UIKit.ButtonStyle.Primary, 24, 58f);
+            var row = UIKit.Row(col, 50f, 12f);
+            UIKit.Size(UIKit.Button(row, "LEADERBOARD", () => Host.Push(new LeaderboardScreen()), UIKit.ButtonStyle.Box, 18, 50f), 50f, -1, 1f);
+            UIKit.Size(UIKit.Button(row, "RANKED SHOP", () => Host.Push(new ShopScreen()), UIKit.ButtonStyle.Box, 18, 50f), 50f, -1, 1f);
+            UIKit.Button(col, "BACK", () => Host.Back(), UIKit.ButtonStyle.Ghost, 18, 44f);
+            _panel = new SearchPanel(root, () => { if (Game.Online != null) Game.Online.CancelSearch(); });
+        }
+
+        private void Find()
+        {
+            var online = Game.Online;
+            if (online == null) { Toast("ONLINE UNAVAILABLE", "RANKED NEEDS THE ONLINE BUILD", true); return; }
+            online.FindMatch(Playlist.Ranked, null, (ok, msg) => { if (!ok) Toast("RANKED", msg, true); });
+        }
+
+        public override void Tick(float dt)
+        {
+            if (_pendingAuto) { _pendingAuto = false; Find(); }
+            bool searching = _panel != null && _panel.Tick(Playlist.Ranked);
+            if (_findButton != null) _findButton.interactable = !searching;
+        }
+
+        public override bool OnBack()
+        {
+            if (Game.Online != null && Game.Online.Searching) { Game.Online.CancelSearch(); return true; }
+            return false;
+        }
+
+        public override void OnHide()
+        {
+            if (Game.Online != null && Game.Online.Searching && Game.Online.State != OnlineState.Loading) Game.Online.CancelSearch();
         }
     }
 

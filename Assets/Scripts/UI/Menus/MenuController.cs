@@ -12,8 +12,16 @@ namespace Vamp.UI.Menus
     /// (player card + XP bar + social panel), and manages the screen stack with fade transitions.
     /// Flow: not logged in → WELCOME; logged in → HOME. First launch shows GRAPHICS DETECTED.
     /// </summary>
+    /// <summary>"FIND ANOTHER MATCH" from the results screen: search again as soon as the menu is back.</summary>
+    public sealed class PendingSearchRequest
+    {
+        public Match.Playlist Playlist;
+        public Match.MatchConfig Config;
+    }
+
     public sealed class MenuController : MonoBehaviour, IScreenHost
     {
+        public static PendingSearchRequest PendingSearch;
         private Canvas _canvas;
         private RectTransform _content;
         private RectTransform _modal;
@@ -71,6 +79,14 @@ namespace Vamp.UI.Menus
             else ClearTo(new WelcomeScreen());
             // Back from an online match: return straight to the lobby.
             if (Game.IsLoggedIn && Game.Online != null && Game.Online.InSession) Push(new OnlineLobbyScreen());
+            else if (Game.IsLoggedIn && PendingSearch != null && Game.Online != null)
+            {
+                var p = PendingSearch;
+                PendingSearch = null;
+                Push(new PlayScreen());
+                if (p.Playlist == Match.Playlist.Ranked) Push(new RankedScreen(true));
+                else Push(new QuickPlayScreen(p.Config));
+            }
             if (Game.Online != null) UpdateChecker.CheckOnce();
 
             if (Game.Settings != null && !Game.Settings.Current.firstLaunchDone) GraphicsDetectPopup.Show(this);

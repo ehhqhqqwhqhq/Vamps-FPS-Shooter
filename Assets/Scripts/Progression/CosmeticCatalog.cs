@@ -5,10 +5,12 @@ namespace Vamp.Progression
 {
     public enum CosmeticType
     {
-        Icon, Frame, Banner, Title, KillEffect, Emote, CrosshairStyle, WeaponSkin, CharacterSkin, ProfileBackground, UITheme, KillFeedStyle
+        Icon, Frame, Banner, Title, KillEffect, Emote, CrosshairStyle, WeaponSkin, CharacterSkin, ProfileBackground, UITheme, KillFeedStyle,
+        WeaponTrail
     }
 
-    public enum UnlockSource { Default, Level, Prestige, Challenge, Event }
+    /// <summary>WeaponLevel = camo unlocked per weapon at that weapon's level. Shop = bought with ranked coins.</summary>
+    public enum UnlockSource { Default, Level, Prestige, Challenge, Event, WeaponLevel, Shop }
     public enum IconShape { Circle, Diamond, Square, Shield }
 
     /// <summary>A cosmetic reward. NEVER affects gameplay - pure status.</summary>
@@ -28,6 +30,8 @@ namespace Vamp.Progression
         public string Description;
         /// <summary>Weapon camos: texture name in Resources/Camos (null = plain colour skin).</summary>
         public string Texture;
+        /// <summary>Ranked shop price in coins (Source = Shop).</summary>
+        public int Price;
 
         public string UnlockText
         {
@@ -39,6 +43,8 @@ namespace Vamp.Progression
                     case UnlockSource.Level: return "UNLOCKS AT LEVEL " + UnlockLevel;
                     case UnlockSource.Prestige: return "UNLOCKS AT PRESTIGE " + Prestige;
                     case UnlockSource.Challenge: return "CHALLENGE REWARD";
+                    case UnlockSource.WeaponLevel: return "REACH WEAPON LEVEL " + UnlockLevel;
+                    case UnlockSource.Shop: return "RANKED SHOP · " + Price.ToString("N0") + " COINS";
                     default: return "EVENT REWARD";
                 }
             }
@@ -232,14 +238,33 @@ namespace Vamp.Progression
             Simple("xhair_red", "BLOOD RED", CosmeticType.CrosshairStyle, UnlockSource.Level, 8, Red);
             Simple("xhair_steel", "STEEL", CosmeticType.CrosshairStyle, UnlockSource.Level, 27, Steel);
 
+            // Weapon camos: unlocked PER WEAPON by levelling that weapon (kills on real players).
             Simple("skin_default", "FACTORY", CosmeticType.WeaponSkin, UnlockSource.Default, 1, Red);
-            Simple("skin_graphite", "GRAPHITE", CosmeticType.WeaponSkin, UnlockSource.Level, 4, Steel);
-            Simple("skin_bone", "BONE", CosmeticType.WeaponSkin, UnlockSource.Level, 17, White);
-            Simple("skin_bloodsteel", "BLOODSTEEL", CosmeticType.WeaponSkin, UnlockSource.Level, 31, Red);
-            Simple("skin_void", "VOID", CosmeticType.WeaponSkin, UnlockSource.Level, 62, Dark);
-            Camo("camo_toxic", "TOXIC", "Toxic", new Color(0.1f, 1f, 0.1f));
-            Camo("camo_riptide", "RIPTIDE", "Riptide", new Color(0.1f, 0.55f, 1f));
-            Camo("camo_bloodrush", "BLOOD RUSH", "BloodRush", new Color(0.85f, 0.05f, 0.05f));
+            Simple("skin_graphite", "GRAPHITE", CosmeticType.WeaponSkin, UnlockSource.WeaponLevel, 2, Steel);
+            Simple("skin_bone", "BONE", CosmeticType.WeaponSkin, UnlockSource.WeaponLevel, 4, White);
+            Simple("skin_bloodsteel", "BLOODSTEEL", CosmeticType.WeaponSkin, UnlockSource.WeaponLevel, 6, Red);
+            Simple("skin_void", "VOID", CosmeticType.WeaponSkin, UnlockSource.WeaponLevel, 8, Dark);
+            Camo("camo_toxic", "TOXIC", "Toxic", new Color(0.1f, 1f, 0.1f), UnlockSource.WeaponLevel, 10, 0);
+            Camo("camo_riptide", "RIPTIDE", "Riptide", new Color(0.1f, 0.55f, 1f), UnlockSource.WeaponLevel, 14, 0);
+            Camo("camo_bloodrush", "BLOOD RUSH", "BloodRush", new Color(0.85f, 0.05f, 0.05f), UnlockSource.WeaponLevel, 18, 0);
+            // Ranked shop camos (work on every weapon).
+            Camo("camo_voidreaper", "VOID REAPER", "VoidReaper", new Color(0.8f, 0.05f, 0.08f), UnlockSource.Shop, 1, 3950)
+                .Description = "AGGRESSIVE RED AND BLACK FRACTURED SKIN. BUILT TO DOMINATE.";
+            Camo("camo_dragonsvein", "DRAGON'S VEIN", "DragonsVein", new Color(0.95f, 0.2f, 0.05f), UnlockSource.Shop, 1, 3950)
+                .Description = "ANCIENT DRAGON-SCALE PATTERN WITH MOLTEN RED VEINS.";
+
+            // Bullet trails
+            Simple("trail_none", "STANDARD", CosmeticType.WeaponTrail, UnlockSource.Default, 1, White);
+            Simple("trail_ember", "EMBER", CosmeticType.WeaponTrail, UnlockSource.Level, 12, new Color(1f, 0.45f, 0.1f));
+            Shop("trail_phantom", "PHANTOM STRIKE", CosmeticType.WeaponTrail, 2450, new Color(1f, 0.1f, 0.15f),
+                 "CRIMSON PARTICLE TRAIL THAT SHREDS THROUGH THE BATTLEFIELD.");
+            Shop("trail_razor", "RAZOR WHIP", CosmeticType.WeaponTrail, 2450, new Color(1f, 0.2f, 0.3f),
+                 "HIGH-SPEED SLASH TRAIL WITH ELECTRIC CRIMSON SPARKS.");
+            // Shop kill effects
+            Shop("kfx_crimson_eruption", "CRIMSON ERUPTION", CosmeticType.KillEffect, 2950, Red,
+                 "EXPLOSIVE ELIMINATION EFFECT WITH A SHATTERING IMPACT.");
+            Shop("kfx_soul_reap", "SOUL REAP", CosmeticType.KillEffect, 2950, new Color(1f, 0.15f, 0.2f),
+                 "DEMONIC ENERGY BURST THAT CLAIMS EVERY ELIMINATION.");
 
             Simple("char_default", "OPERATIVE", CosmeticType.CharacterSkin, UnlockSource.Default, 1, Steel);
             Simple("char_night", "NIGHT OPS", CosmeticType.CharacterSkin, UnlockSource.Level, 21, Dark);
@@ -269,11 +294,28 @@ namespace Vamp.Progression
             Add(new CosmeticItem { Id = id, Name = name, Type = CosmeticType.Icon, Source = source, UnlockLevel = level, Glyph = glyph, Color = color, Accent = Dark, Shape = shape, Animated = animated });
         }
 
-        /// <summary>Patterned weapon camo (texture in Resources/Camos). Unlocked for everyone.</summary>
-        private static void Camo(string id, string name, string texture, Color color)
+        /// <summary>Patterned weapon camo (texture in Resources/Camos).</summary>
+        private static CosmeticItem Camo(string id, string name, string texture, Color color, UnlockSource source, int level, int price)
         {
-            var item = Simple(id, name, CosmeticType.WeaponSkin, UnlockSource.Default, 1, color);
+            var item = Simple(id, name, CosmeticType.WeaponSkin, source, level, color);
             item.Texture = texture;
+            item.Price = price;
+            return item;
+        }
+
+        private static CosmeticItem Shop(string id, string name, CosmeticType type, int price, Color color, string description)
+        {
+            var item = Simple(id, name, type, UnlockSource.Shop, 1, color);
+            item.Price = price;
+            item.Description = description;
+            return item;
+        }
+
+        /// <summary>Everything sold in the ranked shop.</summary>
+        public static List<CosmeticItem> ShopItems()
+        {
+            Build();
+            return _items.FindAll(i => i.Source == UnlockSource.Shop);
         }
 
         private static CosmeticItem Simple(string id, string name, CosmeticType type, UnlockSource source, int level, Color color)

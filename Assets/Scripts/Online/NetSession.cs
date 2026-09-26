@@ -33,6 +33,10 @@ namespace Vamp.Online
         private readonly NetworkVariable<int> _scoreA = new NetworkVariable<int>(0);
         private readonly NetworkVariable<int> _scoreB = new NetworkVariable<int>(0);
         private readonly NetworkVariable<FixedString64Bytes> _winner = new NetworkVariable<FixedString64Bytes>();
+        private readonly NetworkVariable<FixedString64Bytes> _status = new NetworkVariable<FixedString64Bytes>();
+
+        /// <summary>Member ids at or above this are bots (quick match backfill).</summary>
+        public const ulong BotIdBase = 1UL << 40;
         private NetworkList<NetMember> _members;
 
         private MatchConfig _cfg;
@@ -46,6 +50,15 @@ namespace Vamp.Online
         public string LobbyName { get { return _lobbyName.Value.ToString(); } }
         public string Code { get { return _code.Value.ToString(); } }
         public string Winner { get { return _winner.Value.ToString(); } }
+        /// <summary>Host status for everyone in the lobby ("SEARCHING FOR PLAYERS 3/8").</summary>
+        public string Status { get { return _status.Value.ToString(); } }
+
+        public void ServerSetStatus(string status)
+        {
+            if (!IsServer) return;
+            var v = new FixedString64Bytes(Trim(status ?? "", 60));
+            if (!_status.Value.Equals(v)) _status.Value = v;
+        }
         public int[] TeamScores { get { return new[] { _scoreA.Value, _scoreB.Value }; } }
         public double StartTime { get { return _startTime.Value; } }
 
@@ -94,6 +107,7 @@ namespace Vamp.Online
             _scoreA.OnValueChanged += (a, b) => Raise();
             _scoreB.OnValueChanged += (a, b) => Raise();
             _winner.OnValueChanged += (a, b) => Raise();
+            _status.OnValueChanged += (a, b) => Raise();
             _members.OnListChanged += e => Raise();
             SceneManager.sceneLoaded += OnUnitySceneLoaded;
             if (IsServer)
@@ -125,6 +139,7 @@ namespace Vamp.Online
         private void OnStateChanged(byte previous, byte current)
         {
             Raise();
+            if ((NetState)current == NetState.Loading && (NetState)previous == NetState.Lobby) NetMatchTally.Reset();
             if ((NetState)current == NetState.PostMatch)
             {
                 InputController.SetCursorLocked(false);
@@ -151,11 +166,14 @@ namespace Vamp.Online
                         Level = m.Level,
                         Team = m.Team,
                         Ready = m.Ready,
-                        IsHost = m.ClientId == NetworkManager.ServerClientId,
-                        IsLocal = m.ClientId == local,
+                        IsHost = !m.Bot && m.ClientId == NetworkManager.ServerClientId,
+                        IsLocal = !m.Bot && m.ClientId == local,
                         Kills = m.Kills,
                         Deaths = m.Deaths,
-                        Score = m.Kills * 100
+                        Score = m.Kills * 100,
+                        IsBot = m.Bot,
+                        Matched = m.Matched,
+                        HumanKills = m.HumanKills
                     });
                 }
                 return _views;
@@ -199,7 +217,7 @@ namespace Vamp.Online
             else BalanceTeams(false);
         }
 
-        public void ServerAddMember(ulong clientId, string name, int level)
+        public void ServerAddMember(ulong clientId, string name, int level, bool matched = false)
         {
             if (!IsServer) return;
             for (int i = 0; i < _members.Count; i++) if (_members[i].ClientId == clientId) return;
@@ -209,10 +227,55 @@ namespace Vamp.Online
                 Name = new FixedString32Bytes(Trim(string.IsNullOrEmpty(name) ? "PLAYER" : name, 28)),
                 Level = Mathf.Clamp(level, 1, 999),
                 Team = -1,
-                Ready = clientId == NetworkManager.ServerClientId
+                Ready = clientId == NetworkManager.ServerClientId || matched,
+                Matched = matched
             });
             if (Config.IsTeamMode) BalanceTeams(false);
             Notice("PLAYER JOINED", name);
+        }
+
+        /// <summary>Real players currently in the lobby.</summary>
+        public int HumanCount
+        {
+            get { int n = 0; foreach (var m in _members) if (!m.Bot) n++; return n; }
+        }
+
+        /// <summary>Real players who are NOT from matchmaking (the host's party).</summary>
+        public int PartyCount
+        {
+            get { int n = 0; foreach (var m in _members) if (!m.Bot && !m.Matched) n++; return n; }
+        }
+
+        /// <summary>Newest matchmaking joiners first (ranked: the odd one out is sent back to the queue).</summary>
+        public List<ulong> MatchedNewestFirst()
+        {
+            var l = new List<ulong>();
+            for (int i = _members.Count - 1; i >= 0; i--) if (!_members[i].Bot && _members[i].Matched) l.Add(_members[i].ClientId);
+            return l;
+        }
+
+        private void ServerRemoveBots()
+        {
+            for (int i = _members.Count - 1; i >= 0; i--) if (_members[i].Bot) _members.RemoveAt(i);
+        }
+
+        /// <summary>Quick match / ranked teams: the party stays together, then matched players, then bots fill the smaller team.</summary>
+        private void AutoTeams(int cap)
+        {
+            int a = 0, b = 0;
+            for (int pass = 0; pass < 3; pass++)
+            {
+                for (int i = 0; i < _members.Count; i++)
+                {
+                    var m = _members[i];
+                    int group = m.Bot ? 2 : m.Matched ? 1 : 0;
+                    if (group != pass) continue;
+                    if (pass == 0) m.Team = a < cap ? 0 : 1;
+                    else m.Team = a <= b ? (a < cap ? 0 : 1) : (b < cap ? 1 : 0);
+                    if (m.Team == 0) a++; else b++;
+                    _members[i] = m;
+                }
+            }
         }
 
         private void OnClientDisconnected(ulong clientId)
@@ -283,8 +346,28 @@ namespace Vamp.Online
             var cfg = Config;
             var map = MapCatalog.Get(cfg.mapId);
             if (map == null) return;
-            if (cfg.IsTeamMode) BalanceTeams(false);
-            for (int i = 0; i < _members.Count; i++) { var m = _members[i]; m.Kills = 0; m.Deaths = 0; _members[i] = m; }
+            // Quick match backfill: bots join as members (they get spawned with the map).
+            ServerRemoveBots();
+            int bots = cfg.playlist == Playlist.Ranked ? 0 : Mathf.Clamp(cfg.bots, 0, 11);
+            for (int i = 0; i < bots; i++)
+            {
+                _members.Add(new NetMember
+                {
+                    ClientId = BotIdBase + (ulong)i,
+                    Name = new FixedString32Bytes(Bots.BotFactory.NameFor(i)),
+                    Level = UnityEngine.Random.Range(3, 80),
+                    Team = -1,
+                    Ready = true,
+                    Bot = true
+                });
+            }
+            if (cfg.IsTeamMode)
+            {
+                if (cfg.playlist == Playlist.Custom) BalanceTeams(false);
+                else AutoTeams(cfg.teamSize > 0 ? cfg.teamSize : Mathf.CeilToInt(Mathf.Max(2, cfg.maxPlayers) / 2f));
+            }
+            else for (int i = 0; i < _members.Count; i++) { var m = _members[i]; m.Team = -1; _members[i] = m; }
+            for (int i = 0; i < _members.Count; i++) { var m = _members[i]; m.Kills = 0; m.Deaths = 0; m.HumanKills = 0; _members[i] = m; }
             _scoreA.Value = 0;
             _scoreB.Value = 0;
             _winner.Value = default(FixedString64Bytes);
@@ -322,9 +405,54 @@ namespace Vamp.Online
             }
             foreach (var id in timedOut) NetworkManager.DisconnectClient(id);
 
+            // Bots (host runs their AI on a runtime-baked NavMesh).
+            SpawnBots(taken);
+
             _startTime.Value = NetworkManager.ServerTime.Time;
             _endTime.Value = Config.timeLimitMinutes > 0f ? NetworkManager.ServerTime.Time + Config.timeLimitMinutes * 60.0 : -1;
             _state.Value = (byte)NetState.InMatch;
+        }
+
+        private void SpawnBots(List<Vector3> taken)
+        {
+            bool any = false;
+            foreach (var m in _members) if (m.Bot) any = true;
+            Bots.BotController.RoamPoints.Clear();
+            foreach (var sp in FindObjectsByType<SpawnPoint>()) Bots.BotController.RoamPoints.Add(sp.transform.position);
+            if (!any) return;
+            var prefab = OnlineBootstrap.BotPrefab;
+            if (prefab == null) { Debug.LogError("[VAMP] Online: Resources/VampNetBot prefab missing (VAMP ▸ Build Online Prefabs)."); return; }
+            MatchController.BuildNavMesh();
+            var cfg = Config;
+            foreach (var m in _members)
+            {
+                if (!m.Bot) continue;
+                var spawn = NetSpawns.Choose(cfg.IsTeamMode ? m.Team : -1, taken);
+                taken.Add(spawn.Position);
+                var go = Instantiate(prefab, spawn.Position, Quaternion.Euler(0f, spawn.Yaw, 0f));
+                var bot = go.GetComponent<NetBot>();
+                bot.SetupMember = m.ClientId;
+                bot.SetupName = m.Name.ToString();
+                bot.SetupTeam = m.Team;
+                bot.SetupLevel = m.Level;
+                bot.SetupDifficulty = cfg.botDifficulty;
+                bot.SetupWeapon = BotWeapon(cfg);
+                go.GetComponent<NetworkObject>().Spawn(true);
+            }
+            Bots.BotController.Active = true;
+        }
+
+        private static Weapons.WeaponData BotWeapon(MatchConfig cfg)
+        {
+            var cat = Game.Weapons;
+            if (cat == null) return null;
+            var options = new List<Weapons.WeaponData>();
+            foreach (var id in new[] { "havoc", "ripper", "brute", "v9", "arc", "widow", "reaper" })
+            {
+                var w = cat.Get(id);
+                if (w != null && !cfg.restrictedWeapons.Contains(w.id)) options.Add(w);
+            }
+            return options.Count > 0 ? options[UnityEngine.Random.Range(0, options.Count)] : null;
         }
 
         private void Update()
@@ -345,7 +473,11 @@ namespace Vamp.Online
             {
                 var m = _members[i];
                 if (m.ClientId == victim) m.Deaths++;
-                if (m.ClientId == killer && !suicide) m.Kills += teamKill ? -1 : 1;
+                if (m.ClientId == killer && !suicide)
+                {
+                    m.Kills += teamKill ? -1 : 1;
+                    if (!teamKill && victim < BotIdBase) m.HumanKills++; // kills on real players only (XP / coins)
+                }
                 _members[i] = m;
             }
             if (cfg.IsTeamMode && !suicide && !teamKill)
@@ -380,11 +512,16 @@ namespace Vamp.Online
             }
             _winner.Value = new FixedString64Bytes(Trim(winner, 60));
             _state.Value = (byte)NetState.PostMatch;
+            Bots.BotController.Active = false;
         }
 
         public void ServerReturnToLobby()
         {
             if (!IsServer || (State != NetState.PostMatch && State != NetState.InMatch)) return;
+            Bots.BotController.Active = false;
+            ServerRemoveBots();
+            // Players from matchmaking go back to the menu; the host's party stays together.
+            foreach (var id in MatchedNewestFirst()) NetworkManager.DisconnectClient(id, "MATCH OVER");
             for (int i = 0; i < _members.Count; i++) { var m = _members[i]; m.Ready = m.ClientId == NetworkManager.ServerClientId; _members[i] = m; }
             _state.Value = (byte)NetState.Loading;
             NetworkManager.SceneManager.LoadScene(MapCatalog.MainMenuScene, LoadSceneMode.Single);
@@ -410,7 +547,8 @@ namespace Vamp.Online
             pause.LeaveOverride = () =>
             {
                 if (Game.Online == null) return;
-                if (Game.Online.IsHost) Game.Online.ReturnToLobby();
+                // A party (friends who joined the host) goes back to its lobby; matchmaking games just end for you.
+                if (Game.Online.IsHost && PartyCount > 1) Game.Online.ReturnToLobby();
                 else Game.Online.Leave();
             };
             root.AddComponent<NetMatchUI>();

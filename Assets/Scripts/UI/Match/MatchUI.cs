@@ -289,6 +289,7 @@ namespace Vamp.UI
         {
             var col = Frame("MATCH COMPLETE", o.Title + "  ·  " + o.Subtitle);
             UIKit.Size(UIKit.Label(col, o.Title, 40, o.Won ? UIKit.Red : UIKit.Text), 50f);
+            if (o.Xp == null) UIKit.Caption(col, "NO XP IN CUSTOM / PRIVATE / BOT MATCHES - PLAY QUICK MATCH OR RANKED ONLINE TO LEVEL UP", 13);
             var head = UIKit.Row(col, 26f, 10f);
             foreach (var h in new[] { "#", "PLAYER", "KILLS", "DEATHS", "SCORE", "XP" })
                 UIKit.Size(UIKit.Label(head, h, 13, UIKit.TextDim), -1, h == "PLAYER" ? 420f : 120f);
