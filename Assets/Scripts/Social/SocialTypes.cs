@@ -82,6 +82,8 @@ namespace Vamp.Social
     public interface ISocialService
     {
         bool IsOnline { get; }
+        /// <summary>The name other players type to add you (online: "Name#1234"). Empty offline.</summary>
+        string FriendTag { get; }
         PresenceStatus Status { get; }
         IReadOnlyList<FriendInfo> Friends { get; }
         IReadOnlyList<FriendRequestInfo> Requests { get; }

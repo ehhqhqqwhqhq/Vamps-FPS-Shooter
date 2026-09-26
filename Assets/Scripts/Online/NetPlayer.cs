@@ -175,7 +175,7 @@ namespace Vamp.Online
         private static void AddAllowed(List<WeaponData> list, WeaponCatalog cat, string wanted, WeaponSlot slot, MatchConfig cfg)
         {
             var w = cat.Get(wanted);
-            if (w != null && w.slot == slot && !cfg.restrictedWeapons.Contains(w.id)) { list.Add(w); return; }
+            if (w != null && WeaponCatalog.FitsLoadoutSlot(w, slot) && !cfg.restrictedWeapons.Contains(w.id) && !list.Contains(w)) { list.Add(w); return; }
             foreach (var x in cat.weapons)
                 if (x != null && x.slot == slot && !cfg.restrictedWeapons.Contains(x.id)) { list.Add(x); return; }
         }

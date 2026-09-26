@@ -16,6 +16,7 @@ namespace Vamp.UI.Menus
         private readonly RectTransform _party;
         private readonly RectTransform _friends;
         private readonly Text _requestsBadge;
+        private readonly Text _mode;
         private readonly OptionSelector _status;
         private readonly MenuController _menu;
 
@@ -36,8 +37,8 @@ namespace Vamp.UI.Menus
             var head = UIKit.Row(_root, 30f, 8f);
             UIKit.Label(head, "SOCIAL", 20, UIKit.Text, TextAnchor.MiddleLeft);
             UIKit.Spacer(head, 0f, true);
-            var offline = UIKit.Label(head, "OFFLINE MODE", 12, UIKit.Red, TextAnchor.MiddleRight);
-            UIKit.Size(offline, -1, 110f);
+            _mode = UIKit.Label(head, "OFFLINE MODE", 12, UIKit.Red, TextAnchor.MiddleRight);
+            UIKit.Size(_mode, -1, 110f);
 
             _status = UIKit.Selector(_root, "STATUS", StatusNames, 0, i =>
             {
@@ -113,13 +114,18 @@ namespace Vamp.UI.Menus
             UIKit.Clear(_friends);
             var social = Game.Social;
             if (social == null) return;
+            if (_mode != null)
+            {
+                _mode.text = social.IsOnline ? "ONLINE" : "OFFLINE MODE";
+                _mode.color = social.IsOnline ? UIKit.Good : UIKit.Red;
+            }
             int pending = social.PendingRequestCount;
             _requestsBadge.text = pending > 0 ? pending + " REQUEST" + (pending > 1 ? "S" : "") : "";
 
             if (social.Friends.Count == 0)
             {
-                var msg = UIKit.Label(_friends, social.IsOnline ? "NO FRIENDS YET.\nUSE ADD FRIEND TO SEARCH BY USERNAME."
-                                                                : "FRIENDS, PARTIES AND INVITES NEED ONLINE SERVICES, WHICH AREN'T CONNECTED IN THIS BUILD.",
+                var msg = UIKit.Label(_friends, social.IsOnline ? "NO FRIENDS YET.\nADD FRIEND ▸ TYPE THEIR TAG (NAME#1234)."
+                                                                : "CONNECTING TO ONLINE SERVICES...\nFRIENDS NEED AN INTERNET CONNECTION.",
                     13, UIKit.TextFaint, TextAnchor.UpperLeft, FontStyle.Normal);
                 UIKit.Size(msg, 70f);
                 return;

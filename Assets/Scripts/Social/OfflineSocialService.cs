@@ -19,6 +19,7 @@ namespace Vamp.Social
         private string _accountId;
 
         public bool IsOnline { get { return false; } }
+        public string FriendTag { get { return ""; } }
         public PresenceStatus Status { get { return _data.status; } }
         public IReadOnlyList<FriendInfo> Friends { get { return _data.friends; } }
         public IReadOnlyList<FriendRequestInfo> Requests { get { return _data.requests; } }

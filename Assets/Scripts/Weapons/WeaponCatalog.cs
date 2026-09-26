@@ -37,6 +37,22 @@ namespace Vamp.Weapons
             return weapons.FindAll(w => w != null && w.slot == slot);
         }
 
+        /// <summary>
+        /// Loadout rule: ANY gun can go in the primary or the secondary slot (pistols, snipers, launchers...);
+        /// the melee slot only takes melee weapons.
+        /// </summary>
+        public static bool FitsLoadoutSlot(WeaponData w, WeaponSlot slot)
+        {
+            if (w == null) return false;
+            bool melee = w.delivery == DeliveryType.Melee || w.slot == WeaponSlot.Melee;
+            return slot == WeaponSlot.Melee ? melee : !melee;
+        }
+
+        public List<WeaponData> ForLoadoutSlot(WeaponSlot slot)
+        {
+            return weapons.FindAll(w => FitsLoadoutSlot(w, slot));
+        }
+
         public string DisplayName(string id)
         {
             var w = Get(id);

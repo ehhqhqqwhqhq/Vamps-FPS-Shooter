@@ -91,11 +91,17 @@ namespace Vamp.Customization
         {
             if (P == null) return false;
             var data = Core.Game.Weapons != null ? Core.Game.Weapons.Get(weaponId) : null;
-            if (data == null || data.slot != slot) return false;
+            if (data == null || !Weapons.WeaponCatalog.FitsLoadoutSlot(data, slot)) return false;
             switch (slot)
             {
-                case Weapons.WeaponSlot.Primary: P.loadout.primary = weaponId; break;
-                case Weapons.WeaponSlot.Secondary: P.loadout.secondary = weaponId; break;
+                case Weapons.WeaponSlot.Primary:
+                    if (P.loadout.secondary == weaponId) P.loadout.secondary = P.loadout.primary; // same gun twice → swap
+                    P.loadout.primary = weaponId;
+                    break;
+                case Weapons.WeaponSlot.Secondary:
+                    if (P.loadout.primary == weaponId) P.loadout.primary = P.loadout.secondary;
+                    P.loadout.secondary = weaponId;
+                    break;
                 default: P.loadout.melee = weaponId; break;
             }
             Commit();

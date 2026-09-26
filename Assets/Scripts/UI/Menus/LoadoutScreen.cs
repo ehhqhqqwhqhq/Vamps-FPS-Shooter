@@ -19,7 +19,7 @@ namespace Vamp.UI.Menus
 
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "LOADOUT", "WEAPONS ARE NEVER LOCKED BEHIND PROGRESSION · SKINS ARE COSMETIC", 1100f);
+            var col = Page(root, "LOADOUT", "ANY GUN CAN BE YOUR PRIMARY OR SECONDARY · NOTHING IS LOCKED · SKINS ARE COSMETIC", 1100f);
             _tabs = UIKit.Tabs(col, SlotNames, 0, i => { _slot = i; Refresh(); });
             var body = UIKit.Row(col, 520f, 24f, "Body");
             ScrollRect scroll;
@@ -44,7 +44,7 @@ namespace Vamp.UI.Menus
             if (Game.Weapons == null || Game.Progression == null || !Game.Progression.IsLoaded) return;
             var slot = (WeaponSlot)_slot;
             string eq = Equipped();
-            foreach (var w in Game.Weapons.InSlot(slot))
+            foreach (var w in Game.Weapons.ForLoadoutSlot(slot))
             {
                 var data = w;
                 bool isEq = data.id == eq;

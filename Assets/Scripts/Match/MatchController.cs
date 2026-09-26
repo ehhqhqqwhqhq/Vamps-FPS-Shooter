@@ -257,7 +257,7 @@ namespace Vamp.Match
             var cat = Game.Weapons;
             if (cat == null) return null;
             var w = cat.Get(id);
-            if (w != null && w.slot == slot && Allowed(w)) return w;
+            if (w != null && WeaponCatalog.FitsLoadoutSlot(w, slot) && Allowed(w)) return w;
             foreach (var x in cat.InSlot(slot)) if (Allowed(x)) return x;
             return null;
         }

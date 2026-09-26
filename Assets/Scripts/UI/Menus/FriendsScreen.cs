@@ -21,7 +21,7 @@ namespace Vamp.UI.Menus
 
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "FRIENDS", Game.Social != null && Game.Social.IsOnline ? null : "OFFLINE BUILD · ONLINE SOCIAL FEATURES ARE NOT CONNECTED", 1000f);
+            var col = Page(root, "FRIENDS", Game.Social != null && Game.Social.IsOnline ? "YOUR TAG: " + Game.Social.FriendTag : "NOT CONNECTED TO ONLINE SERVICES", 1000f);
             UIKit.Tabs(col, TabNames, _tab, i => { _tab = i; Refresh(); }, 15);
             ScrollRect scroll;
             _content = UIKit.ScrollList(col, out scroll, 6f);
@@ -49,7 +49,7 @@ namespace Vamp.UI.Menus
             switch (_tab)
             {
                 case 0:
-                    if (s.Friends.Count == 0) Empty("NO FRIENDS YET. USE ADD FRIEND TO SEARCH BY USERNAME.");
+                    if (s.Friends.Count == 0) Empty(s.IsOnline ? "NO FRIENDS YET. USE ADD FRIEND AND TYPE A FRIEND TAG (NAME#1234)." : "NO FRIENDS YET.");
                     foreach (var f in s.Friends) FriendRow(f);
                     break;
                 case 1:
@@ -124,9 +124,21 @@ namespace Vamp.UI.Menus
         private void AddFriend()
         {
             UIKit.Heading(_content, "ADD FRIEND", 30);
-            UIKit.Caption(_content, "SEARCH BY EXACT USERNAME. ONLY PUBLIC PROFILE INFORMATION IS EVER SHOWN.", 13);
+            var s = Game.Social;
+            if (s != null && s.IsOnline && !string.IsNullOrEmpty(s.FriendTag))
+            {
+                var tagRow = UIKit.Row(_content, 40f, 10f);
+                var tag = UIKit.Label(tagRow, "YOUR FRIEND TAG:  <color=#C8102E>" + s.FriendTag + "</color>", 20, UIKit.Text);
+                tag.supportRichText = true;
+                UIKit.Size(tag, -1, -1, 1f);
+                string t = s.FriendTag;
+                var copy = UIKit.Button(tagRow, "COPY", () => { GUIUtility.systemCopyBuffer = t; Toast("COPIED", t); }, UIKit.ButtonStyle.Box, 14, 36f);
+                UIKit.Size(copy, 36f, 110f);
+                UIKit.Caption(_content, "SHARE YOUR TAG. TO ADD SOMEONE, TYPE THEIR FULL TAG INCLUDING THE # NUMBER (E.G. VAMPP#1234).", 13);
+            }
+            else UIKit.Caption(_content, "SEARCH BY EXACT USERNAME. ONLY PUBLIC PROFILE INFORMATION IS EVER SHOWN.", 13);
             var row = UIKit.Row(_content, 46f, 10f);
-            var field = UIKit.Input(row, "Search username...", false, 16);
+            var field = UIKit.Input(row, s != null && s.IsOnline ? "Friend tag, e.g. Name#1234" : "Search username...", false, 40);
             UIKit.Size(field, 46f, -1, 1f);
             var results = UIKit.Column(_content, 6f, "Results");
             System.Action search = () =>

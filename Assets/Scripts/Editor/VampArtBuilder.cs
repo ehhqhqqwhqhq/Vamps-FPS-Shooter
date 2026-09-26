@@ -38,6 +38,7 @@ namespace Vamp.EditorTools
         /// <summary>Manual corrections if the automatic orientation guesses wrong: (flip front/back, flip upside down).</summary>
         private static readonly Dictionary<string, (bool flipZ, bool flipY)> Fixes = new Dictionary<string, (bool, bool)>
         {
+            { "AWP", (false, true) }, // long stock + low bipod fool the auto-detection: it came out upside down
         };
 
         /// <summary>Which model each VAMP weapon uses (weapon id → model file). BLAST and BLADE keep generated models.</summary>

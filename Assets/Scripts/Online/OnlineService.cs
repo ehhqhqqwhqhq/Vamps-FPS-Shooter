@@ -100,7 +100,7 @@ namespace Vamp.Online
 
         // ------------------------------------------------------------------ Sign in (anonymous, per local account)
 
-        private static async Task SignIn()
+        internal static async Task SignIn()
         {
             if (UnityServices.State != ServicesInitializationState.Initialized) await UnityServices.InitializeAsync();
             if (AuthenticationService.Instance.IsSignedIn) return;

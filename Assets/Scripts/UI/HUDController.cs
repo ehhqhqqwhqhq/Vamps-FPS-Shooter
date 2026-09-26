@@ -57,7 +57,7 @@ namespace Vamp.UI
         private WeaponData _lastWeapon;
         private MovementState _lastState = (MovementState)(-1);
 
-        private const float HealthBarWidth = 260f;
+        private const float HealthBarWidth = 180f;
         private const float SpeedBarWidth = 220f;
         private const float ReloadBarWidth = 60f;
 
@@ -151,14 +151,12 @@ namespace Vamp.UI
             _death = UIFactory.Label("Death", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 120f), new Vector2(1100f, 120f), 34, TextAnchor.MiddleCenter, R);
             _death.gameObject.SetActive(false);
 
-            // BOTTOM LEFT - health / armor
-            UIFactory.Box("HealthPanel", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(28f, 28f), new Vector2(300f, 104f), UIFactory.DarkGray);
-            UIFactory.Box("HealthAccent", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(28f, 28f), new Vector2(3f, 104f), R);
-            _health = UIFactory.Label("Health", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(48f, 64f), new Vector2(140f, 56f), 52, TextAnchor.LowerLeft, W);
-            UIFactory.Label("HPLabel", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(156f, 70f), new Vector2(40f, 20f), 16, TextAnchor.LowerLeft, UIFactory.DimWhite).text = "HP";
-            _armor = UIFactory.Label("Armor", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(200f, 70f), new Vector2(110f, 20f), 16, TextAnchor.LowerLeft, UIFactory.DimWhite);
-            _healthFill = UIFactory.Bar("HealthBar", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(48f, 48f), new Vector2(HealthBarWidth, 6f), W);
-            _armorFill = UIFactory.Bar("ArmorBar", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(48f, 38f), new Vector2(HealthBarWidth, 3f), new Color(0.6f, 0.75f, 1f, 1f));
+            // BOTTOM LEFT - health / armor (compact, no panel - text shadow keeps it readable on bright maps)
+            _health = Shadowed(UIFactory.Label("Health", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 44f), new Vector2(90f, 40f), 36, TextAnchor.LowerLeft, W));
+            Shadowed(UIFactory.Label("HPLabel", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(104f, 48f), new Vector2(30f, 16f), 12, TextAnchor.LowerLeft, UIFactory.DimWhite)).text = "HP";
+            _armor = Shadowed(UIFactory.Label("Armor", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(132f, 48f), new Vector2(90f, 16f), 12, TextAnchor.LowerLeft, UIFactory.DimWhite));
+            _healthFill = UIFactory.Bar("HealthBar", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 36f), new Vector2(HealthBarWidth, 4f), W);
+            _armorFill = UIFactory.Bar("ArmorBar", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 29f), new Vector2(HealthBarWidth, 2f), new Color(0.6f, 0.75f, 1f, 1f));
 
             // BOTTOM CENTER - speed + dash
             _speed = UIFactory.Label("Speed", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 58f), new Vector2(240f, 40f), 34, TextAnchor.LowerCenter, W);
@@ -166,13 +164,11 @@ namespace Vamp.UI
             _state = UIFactory.Label("State", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 98f), new Vector2(240f, 20f), 14, TextAnchor.LowerCenter, UIFactory.DimWhite);
             _speedFill = UIFactory.Bar("SpeedBar", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 48f), new Vector2(SpeedBarWidth, 4f), R);
 
-            // BOTTOM RIGHT - weapon / ammo / heat
-            UIFactory.Box("AmmoPanel", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-28f, 28f), new Vector2(300f, 104f), UIFactory.DarkGray);
-            UIFactory.Box("AmmoAccent", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-28f, 28f), new Vector2(3f, 104f), R);
-            _ammo = UIFactory.Label("Ammo", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-48f, 44f), new Vector2(260f, 56f), 48, TextAnchor.LowerRight, W);
+            // BOTTOM RIGHT - weapon / ammo / heat (compact, no panel)
+            _ammo = Shadowed(UIFactory.Label("Ammo", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-32f, 36f), new Vector2(220f, 42f), 34, TextAnchor.LowerRight, W));
             _ammo.supportRichText = true;
-            _weaponName = UIFactory.Label("Weapon", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-48f, 100f), new Vector2(260f, 24f), 18, TextAnchor.LowerRight, UIFactory.DimWhite);
-            _heatFill = UIFactory.Bar("Heat", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-48f, 38f), new Vector2(200f, 4f), new Color(1f, 0.5f, 0.1f));
+            _weaponName = Shadowed(UIFactory.Label("Weapon", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-32f, 78f), new Vector2(220f, 18f), 13, TextAnchor.LowerRight, UIFactory.DimWhite));
+            _heatFill = UIFactory.Bar("Heat", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-32f, 29f), new Vector2(160f, 3f), new Color(1f, 0.5f, 0.1f));
             _heatFill.transform.parent.gameObject.SetActive(false);
 
             _hint = UIFactory.Label("Hint", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(1100f, 20f), 13, TextAnchor.LowerCenter, new Color(1f, 1f, 1f, 0.35f), FontStyle.Normal);
@@ -188,30 +184,79 @@ namespace Vamp.UI
             }
         }
 
+        private static Text Shadowed(Text t)
+        {
+            var sh = t.gameObject.AddComponent<Shadow>();
+            sh.effectColor = new Color(0f, 0f, 0f, 0.75f);
+            sh.effectDistance = new Vector2(1.5f, -1.5f);
+            return t;
+        }
+
+        private static Texture2D _scopeTex;
+
+        /// <summary>Round sniper scope: circular lens (screen-height sized), black outside, thick posts + fine centre cross.</summary>
         private static void BuildScope(RectTransform root)
         {
-            // Simple scope: dark vignette bars + thin cross lines.
-            var left = UIKit.Image(root, "L", Color.black);
-            left.rectTransform.anchorMin = new Vector2(0f, 0f); left.rectTransform.anchorMax = new Vector2(0.28f, 1f);
-            left.rectTransform.offsetMin = left.rectTransform.offsetMax = Vector2.zero;
-            var right = UIKit.Image(root, "R", Color.black);
-            right.rectTransform.anchorMin = new Vector2(0.72f, 0f); right.rectTransform.anchorMax = new Vector2(1f, 1f);
-            right.rectTransform.offsetMin = right.rectTransform.offsetMax = Vector2.zero;
-            var ring = UIKit.Image(root, "Ring", new Color(0f, 0f, 0f, 0f));
-            ring.rectTransform.anchorMin = ring.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            ring.rectTransform.sizeDelta = new Vector2(820f, 820f);
-            var ol = ring.gameObject.AddComponent<Outline>();
-            ol.effectColor = Color.black;
-            ol.effectDistance = new Vector2(6f, -6f);
-            var h = UIKit.Image(root, "H", new Color(0f, 0f, 0f, 0.85f));
-            h.rectTransform.anchorMin = new Vector2(0.28f, 0.5f); h.rectTransform.anchorMax = new Vector2(0.72f, 0.5f);
-            h.rectTransform.sizeDelta = new Vector2(0f, 2f);
-            var v = UIKit.Image(root, "V", new Color(0f, 0f, 0f, 0.85f));
-            v.rectTransform.anchorMin = new Vector2(0.5f, 0f); v.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            v.rectTransform.sizeDelta = new Vector2(2f, 0f);
-            var dot = UIKit.Image(root, "Dot", new Color(0.9f, 0.05f, 0.1f, 1f));
+            var lens = UIKit.Node("Lens", root);
+            lens.anchorMin = new Vector2(0.5f, 0f);
+            lens.anchorMax = new Vector2(0.5f, 1f);
+            lens.pivot = new Vector2(0.5f, 0.5f);
+            lens.sizeDelta = Vector2.zero;
+            var fit = lens.gameObject.AddComponent<AspectRatioFitter>();
+            fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+            fit.aspectRatio = 1f;
+            var img = lens.gameObject.AddComponent<RawImage>();
+            img.texture = ScopeTexture();
+            img.raycastTarget = false;
+
+            // Black out everything left and right of the lens.
+            foreach (float side in new[] { -1f, 1f })
+            {
+                var bar = UIKit.Image(lens, side < 0f ? "Left" : "Right", Color.black);
+                var rt = bar.rectTransform;
+                rt.anchorMin = new Vector2(side < 0f ? 0f : 1f, 0f);
+                rt.anchorMax = new Vector2(side < 0f ? 0f : 1f, 1f);
+                rt.pivot = new Vector2(side < 0f ? 1f : 0f, 0.5f);
+                rt.sizeDelta = new Vector2(6000f, 0f);
+                rt.anchoredPosition = new Vector2(side * 0.5f, 0f);
+            }
+            var dot = UIKit.Image(root, "Dot", new Color(0.95f, 0.05f, 0.1f, 1f));
             dot.rectTransform.anchorMin = dot.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             dot.rectTransform.sizeDelta = new Vector2(4f, 4f);
+        }
+
+        private static Texture2D ScopeTexture()
+        {
+            if (_scopeTex != null) return _scopeTex;
+            const int n = 1024;
+            _scopeTex = new Texture2D(n, n, TextureFormat.RGBA32, false) { name = "VampScope", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[n * n];
+            float c = (n - 1) * 0.5f, r = n * 0.5f - 2f;
+            for (int y = 0; y < n; y++)
+            {
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = x - c, dy = y - c;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy) / r;           // 0 centre → 1 rim
+                    float a;
+                    if (d >= 1f) a = 1f;                                     // outside the lens: black
+                    else
+                    {
+                        a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.86f, 1f, d)) * 0.95f; // dark rim / vignette
+                        float ax = Mathf.Abs(dx), ay = Mathf.Abs(dy);
+                        bool post = d > 0.32f;                               // thick posts toward the edge
+                        float w = post ? n * 0.006f : n * 0.0011f;
+                        if ((ax < w && (post || ay < r)) || (ay < w && (post || ax < r))) a = Mathf.Max(a, post ? 1f : 0.9f);
+                        // small range marks on the fine cross
+                        if (!post && ax < n * 0.006f && Mathf.Abs(ay % (n * 0.04f)) < 1.2f && ay > 4f) a = Mathf.Max(a, 0.85f);
+                        if (!post && ay < n * 0.006f && Mathf.Abs(ax % (n * 0.04f)) < 1.2f && ax > 4f) a = Mathf.Max(a, 0.85f);
+                    }
+                    px[y * n + x] = new Color32(0, 0, 0, (byte)(Mathf.Clamp01(a) * 255f));
+                }
+            }
+            _scopeTex.SetPixels32(px);
+            _scopeTex.Apply(false, true);
+            return _scopeTex;
         }
 
         // ------------------------------------------------------------------ Events
@@ -368,7 +413,7 @@ namespace Vamp.UI
             }
             if (w.Current.usesHeat)
             {
-                UIFactory.SetFill(_heatFill, 200f, w.Heat);
+                UIFactory.SetFill(_heatFill, 160f, w.Heat);
                 _heatFill.color = w.Overheated ? UIFactory.DeepRed : new Color(1f, 0.5f + 0.5f * (1f - w.Heat), 0.1f);
                 string heat = w.Overheated ? "<color=#C8102E>OVERHEAT</color>" : Mathf.RoundToInt(w.Heat * 100f) + "<size=26>%</size>";
                 if (_ammo.text != heat) _ammo.text = heat;
