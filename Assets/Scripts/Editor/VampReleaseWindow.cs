@@ -254,7 +254,8 @@ namespace Vamp.EditorTools
             File.WriteAllText(Path.Combine(LauncherDir, "launcher.json"), json);
             File.WriteAllText(Path.Combine(LauncherDir, "README.txt"),
                 "VAMP\r\n\r\nRun \"VAMP Launcher.exe\". It downloads the latest VAMP into the Game folder and keeps it updated.\r\n" +
-                "Keep launcher.json next to the launcher.\r\n");
+                "Keep launcher.json next to the launcher.\r\n\r\n" +
+                "Credits: \"FPS Butterfly Knife\" by BURNER (sketchfab.com/3d-models/fps-butterfly-knife-fc1dcc17f9434540a7165255dfa7f66a), CC BY 4.0.\r\n");
             string zip = Path.Combine(BuildsDir, LauncherZip);
             if (File.Exists(zip)) File.Delete(zip);
             // Zip only the launcher files (not a downloaded Game folder).
@@ -349,7 +350,11 @@ namespace Vamp.EditorTools
             "## Develop\n1. Open this folder in Unity 6000.6.3f1 (Unity Hub ▸ Add ▸ this folder).\n" +
             "2. Import **[Free] Modern Combat Knife** (Asset Store, free) from Package Manager ▸ My Assets, then run **VAMP ▸ Build All Scenes**, open `Assets/Scenes/Boot/Boot.unity` and press Play.\n" +
             "3. Ship updates with **VAMP ▸ Release** (builds the .exe and publishes a GitHub release that launchers download).\n\n" +
-            "Online custom lobbies use Unity Relay / Multiplayer Services (link the project to your Unity Cloud project).\n";
+            "Online custom lobbies use Unity Relay / Multiplayer Services (link the project to your Unity Cloud project).\n\n" +
+            "## Credits\n" +
+            "- \"FPS Butterfly Knife\" by BURNER (https://sketchfab.com/3d-models/fps-butterfly-knife-fc1dcc17f9434540a7165255dfa7f66a), " +
+            "licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Textures resized, clips split for first person.\n" +
+            "- First-person hands: \"hand low poly\" (Sketchfab), re-posed into grips.\n";
 
         /// <summary>
         /// Pushes the Unity project (Assets, Packages, ProjectSettings, Launcher + README/.gitignore) to the repo's default

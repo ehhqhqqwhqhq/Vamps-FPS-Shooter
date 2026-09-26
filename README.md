@@ -11,3 +11,7 @@ Download **VAMP-Launcher.zip** from the [latest release](../../releases/latest),
 3. Ship updates with **VAMP ▸ Release** (builds the .exe and publishes a GitHub release that launchers download).
 
 Online custom lobbies use Unity Relay / Multiplayer Services (link the project to your Unity Cloud project).
+
+## Credits
+- "FPS Butterfly Knife" by BURNER (https://sketchfab.com/3d-models/fps-butterfly-knife-fc1dcc17f9434540a7165255dfa7f66a), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Textures resized, clips split for first person.
+- First-person hands: "hand low poly" (Sketchfab), re-posed into grips.

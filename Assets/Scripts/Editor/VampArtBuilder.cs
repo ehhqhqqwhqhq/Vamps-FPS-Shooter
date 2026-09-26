@@ -73,6 +73,7 @@ namespace Vamp.EditorTools
             }
             BuildCharacterPrefab();
             BuildKnifePrefab();
+            VampArmsBuilder.Build();
             AssetDatabase.SaveAssets();
         }
 
