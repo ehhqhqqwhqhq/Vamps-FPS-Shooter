@@ -68,6 +68,10 @@ namespace Vamp.EditorTools
                 BuildLab(assets);
                 EditorUtility.DisplayProgressBar("VAMP", "Building VERTEX...", 0.5f);
                 BuildVertex(assets);
+                EditorUtility.DisplayProgressBar("VAMP", "Building FOUNDRY, OUTPOST, SKYLINE...", 0.7f);
+                VampMapsBuilder.BuildFoundry(assets);
+                VampMapsBuilder.BuildOutpost(assets);
+                VampMapsBuilder.BuildSkyline(assets);
                 EditorUtility.DisplayProgressBar("VAMP", "Building menus...", 0.8f);
                 BuildMenuScene();
                 BuildBootScene();
@@ -104,6 +108,8 @@ namespace Vamp.EditorTools
             var arc = B.LoadOrCreateWeapon("Arc_Energy", ConfigureArc);
             var reaper = B.LoadOrCreateWeapon("Reaper", ConfigureReaper);
             var blade = B.LoadOrCreateWeapon("Blade_Melee", ConfigureBlade);
+            var knife = B.LoadOrCreateWeapon("Knife_Melee", ConfigureKnife);
+            ArcHeat(arc);
 
             string catPath = ResourcesFolder + "/VampWeaponCatalog.asset";
             var cat = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(catPath);
@@ -112,7 +118,7 @@ namespace Vamp.EditorTools
                 cat = ScriptableObject.CreateInstance<WeaponCatalog>();
                 AssetDatabase.CreateAsset(cat, catPath);
             }
-            cat.weapons = new List<WeaponData> { brute, ripper, havoc, widow, blast, arc, v9, reaper, blade };
+            cat.weapons = new List<WeaponData> { brute, ripper, havoc, widow, blast, arc, v9, reaper, blade, knife }; // append only: online uses the index
             VampArtBuilder.AssignWeaponModels(cat.weapons);
             cat.gunGameOrder = new List<WeaponData> { havoc, ripper, arc, brute, widow, v9, reaper, blast, blade };
             EditorUtility.SetDirty(cat);
@@ -174,11 +180,21 @@ namespace Vamp.EditorTools
             w.damage = 9f; w.headshotMultiplier = 1.4f; w.range = 60f;
             w.falloffStart = 15f; w.falloffEnd = 35f; w.minDamageMultiplier = 0.5f;
             w.fireRate = 1200f; w.magazineSize = 1; w.reserveAmmo = 0; w.reloadTime = 0.5f; w.equipTime = 0.3f;
-            w.usesHeat = true; w.heatPerShot = 0.028f; w.heatCoolRate = 0.5f; w.overheatLockout = 1.4f;
+            ArcHeat(w);
             w.hipSpread = 0.6f; w.adsSpread = 0.3f; w.movingSpreadAdd = 0.2f; w.airborneSpreadAdd = 0.4f;
             w.recoilPitch = 0.1f; w.recoilYawRandom = 0.08f; w.viewKick = 0.15f; w.screenShake = 0.01f;
             w.adsFovMultiplier = 0.9f; w.adsTime = 0.1f;
             w.tracerColor = new Color(1f, 0.95f, 0.95f, 0.8f);
+        }
+
+        /// <summary>
+        /// ARC heat tuning (also re-applied to the existing asset on every build - this is a balance fix):
+        /// ~29 shots / 1.45 s of continuous beam before it overheats, 2 s lockout, cools only after you let go.
+        /// </summary>
+        internal static void ArcHeat(WeaponData w)
+        {
+            w.usesHeat = true; w.heatPerShot = 0.035f; w.heatCoolRate = 0.5f; w.heatCoolDelay = 0.4f; w.overheatLockout = 2f;
+            EditorUtility.SetDirty(w);
         }
 
         private static void ConfigureReaper(WeaponData w)
@@ -203,6 +219,16 @@ namespace Vamp.EditorTools
             w.fireRate = 90f; w.magazineSize = 1; w.reserveAmmo = 0; w.equipTime = 0.2f;
             w.hipSpread = 0f; w.adsSpread = 0f; w.canAim = false; w.showTracers = false;
             w.recoilPitch = 0f; w.viewKick = 2f; w.screenShake = 0.05f;
+        }
+
+        private static void ConfigureKnife(WeaponData w)
+        {
+            w.id = "knife"; w.displayName = "COMBAT KNIFE"; w.slot = WeaponSlot.Melee;
+            w.fireMode = FireMode.SemiAuto; w.delivery = DeliveryType.Melee;
+            w.damage = 50f; w.headshotMultiplier = 1f; w.backstabMultiplier = 2.5f; w.meleeRange = 2.2f; w.meleeRadius = 0.55f;
+            w.fireRate = 110f; w.magazineSize = 1; w.reserveAmmo = 0; w.equipTime = 0.15f;
+            w.hipSpread = 0f; w.adsSpread = 0f; w.canAim = false; w.showTracers = false;
+            w.recoilPitch = 0f; w.viewKick = 1.6f; w.screenShake = 0.04f;
         }
 
         // ================================================================== Movement Lab
@@ -397,7 +423,7 @@ namespace Vamp.EditorTools
             Gate(race, 7, new Vector3(-30f, 2f, 6f), 0f);
 
             // Signs
-            B.Sign(detail, "V E R T E X", new Vector3(0f, 19.5f, -half + 1.2f), 1.1f);
+            B.Sign(detail, "V E R T E X", new Vector3(0f, 19.5f, -half + 1.2f), 1.1f, Vector3.back);
 
             AddMatch("vertex", AssetDatabase.LoadAssetAtPath<GameObject>(B.PlayerPrefabPath));
             AddNavMesh();
@@ -433,7 +459,8 @@ namespace Vamp.EditorTools
 
         public static void ApplyBuildSettings()
         {
-            var ordered = new List<string> { BootPath, MenuPath, B.ScenePath, VertexPath };
+            var ordered = new List<string> { BootPath, MenuPath, B.ScenePath, VertexPath,
+                                             VampMapsBuilder.FoundryPath, VampMapsBuilder.OutpostPath, VampMapsBuilder.SkylinePath };
             var list = new List<EditorBuildSettingsScene>();
             foreach (var path in ordered)
                 if (System.IO.File.Exists(path)) list.Add(new EditorBuildSettingsScene(path, true));
@@ -444,7 +471,7 @@ namespace Vamp.EditorTools
 
         // ================================================================== Helpers
 
-        private static void AddMatch(string MapId, GameObject playerPrefab)
+        internal static void AddMatch(string MapId, GameObject playerPrefab)
         {
             var go = new GameObject("Match");
             var mc = go.AddComponent<MatchController>();
@@ -452,7 +479,7 @@ namespace Vamp.EditorTools
             if (playerPrefab != null) B.SetRef(mc, "playerPrefab", playerPrefab);
         }
 
-        private static void AddNavMesh()
+        internal static void AddNavMesh()
         {
             var go = new GameObject("NavMesh");
             var s = go.AddComponent<NavMeshSurface>();
@@ -460,7 +487,7 @@ namespace Vamp.EditorTools
             s.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
         }
 
-        private static void Spawn(Transform parent, Vector3 pos, float yaw, int team)
+        internal static void Spawn(Transform parent, Vector3 pos, float yaw, int team)
         {
             var go = new GameObject("Spawn" + (team < 0 ? "" : "_T" + team));
             go.transform.SetParent(parent, false);

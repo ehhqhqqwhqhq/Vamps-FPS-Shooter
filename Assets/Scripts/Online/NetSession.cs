@@ -405,7 +405,14 @@ namespace Vamp.Online
             root.AddComponent<MovementDebugOverlay>();
             var pause = root.AddComponent<PauseMenu>();
             pause.KeepTimeRunning = true;
-            pause.LeaveOverride = () => { if (Game.Online != null) Game.Online.Leave(); };
+            // Party leader leaving a match brings the whole party back to the party lobby;
+            // a member leaving a match leaves the party (everyone in a party shares one session).
+            pause.LeaveOverride = () =>
+            {
+                if (Game.Online == null) return;
+                if (Game.Online.IsHost) Game.Online.ReturnToLobby();
+                else Game.Online.Leave();
+            };
             root.AddComponent<NetMatchUI>();
             HUDController.ExternalMatchInfo = MatchInfo;
             Audio.AudioController.SetMusic("match");
@@ -414,7 +421,7 @@ namespace Vamp.Online
         private bool MatchInfo(out string mode, out string objective, out string score, out float seconds)
         {
             var cfg = Config;
-            mode = "ONLINE  ·  " + MatchConfig.ModeName(cfg.mode);
+            mode = "ONLINE  ·  " + cfg.ModeLabel;
             float remaining = TimeRemaining;
             seconds = remaining >= 0f ? remaining : Elapsed;
             ulong me = NetworkManager.LocalClientId;

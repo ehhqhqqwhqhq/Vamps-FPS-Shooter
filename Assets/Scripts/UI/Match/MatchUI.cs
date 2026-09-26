@@ -121,7 +121,7 @@ namespace Vamp.UI
             var col = UIKit.StretchNode("Col", _intro, 120, 120, 140, 120);
             UIKit.VList(col, 10f, 0, TextAnchor.UpperCenter);
             UIKit.Size(UIKit.Label(col, _match.Map.DisplayName, 90, UIKit.Text, TextAnchor.MiddleCenter), 110f);
-            UIKit.Size(UIKit.Label(col, MatchConfig.ModeName(_match.Config.mode) + "  ·  " + _match.Map.Description, 20, UIKit.Red, TextAnchor.MiddleCenter), 30f);
+            UIKit.Size(UIKit.Label(col, _match.Config.ModeLabel + "  ·  " + _match.Map.Description, 20, UIKit.Red, TextAnchor.MiddleCenter), 30f);
             UIKit.Size(UIKit.Label(col, MatchConfig.ModeDescription(_match.Config.mode), 16, UIKit.TextDim, TextAnchor.MiddleCenter, FontStyle.Normal), 26f);
             UIKit.Spacer(col, 30f);
             var cards = UIKit.Row(col, 300f, 18f, "Cards");
@@ -150,7 +150,7 @@ namespace Vamp.UI
             _scoreboard.sizeDelta = new Vector2(1100f, 680f);
             UIKit.VList(_scoreboard, 6f, 24);
             var head = UIKit.Row(_scoreboard, 40f, 10f);
-            UIKit.Size(UIKit.Label(head, MatchConfig.ModeName(_match.Config.mode), 28, UIKit.Text), -1, -1, 1f);
+            UIKit.Size(UIKit.Label(head, _match.Config.ModeLabel, 28, UIKit.Text), -1, -1, 1f);
             UIKit.Size(UIKit.Label(head, _match.Map.DisplayName, 18, UIKit.TextDim, TextAnchor.MiddleRight), -1, 300f);
             UIKit.Divider(_scoreboard, UIKit.Red, 2f);
             var cols = UIKit.Row(_scoreboard, 26f, 10f);

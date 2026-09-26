@@ -60,6 +60,7 @@ namespace Vamp.Online
         public float WallSide { get { return (_motion.Value.Flags & NetMotion.WallRight) != 0 ? 1f : -1f; } }
         public float Crouch { get { return (_motion.Value.Flags & NetMotion.Crouched) != 0 ? 1f : 0f; } }
         public WeaponData Weapon { get { return WeaponByIndex(_motion.Value.Weapon); } }
+        public string WeaponCamo { get { return Vamp.Weapons.WeaponCamo.FromIndex(_motion.Value.Camo); } }
 
         // ------------------------------------------------------------------ Spawn
 
@@ -210,7 +211,8 @@ namespace Vamp.Online
                 Yaw = _pc.View.Yaw,
                 Pitch = _pc.View.Pitch,
                 Flags = flags,
-                Weapon = (sbyte)WeaponIndex(Weapons.Current)
+                Weapon = (sbyte)WeaponIndex(Weapons.Current),
+                Camo = Vamp.Weapons.WeaponCamo.ToIndex(Vamp.Weapons.WeaponCamo.LocalFor(Weapons.Current))
             };
         }
 

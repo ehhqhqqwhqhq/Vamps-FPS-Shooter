@@ -47,6 +47,7 @@ namespace Vamp.Weapons
             public int Reserve;
             public float Heat;
             public float OverheatTimer;
+            public float LastHeatShot = -99f;
         }
 
         private sealed class HitAccum
@@ -198,7 +199,10 @@ namespace Vamp.Weapons
                     state.Heat = Mathf.MoveTowards(state.Heat, 0f, dt / Mathf.Max(0.1f, d.overheatLockout));
                     return;
                 }
-                if (!trigger || _time < _nextFireTime) state.Heat = Mathf.MoveTowards(state.Heat, 0f, d.heatCoolRate * dt);
+                // Only cools once you've actually stopped shooting (it used to cool between every shot of the
+                // 1200 RPM beam, so holding the trigger never overheated = infinite fire).
+                if (!trigger && _time - state.LastHeatShot >= d.heatCoolDelay)
+                    state.Heat = Mathf.MoveTowards(state.Heat, 0f, d.heatCoolRate * dt);
             }
 
             if (!trigger || _equipTimer > 0f || _time < _nextFireTime) return;
@@ -212,6 +216,7 @@ namespace Vamp.Weapons
             if (d.usesHeat)
             {
                 state.Heat += d.heatPerShot;
+                state.LastHeatShot = _time;
                 if (state.Heat >= 1f)
                 {
                     state.Heat = 1f;

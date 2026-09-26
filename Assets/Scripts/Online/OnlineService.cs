@@ -149,12 +149,12 @@ namespace Vamp.Online
                 _nm.NetworkConfig.ConnectionData = OnlineBootstrap.Payload(Game.Username, LocalLevel());
                 var options = new SessionOptions
                 {
-                    MaxPlayers = cfg.maxPlayers,
+                    MaxPlayers = 12, // the party can switch modes later; VAMP enforces the mode's player limit itself
                     Name = name,
                     IsPrivate = cfg.isPrivate,
                     SessionProperties = new Dictionary<string, SessionProperty>
                     {
-                        { KeyMode, new SessionProperty(MatchConfig.ModeName(cfg.mode), VisibilityPropertyOptions.Public) },
+                        { KeyMode, new SessionProperty(cfg.ModeLabel, VisibilityPropertyOptions.Public) },
                         { KeyMap, new SessionProperty(map != null ? map.DisplayName : cfg.mapId, VisibilityPropertyOptions.Public) },
                         { KeyVersion, new SessionProperty(Application.version, VisibilityPropertyOptions.Public) },
                         { KeyHost, new SessionProperty(Game.Username, VisibilityPropertyOptions.Public) },
@@ -278,6 +278,12 @@ namespace Vamp.Online
         }
 
         public void StartMatch() { if (IsHost && Net != null) Net.ServerStartMatch(); }
+
+        public void Kick(ulong clientId)
+        {
+            if (!IsHost || clientId == _nm.LocalClientId) return;
+            _nm.DisconnectClient(clientId, "YOU WERE REMOVED FROM THE PARTY");
+        }
         public void ReturnToLobby() { if (IsHost && Net != null) Net.ServerReturnToLobby(); }
 
         public async void Leave()

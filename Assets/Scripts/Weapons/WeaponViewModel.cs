@@ -37,6 +37,8 @@ namespace Vamp.Weapons
         private float _bobPhase;
         private float _equipLower;
         private Vector3 _hip, _ads;
+        private bool _melee;
+        private float _stab;
 
         private void Awake()
         {
@@ -62,6 +64,7 @@ namespace Vamp.Weapons
 
         private void OnFired(WeaponData d)
         {
+            if (d.delivery == DeliveryType.Melee) { _stab = 1f; return; }
             _kick = Mathf.Min(1.5f, _kick + (d.pelletsPerShot > 1 || d.delivery == DeliveryType.Projectile ? 1f : 0.45f));
         }
 
@@ -86,6 +89,7 @@ namespace Vamp.Weapons
                 var sight = root.transform.Find("Sight");
                 _ads = sight != null ? new Vector3(0f, -sight.localPosition.y - 0.005f, 0.24f) : adsPosition;
                 _hip = d.slot == WeaponSlot.Secondary ? new Vector3(0.17f, -0.16f, 0.36f) : new Vector3(0.18f, -0.17f, 0.24f);
+                if (d.delivery == DeliveryType.Melee) _hip = _ads = new Vector3(0.19f, -0.15f, 0.27f);
             }
             else
             {
@@ -95,6 +99,9 @@ namespace Vamp.Weapons
                 _ads = adsPosition;
                 _hip = hipPosition;
             }
+            WeaponCamo.Apply(root, WeaponCamo.LocalFor(d));
+            _melee = d.delivery == DeliveryType.Melee;
+            _stab = 0f;
             _model = root.transform;
             _model.localPosition = _hip;
             _model.localRotation = Quaternion.identity;
@@ -122,32 +129,12 @@ namespace Vamp.Weapons
 
             Part(root, "Body", new Vector3(0f, 0f, length * 0.35f), new Vector3(width, height, length), bodyMaterial);
             Part(root, "Grip", new Vector3(0f, -height * 0.9f, 0f), new Vector3(width * 0.8f, height * 1.3f, width), bodyMaterial);
-            Part(root, "Accent", new Vector3(0f, height * 0.55f, length * 0.4f), new Vector3(width * 1.02f, height * 0.12f, length * 0.7f), SkinMaterial(d));
+            Part(root, "Accent", new Vector3(0f, height * 0.55f, length * 0.4f), new Vector3(width * 1.02f, height * 0.12f, length * 0.7f), accentMaterial);
             if (d.isSniper) Part(root, "Scope", new Vector3(0f, height * 1.1f, length * 0.25f), new Vector3(width * 0.8f, width * 0.8f, length * 0.35f), bodyMaterial);
 
             var muzzle = new GameObject("Muzzle").transform;
             muzzle.SetParent(root, false);
             muzzle.localPosition = new Vector3(0f, 0f, length * 0.85f);
-        }
-
-        private Material _skinMat;
-
-        /// <summary>Weapon skins are cosmetic: they only recolour the accent material.</summary>
-        private Material SkinMaterial(WeaponData d)
-        {
-            var prog = Core.Game.Progression;
-            if (prog == null || prog.Profile == null || accentMaterial == null) return accentMaterial;
-            var skin = Progression.CosmeticCatalog.Get(prog.Profile.loadout.SkinFor(d.id));
-            if (skin == null || skin.Id == "skin_default") return accentMaterial;
-            if (_skinMat == null) _skinMat = new Material(accentMaterial);
-            _skinMat.color = skin.Color;
-            if (_skinMat.HasProperty("_EmissionColor")) _skinMat.SetColor("_EmissionColor", skin.Color * 0.6f);
-            return _skinMat;
-        }
-
-        private void OnDestroy()
-        {
-            if (_skinMat != null) Destroy(_skinMat);
         }
 
         private static void Part(Transform parent, string name, Vector3 pos, Vector3 scale, Material mat)
@@ -186,8 +173,20 @@ namespace Vamp.Weapons
             Vector3 pos = Vector3.Lerp(_hip, _ads, weapons.AimBlend) + bob;
             pos.z -= _kick * kickBack;
             pos.y -= (reload * 0.12f) + _equipLower * 0.25f;
+            // Melee: quick forward stab (out fast, back slower).
+            float stab = 0f;
+            if (_melee && _stab > 0f)
+            {
+                _stab = Mathf.MoveTowards(_stab, 0f, dt * 4f);
+                float t = 1f - _stab;
+                stab = t < 0.25f ? t / 0.25f : 1f - (t - 0.25f) / 0.75f;
+            }
+            pos += new Vector3(-0.1f, 0.04f, 0.26f) * stab;
             _model.localPosition = pos;
-            _model.localRotation = Quaternion.Euler(-_kick * kickPitch + reload * 35f + _sway.y, _sway.x, reload * -15f);
+            var rot = Quaternion.Euler(-_kick * kickPitch + reload * 35f + _sway.y, _sway.x, reload * -15f);
+            // Knife held tip-up towards the centre of the screen; the stab straightens it out.
+            if (_melee) rot *= Quaternion.Euler(Mathf.Lerp(-22f, 4f, stab), Mathf.Lerp(-28f, -8f, stab), Mathf.Lerp(-35f, -10f, stab));
+            _model.localRotation = rot;
             bool scoped = weapons.ShowScope;
             if (_model.gameObject.activeSelf == scoped) _model.gameObject.SetActive(!scoped);
         }

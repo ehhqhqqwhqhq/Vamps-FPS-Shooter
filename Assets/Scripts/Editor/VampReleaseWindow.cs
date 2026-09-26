@@ -331,18 +331,20 @@ namespace Vamp.EditorTools
 
         private static readonly string[] SourceRoots = { "Assets", "Packages", "ProjectSettings", "Launcher" };
         private static readonly string[] SkipNames = { "TestAccounts.txt", ".DS_Store", "Thumbs.db" };
+        /// <summary>Asset Store packages may not be redistributed in a public repo - they're imported from My Assets instead.</summary>
+        private static readonly string[] SkipFolders = { "Assets/Combat Knife/" };
 
         private const string GitIgnore =
             "# Unity\n/[Ll]ibrary/\n/[Tt]emp/\n/[Oo]bj/\n/[Bb]uild/\n/[Bb]uilds/\n/[Ll]ogs/\n/[Uu]ser[Ss]ettings/\n/[Mm]emoryCaptures/\n/[Rr]ecordings/\n" +
             "*.csproj\n*.sln\n*.suo\n*.user\n*.userprefs\n*.pidb\n*.booproj\n*.svd\n*.pdb\n*.mdb\n*.opendb\n*.VC.db\n.vs/\n.idea/\n.vscode/\n" +
-            "crashlytics-build.properties\n/[Aa]ssets/[Ss]treamingAssets/aa/*\nTestAccounts.txt\n";
+            "crashlytics-build.properties\n/[Aa]ssets/[Ss]treamingAssets/aa/*\nTestAccounts.txt\n/Assets/Combat Knife/\n/Assets/Combat Knife.meta\n";
 
         private const string SourceReadme =
             "# VAMP\n\nFast-paced movement arena FPS made in Unity 6 (URP).\n\n" +
             "## Play\nDownload **VAMP-Launcher.zip** from the [latest release](../../releases/latest), unzip it and run **VAMP Launcher.exe**. " +
             "It installs VAMP and keeps it updated.\n\n" +
             "## Develop\n1. Open this folder in Unity 6000.6.3f1 (Unity Hub ▸ Add ▸ this folder).\n" +
-            "2. Run **VAMP ▸ Build All Scenes**, open `Assets/Scenes/Boot/Boot.unity` and press Play.\n" +
+            "2. Import **[Free] Modern Combat Knife** (Asset Store, free) from Package Manager ▸ My Assets, then run **VAMP ▸ Build All Scenes**, open `Assets/Scenes/Boot/Boot.unity` and press Play.\n" +
             "3. Ship updates with **VAMP ▸ Release** (builds the .exe and publishes a GitHub release that launchers download).\n\n" +
             "Online custom lobbies use Unity Relay / Multiplayer Services (link the project to your Unity Cloud project).\n";
 
@@ -374,6 +376,9 @@ namespace Vamp.EditorTools
                     {
                         string rel = f.Substring(ProjectRoot.Length).TrimStart('\\', '/').Replace('\\', '/');
                         if (Array.IndexOf(SkipNames, Path.GetFileName(f)) >= 0) continue;
+                        bool store = false;
+                        foreach (var sf in SkipFolders) if (rel.StartsWith(sf) || rel == sf.TrimEnd('/') + ".meta") store = true;
+                        if (store) continue;
                         if (new FileInfo(f).Length > 95L * 1024 * 1024) { Log("Skipping " + rel + " (over GitHub's 100 MB file limit)"); continue; }
                         files.Add(rel);
                     }

@@ -72,6 +72,7 @@ namespace Vamp.EditorTools
                 if (p != null) prefabs[kv.Key] = p;
             }
             BuildCharacterPrefab();
+            BuildKnifePrefab();
             AssetDatabase.SaveAssets();
         }
 
@@ -82,7 +83,8 @@ namespace Vamp.EditorTools
             {
                 if (w == null) continue;
                 string model;
-                if (!WeaponModels.TryGetValue(w.id, out model)) continue;
+                if (w.id == "knife") model = "Knife";
+                else if (!WeaponModels.TryGetValue(w.id, out model)) continue;
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(WeaponPrefabs + "/" + model + ".prefab");
                 if (prefab == null) continue;
                 w.viewModelPrefab = prefab;
@@ -121,6 +123,14 @@ namespace Vamp.EditorTools
                 label.color = Color.black;
                 label.transform.position = new Vector3(x, 0.8f, 0f);
                 x += 1f;
+            }
+
+            var knife = AssetDatabase.LoadAssetAtPath<GameObject>(WeaponPrefabs + "/Knife.prefab");
+            if (knife != null)
+            {
+                var k = (GameObject)PrefabUtility.InstantiatePrefab(knife);
+                k.transform.position = new Vector3(x, 1.2f, 0f);
+                k.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
             }
 
             var ch = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterPrefab);
@@ -312,6 +322,158 @@ namespace Vamp.EditorTools
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        // ================================================================== Combat knife (Asset Store: "Free Modern Combat Knife")
+
+        /// <summary>Knife correction if the auto orientation guesses wrong: (flip tip/handle, flip edge/spine).</summary>
+        public static (bool flipZ, bool flipY) KnifeFix = (false, false);
+        public const float KnifeLength = 0.3f;
+
+        /// <summary>Finds the imported knife (a prefab from the package if there is one, else its model file).</summary>
+        public static GameObject FindKnifeSource(out string path)
+        {
+            path = "Assets/Combat Knife/2kblackblade.prefab"; // black blade, 2K textures
+            var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (go != null) return go;
+            foreach (var type in new[] { "t:Prefab", "t:Model" })
+            {
+                foreach (var guid in AssetDatabase.FindAssets(type))
+                {
+                    var p = AssetDatabase.GUIDToAssetPath(guid);
+                    if (p.IndexOf("knife", System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    if (p.StartsWith(WeaponPrefabs) || p.StartsWith("Assets/Scripts")) continue;
+                    go = AssetDatabase.LoadAssetAtPath<GameObject>(p);
+                    if (go == null || go.GetComponentsInChildren<Renderer>(true).Length == 0) continue;
+                    path = p;
+                    return go;
+                }
+            }
+            path = null;
+            return null;
+        }
+
+        private static void BuildKnifePrefab()
+        {
+            string srcPath;
+            var src = FindKnifeSource(out srcPath);
+            if (src == null)
+            {
+                Debug.Log("[VAMP] Combat knife model not found (import \"Free Modern Combat Knife\" from My Assets) - melee keeps the generated blade.");
+                return;
+            }
+            if (srcPath.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase) || srcPath.EndsWith(".obj", System.StringComparison.OrdinalIgnoreCase))
+            {
+                var mi = AssetImporter.GetAtPath(srcPath) as ModelImporter;
+                if (mi != null && mi.importAnimation) { mi.importAnimation = false; mi.SaveAndReimport(); src = AssetDatabase.LoadAssetAtPath<GameObject>(srcPath); }
+            }
+
+            var root = new GameObject("Knife");
+            var inst = (GameObject)PrefabUtility.InstantiatePrefab(src);
+            if (inst == null) inst = Object.Instantiate(src);
+            if (PrefabUtility.IsPartOfPrefabInstance(inst)) PrefabUtility.UnpackPrefabInstance(inst, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            inst.name = "Model";
+            inst.transform.SetParent(root.transform, false);
+            inst.transform.localPosition = Vector3.zero;
+            inst.transform.localRotation = Quaternion.identity;
+            foreach (var c in inst.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
+            foreach (var rb in inst.GetComponentsInChildren<Rigidbody>(true)) Object.DestroyImmediate(rb);
+            foreach (var mb in inst.GetComponentsInChildren<MonoBehaviour>(true)) Object.DestroyImmediate(mb);
+
+            var verts = Collect(inst.transform, root.transform);
+            if (verts.Count == 0) { Object.DestroyImmediate(root); return; }
+
+            // Longest extent → forward (Z), second (blade height) → up (Y), thinnest → X.
+            var b = BoundsOf(verts);
+            var ext = b.size;
+            int[] order = { 0, 1, 2 };
+            System.Array.Sort(order, (p, q) => ext[q].CompareTo(ext[p]));
+            Rotate(inst.transform, verts, Quaternion.Inverse(Quaternion.LookRotation(Axis(order[0]), Axis(order[1]))));
+
+            // Tip forward: the handle end is the thicker one (blade is flat).
+            b = BoundsOf(verts);
+            if (EndThickness(verts, b, true) > EndThickness(verts, b, false)) Rotate(inst.transform, verts, Quaternion.Euler(0f, 180f, 0f));
+            if (KnifeFix.flipZ) Rotate(inst.transform, verts, Quaternion.Euler(0f, 180f, 0f));
+            if (KnifeFix.flipY) Rotate(inst.transform, verts, Quaternion.Euler(0f, 0f, 180f));
+
+            // Real-world length.
+            b = BoundsOf(verts);
+            float s = KnifeLength / Mathf.Max(0.0001f, b.size.z);
+            inst.transform.localScale *= s;
+            inst.transform.localPosition *= s;
+            for (int i = 0; i < verts.Count; i++) verts[i] *= s;
+            b = BoundsOf(verts);
+
+            // Origin = middle of the handle (back 20%).
+            Vector3 origin = new Vector3(b.center.x, b.center.y, b.min.z + b.size.z * 0.2f);
+            inst.transform.localPosition -= origin;
+            for (int i = 0; i < verts.Count; i++) verts[i] -= origin;
+            b = BoundsOf(verts);
+
+            Point(root, "Muzzle", new Vector3(0f, 0f, b.max.z));
+            Point(root, "Grip", Vector3.zero);
+            Point(root, "Offhand", new Vector3(-0.05f, -0.2f, -0.2f));
+
+            // Materials: keep the pack's textures, converted to URP Lit when they use the built-in pipeline shaders.
+            foreach (var r in inst.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++) mats[i] = UrpMaterial(mats[i]);
+                r.sharedMaterials = mats;
+            }
+
+            string path = WeaponPrefabs + "/Knife.prefab";
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            Object.DestroyImmediate(root);
+            Debug.Log("[VAMP] Combat knife built from " + srcPath);
+        }
+
+        /// <summary>Mean X thickness of the vertices in the front (or back) 25% of the length.</summary>
+        private static float EndThickness(List<Vector3> v, Bounds b, bool front)
+        {
+            float lo = float.MaxValue, hi = float.MinValue;
+            float cut = front ? b.max.z - b.size.z * 0.25f : b.min.z + b.size.z * 0.25f;
+            foreach (var p in v)
+            {
+                if (front ? p.z < cut : p.z > cut) continue;
+                lo = Mathf.Min(lo, p.x); hi = Mathf.Max(hi, p.x);
+            }
+            return hi > lo ? hi - lo : 0f;
+        }
+
+        private static Material UrpMaterial(Material m)
+        {
+            if (m == null) return _gunMetal;
+            string sh = m.shader != null ? m.shader.name : "";
+            if (sh.StartsWith("Universal Render Pipeline") || sh.StartsWith("Shader Graphs") || sh.StartsWith("VAMP")) return m;
+            string path = ArtMaterials + "/Knife_" + m.name.Replace("/", "_") + ".mat";
+            var conv = AssetDatabase.LoadAssetAtPath<Material>(path);
+            bool create = conv == null;
+            if (create) conv = new Material(B.LitShader());
+            Texture main = m.HasProperty("_MainTex") ? m.GetTexture("_MainTex") : null;
+            if (main == null && m.HasProperty("_BaseMap")) main = m.GetTexture("_BaseMap");
+            conv.SetTexture("_BaseMap", main);
+            conv.SetColor("_BaseColor", m.HasProperty("_Color") ? m.GetColor("_Color") : Color.white);
+            if (m.HasProperty("_BumpMap") && m.GetTexture("_BumpMap") != null)
+            {
+                conv.SetTexture("_BumpMap", m.GetTexture("_BumpMap"));
+                conv.EnableKeyword("_NORMALMAP");
+            }
+            if (m.HasProperty("_MetallicGlossMap") && m.GetTexture("_MetallicGlossMap") != null)
+            {
+                conv.SetTexture("_MetallicGlossMap", m.GetTexture("_MetallicGlossMap"));
+                conv.EnableKeyword("_METALLICSPECGLOSSMAP");
+            }
+            if (m.HasProperty("_OcclusionMap") && m.GetTexture("_OcclusionMap") != null)
+            {
+                conv.SetTexture("_OcclusionMap", m.GetTexture("_OcclusionMap"));
+                conv.EnableKeyword("_OCCLUSIONMAP");
+            }
+            conv.SetFloat("_Metallic", m.HasProperty("_Metallic") ? m.GetFloat("_Metallic") : 0.6f);
+            conv.SetFloat("_Smoothness", m.HasProperty("_Glossiness") ? m.GetFloat("_Glossiness") : 0.5f);
+            if (create) AssetDatabase.CreateAsset(conv, path);
+            else EditorUtility.SetDirty(conv);
+            return conv;
         }
 
         private static void Point(GameObject root, string name, Vector3 pos)

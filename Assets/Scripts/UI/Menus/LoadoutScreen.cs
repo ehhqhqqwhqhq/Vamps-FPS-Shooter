@@ -19,7 +19,7 @@ namespace Vamp.UI.Menus
 
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "LOADOUT", "ANY GUN CAN BE YOUR PRIMARY OR SECONDARY · NOTHING IS LOCKED · SKINS ARE COSMETIC", 1100f);
+            var col = Page(root, "LOADOUT", "ANY GUN CAN BE YOUR PRIMARY OR SECONDARY · NOTHING IS LOCKED · CAMOS ARE COSMETIC", 1100f);
             _tabs = UIKit.Tabs(col, SlotNames, 0, i => { _slot = i; Refresh(); });
             var body = UIKit.Row(col, 520f, 24f, "Body");
             ScrollRect scroll;
@@ -76,7 +76,7 @@ namespace Vamp.UI.Menus
             Stat("HEADSHOT", w.headshotMultiplier, 3f, "×" + w.headshotMultiplier.ToString("0.0#"));
 
             UIKit.Spacer(_details, 8f);
-            UIKit.Caption(_details, "WEAPON SKIN (COSMETIC)", 14);
+            UIKit.Caption(_details, "CAMO (COSMETIC)", 14);
             var skins = CosmeticCatalog.OfType(CosmeticType.WeaponSkin);
             var names = new List<string>();
             int idx = 0;
@@ -88,11 +88,27 @@ namespace Vamp.UI.Menus
                 if (skins[i].Id == current) idx = i;
             }
             string weaponId = w.id;
-            UIKit.Selector(_details, "SKIN", names, idx, i =>
+            RawImage swatch = null;
+            UIKit.Selector(_details, "CAMO", names, idx, i =>
             {
                 if (!Game.Customization.SetWeaponSkin(weaponId, skins[i].Id))
                     Toast("LOCKED", skins[i].UnlockText, true);
+                else ShowSwatch(swatch, skins[i]);
             });
+            var sw = new GameObject("CamoSwatch", typeof(RectTransform), typeof(RawImage));
+            sw.transform.SetParent(_details, false);
+            swatch = sw.GetComponent<RawImage>();
+            UIKit.Size(swatch, 54f, -1, 1f);
+            ShowSwatch(swatch, skins[idx]);
+        }
+
+        private static void ShowSwatch(RawImage img, CosmeticItem skin)
+        {
+            if (img == null || skin == null) return;
+            Texture tex = !string.IsNullOrEmpty(skin.Texture) ? Resources.Load<Texture2D>("Camos/" + skin.Texture) : null;
+            img.texture = tex;
+            img.uvRect = new Rect(0f, 0f, 1f, 0.12f);
+            img.color = tex != null ? Color.white : (skin.Id == "skin_default" ? new Color(0.16f, 0.16f, 0.17f) : skin.Color);
         }
 
         private void Stat(string label, float value, float max, string text)
@@ -124,6 +140,7 @@ namespace Vamp.UI.Menus
                 case "arc": return "ENERGY BEAM. NO RELOAD - MANAGE THE HEAT.";
                 case "reaper": return "DEVASTATING AT POINT BLANK, USELESS BEYOND IT.";
                 case "blade": return "MELEE. QUICK, SILENT, LETHAL FROM BEHIND.";
+                case "knife": return "COMBAT KNIFE. FASTEST STAB IN THE GAME - 2.5× BACKSTAB DAMAGE.";
                 default: return "";
             }
         }

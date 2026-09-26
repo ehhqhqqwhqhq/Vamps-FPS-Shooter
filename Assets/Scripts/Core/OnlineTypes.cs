@@ -68,6 +68,8 @@ namespace Vamp.Core
         void SetTeam(int team);
         void SetConfig(MatchConfig config);
         void StartMatch();
+        /// <summary>Host only: remove a player from the lobby / party.</summary>
+        void Kick(ulong clientId);
         void ReturnToLobby();
         void Leave();
     }

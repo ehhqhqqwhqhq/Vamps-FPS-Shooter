@@ -111,7 +111,7 @@ namespace Vamp.Match
         {
             var r = new MatchReport
             {
-                mode = MatchConfig.ModeName(cfg.mode),
+                mode = cfg.ModeLabel,
                 map = cfg.mapId,
                 completed = true,
                 won = won,

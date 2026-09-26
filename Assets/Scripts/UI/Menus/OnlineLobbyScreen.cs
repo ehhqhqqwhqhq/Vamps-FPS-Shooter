@@ -31,12 +31,14 @@ namespace Vamp.UI.Menus
 
         protected override void OnBuild(RectTransform root)
         {
-            var col = Page(root, "ONLINE LOBBY", O != null ? O.LobbyName : "", 1180f);
+            var col = Page(root, "PARTY", O != null ? O.LobbyName + "  ·  THE PARTY STAYS TOGETHER THROUGH EVERY MATCH" : "", 1180f);
 
             var codeRow = UIKit.Row(col, 44f, 12f);
             _code = UIKit.Label(codeRow, "", 26, UIKit.Text);
             _code.supportRichText = true;
             UIKit.Size(_code, -1, -1, 1f);
+            var invite = UIKit.Button(codeRow, "INVITE FRIENDS", () => Host.Push(new FriendsScreen(0)), UIKit.ButtonStyle.Primary, 15, 40f);
+            UIKit.Size(invite, 40f, 200f);
             var copy = UIKit.Button(codeRow, "COPY CODE", () =>
             {
                 if (O == null) return;
@@ -72,8 +74,8 @@ namespace Vamp.UI.Menus
                 O.SetReady(!now);
             }, UIKit.ButtonStyle.Primary, 22, 56f);
             UIKit.Size(_ready, 56f, -1, 1f);
-            var leave = UIKit.Button(buttons, "LEAVE LOBBY", () =>
-                UIKit.Modal(Host.ModalRoot, "LEAVE LOBBY?", O != null && O.IsHost ? "YOU ARE THE HOST - THE LOBBY CLOSES FOR EVERYONE." : "",
+            var leave = UIKit.Button(buttons, "LEAVE PARTY", () =>
+                UIKit.Modal(Host.ModalRoot, "LEAVE PARTY?", O != null && O.IsHost ? "YOU ARE THE PARTY LEADER - THE PARTY CLOSES FOR EVERYONE." : "",
                     ("LEAVE", () => { if (O != null) O.Leave(); Host.ClearTo(new HomeScreen()); }, UIKit.ButtonStyle.Danger),
                     ("STAY", null, UIKit.ButtonStyle.Box)),
                 UIKit.ButtonStyle.Ghost, 18, 56f);
@@ -94,7 +96,7 @@ namespace Vamp.UI.Menus
 
         public override bool OnBack()
         {
-            UIKit.Modal(Host.ModalRoot, "LEAVE LOBBY?", "",
+            UIKit.Modal(Host.ModalRoot, "LEAVE PARTY?", "",
                 ("LEAVE", () => { if (O != null) O.Leave(); Host.ClearTo(new HomeScreen()); }, UIKit.ButtonStyle.Danger),
                 ("STAY", null, UIKit.ButtonStyle.Box));
             return true;
@@ -124,7 +126,7 @@ namespace Vamp.UI.Menus
             if (cfg != null)
             {
                 var map = MapCatalog.Get(cfg.mapId);
-                _summary.text = MatchConfig.ModeName(cfg.mode) + "  ·  " + (map != null ? map.DisplayName : cfg.mapId)
+                _summary.text = cfg.ModeLabel + "  ·  " + (map != null ? map.DisplayName : cfg.mapId)
                                 + "  ·  " + (cfg.timeLimitMinutes > 0f ? cfg.timeLimitMinutes + " MIN" : "NO TIME LIMIT")
                                 + "  ·  " + (cfg.scoreLimit > 0 ? cfg.scoreLimit + " KILLS" : "NO SCORE LIMIT")
                                 + "  ·  v" + Application.version + (O.State == OnlineState.Connecting ? "  ·  CONNECTING..." : "");
@@ -143,7 +145,7 @@ namespace Vamp.UI.Menus
                 var bg = row.gameObject.AddComponent<Image>();
                 bg.color = m.IsLocal ? new Color(0.78f, 0.05f, 0.11f, 0.22f) : new Color(1f, 1f, 1f, 0.04f);
                 bg.raycastTarget = false;
-                var name = UIKit.Label(row, "  [" + m.Level + "]  " + m.Name + (m.IsHost ? "   ★ HOST" : ""), 18, UIKit.Text);
+                var name = UIKit.Label(row, "  [" + m.Level + "]  " + m.Name + (m.IsHost ? "   ♛ LEADER" : ""), 18, UIKit.Text);
                 UIKit.Size(name, -1, -1, 1f);
                 if (cfg != null && cfg.IsTeamMode)
                 {
@@ -158,6 +160,14 @@ namespace Vamp.UI.Menus
                 }
                 var st = UIKit.Label(row, m.IsHost ? "HOST" : (m.Ready ? "READY" : "NOT READY"), 15, m.Ready || m.IsHost ? UIKit.Good : UIKit.TextFaint, TextAnchor.MiddleCenter);
                 UIKit.Size(st, -1, 120f);
+                if (host && !m.IsLocal)
+                {
+                    ulong kickId = m.ClientId;
+                    string kickName = m.Name;
+                    var kick = UIKit.Button(row, "KICK", () => UIKit.Modal(Host.ModalRoot, "REMOVE " + kickName + "?", "",
+                        ("REMOVE", () => O.Kick(kickId), UIKit.ButtonStyle.Danger), ("CANCEL", null, UIKit.ButtonStyle.Box)), UIKit.ButtonStyle.Ghost, 12, 32f);
+                    UIKit.Size(kick, 32f, 70f);
+                }
             }
             int max = cfg != null ? cfg.maxPlayers : 8;
             for (int i = total; i < max && i < 12; i++)
@@ -180,7 +190,7 @@ namespace Vamp.UI.Menus
             UIKit.Clear(_rules);
             if (!host)
             {
-                Line("MODE", MatchConfig.ModeName(cfg.mode));
+                Line("MODE", cfg.ModeLabel);
                 var map = MapCatalog.Get(cfg.mapId);
                 Line("MAP", map != null ? map.DisplayName : cfg.mapId);
                 Line("TIME LIMIT", cfg.timeLimitMinutes > 0f ? cfg.timeLimitMinutes + " MIN" : "NONE");
@@ -196,11 +206,20 @@ namespace Vamp.UI.Menus
             }
 
             var modeNames = new List<string>();
-            foreach (var m in Modes) modeNames.Add(MatchConfig.ModeName(m));
-            UIKit.Selector(_rules, "MODE", modeNames, Mathf.Max(0, System.Array.IndexOf(Modes, cfg.mode)), i =>
+            foreach (var m in MatchConfig.OnlineChoices) modeNames.Add(m.Label);
+            UIKit.Selector(_rules, "MODE", modeNames, MatchConfig.IndexOf(MatchConfig.OnlineChoices, cfg), i =>
             {
-                var c = cfg.Clone();
-                c.mode = Modes[i];
+                var c = MatchConfig.OnlineChoices[i].Create();
+                if (c.maxPlayers < O.Members.Count)
+                {
+                    Toast("TOO MANY PLAYERS", c.ModeLabel + " IS FOR " + c.maxPlayers + " PLAYERS - YOUR PARTY HAS " + O.Members.Count, true);
+                    _rulesKey = "";
+                    _dirty = true;
+                    return;
+                }
+                c.isPrivate = cfg.isPrivate;
+                c.isCustom = true;
+                if (c.teamSize == 0) c.mapId = cfg.mapId;
                 O.SetConfig(c);
             }, 200f);
             var mapNames = new List<string>();
@@ -220,7 +239,7 @@ namespace Vamp.UI.Menus
             UIKit.Toggle(_rules, "RESPAWNS", cfg.respawns, v => { var c = cfg.Clone(); c.respawns = v; O.SetConfig(c); });
             if (cfg.IsTeamMode) UIKit.Toggle(_rules, "FRIENDLY FIRE", cfg.friendlyFire, v => { var c = cfg.Clone(); c.friendlyFire = v; O.SetConfig(c); });
             UIKit.Spacer(_rules, 8f);
-            UIKit.Caption(_rules, "SHARE THE LOBBY CODE WITH FRIENDS. THEY JOIN FROM PLAY ▸ SERVER BROWSER.", 13);
+            UIKit.Caption(_rules, "INVITE FRIENDS OR SHARE THE CODE (PLAY ▸ SERVER BROWSER ▸ JOIN WITH CODE). EVERYONE HERE PLAYS EVERY MATCH TOGETHER.", 13);
         }
 
         private void Line(string label, string value)

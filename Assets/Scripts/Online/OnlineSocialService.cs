@@ -206,7 +206,7 @@ namespace Vamp.Online
             }
             _requests.Clear();
             foreach (var inv in _invites)
-                _requests.Add(new FriendRequestInfo { from_account_id = "invite:" + inv.code, username = inv.from + " INVITED YOU  ·  " + inv.mode + " · " + inv.map, level = 1, icon = "icon_vamp_symbol" });
+                _requests.Add(new FriendRequestInfo { from_account_id = "invite:" + inv.code, username = inv.from + " INVITED YOU TO THEIR PARTY  ·  " + inv.mode + " · " + inv.map, level = 1, icon = "icon_vamp_symbol" });
             foreach (var rel in fs.IncomingFriendRequests)
                 if (rel.Member != null) _requests.Add(new FriendRequestInfo { from_account_id = rel.Member.Id, username = NameOf(rel.Member), level = 1, icon = "icon_vamp_symbol" });
             foreach (var rel in fs.OutgoingFriendRequests)
@@ -246,7 +246,7 @@ namespace Vamp.Online
             {
                 state = o == null || !o.InSession ? "menu" : o.State == OnlineState.InMatch || o.State == OnlineState.Loading ? "match" : "lobby",
                 code = o != null && o.InSession ? o.LobbyCode : "",
-                mode = o != null && o.Config != null ? Match.MatchConfig.ModeName(o.Config.mode) : "",
+                mode = o != null && o.Config != null ? o.Config.ModeLabel : "",
                 map = o != null && o.Config != null ? o.Config.mapId.ToUpperInvariant() : "",
                 level = Game.Progression != null && Game.Progression.Profile != null ? Game.Progression.Profile.level : 1,
                 icon = Game.Progression != null && Game.Progression.Profile != null ? Game.Progression.Profile.profile_icon : "icon_vamp_symbol"
@@ -360,17 +360,38 @@ namespace Vamp.Online
         {
             if (!_online) return SocialResult.Fail("NOT CONNECTED TO ONLINE SERVICES");
             var o = Game.Online;
-            if (o == null || !o.InSession || string.IsNullOrEmpty(o.LobbyCode))
-                return SocialResult.Fail("HOST A LOBBY FIRST: PLAY ▸ CUSTOM GAME ▸ HOST ONLINE LOBBY");
+            if (o == null) return SocialResult.Fail("ONLINE PLAY UNAVAILABLE");
+            if (o.InSession && !string.IsNullOrEmpty(o.LobbyCode))
+            {
+                SendInvite(accountId);
+                return SocialResult.Ok("SENDING INVITE...");
+            }
+            if (o.InSession || o.State == OnlineState.Connecting) return SocialResult.Fail("PARTY IS STILL STARTING - TRY AGAIN IN A SECOND");
+
+            // Not in a party yet: create one (a private lobby you lead), then invite.
+            var cfg = Match.MatchConfig.Defaults(Match.GameMode.FreeForAll);
+            cfg.isPrivate = true;
+            cfg.isCustom = true;
+            o.Host(cfg, Game.Username + "'S PARTY", (ok, msg) =>
+            {
+                if (!ok) { Say("COULDN'T CREATE PARTY", msg); return; }
+                SendInvite(accountId);
+                if (MenuController.Instance != null) MenuController.Instance.Push(new OnlineLobbyScreen());
+            });
+            return SocialResult.Ok("CREATING PARTY...");
+        }
+
+        private void SendInvite(string accountId)
+        {
+            var o = Game.Online;
             var inv = new VampInvite
             {
                 code = o.LobbyCode,
                 from = _tag,
-                mode = o.Config != null ? Match.MatchConfig.ModeName(o.Config.mode) : "",
+                mode = o.Config != null ? o.Config.ModeLabel : "",
                 map = o.Config != null ? o.Config.mapId.ToUpperInvariant() : ""
             };
-            Run(() => FriendsService.Instance.MessageAsync(accountId, inv), "INVITE SENT", "COULDN'T INVITE");
-            return SocialResult.Ok("SENDING INVITE...");
+            Run(() => FriendsService.Instance.MessageAsync(accountId, inv), "PARTY INVITE SENT", "COULDN'T INVITE");
         }
 
         public SocialResult JoinFriend(string accountId)
@@ -386,7 +407,12 @@ namespace Vamp.Online
         {
             var o = Game.Online;
             if (o == null) return SocialResult.Fail("ONLINE PLAY UNAVAILABLE");
-            if (o.InSession) return SocialResult.Fail("LEAVE YOUR CURRENT LOBBY FIRST");
+            if (o.InSession)
+            {
+                // Switching parties: leave the current one first, then join.
+                o.Leave();
+                return SocialResult.Fail("LEFT YOUR OLD PARTY - PRESS ACCEPT / JOIN AGAIN");
+            }
             o.JoinByCode(code, (ok, msg) =>
             {
                 if (ok)
@@ -408,7 +434,7 @@ namespace Vamp.Online
                 if (inv == null || string.IsNullOrEmpty(inv.code)) return;
                 _invites.RemoveAll(i => i.code == inv.code);
                 _invites.Add(inv);
-                Say("LOBBY INVITE FROM " + inv.from, "OPEN FRIENDS ▸ REQUESTS AND PRESS ACCEPT TO JOIN");
+                Say("PARTY INVITE FROM " + inv.from, "OPEN FRIENDS ▸ REQUESTS AND PRESS ACCEPT TO JOIN THEIR PARTY");
                 Rebuild();
             }
             catch (Exception ex) { Debug.LogWarning("[VAMP] Bad friend message: " + ex.Message); }

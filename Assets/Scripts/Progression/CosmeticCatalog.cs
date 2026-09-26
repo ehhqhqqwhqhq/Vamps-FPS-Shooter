@@ -26,6 +26,8 @@ namespace Vamp.Progression
         public IconShape Shape;
         public bool Animated;
         public string Description;
+        /// <summary>Weapon camos: texture name in Resources/Camos (null = plain colour skin).</summary>
+        public string Texture;
 
         public string UnlockText
         {
@@ -235,6 +237,9 @@ namespace Vamp.Progression
             Simple("skin_bone", "BONE", CosmeticType.WeaponSkin, UnlockSource.Level, 17, White);
             Simple("skin_bloodsteel", "BLOODSTEEL", CosmeticType.WeaponSkin, UnlockSource.Level, 31, Red);
             Simple("skin_void", "VOID", CosmeticType.WeaponSkin, UnlockSource.Level, 62, Dark);
+            Camo("camo_toxic", "TOXIC", "Toxic", new Color(0.1f, 1f, 0.1f));
+            Camo("camo_riptide", "RIPTIDE", "Riptide", new Color(0.1f, 0.55f, 1f));
+            Camo("camo_bloodrush", "BLOOD RUSH", "BloodRush", new Color(0.85f, 0.05f, 0.05f));
 
             Simple("char_default", "OPERATIVE", CosmeticType.CharacterSkin, UnlockSource.Default, 1, Steel);
             Simple("char_night", "NIGHT OPS", CosmeticType.CharacterSkin, UnlockSource.Level, 21, Dark);
@@ -262,6 +267,13 @@ namespace Vamp.Progression
         private static void Icon(string id, string name, UnlockSource source, int level, string glyph, Color color, IconShape shape, bool animated = false)
         {
             Add(new CosmeticItem { Id = id, Name = name, Type = CosmeticType.Icon, Source = source, UnlockLevel = level, Glyph = glyph, Color = color, Accent = Dark, Shape = shape, Animated = animated });
+        }
+
+        /// <summary>Patterned weapon camo (texture in Resources/Camos). Unlocked for everyone.</summary>
+        private static void Camo(string id, string name, string texture, Color color)
+        {
+            var item = Simple(id, name, CosmeticType.WeaponSkin, UnlockSource.Default, 1, color);
+            item.Texture = texture;
         }
 
         private static CosmeticItem Simple(string id, string name, CosmeticType type, UnlockSource source, int level, Color color)

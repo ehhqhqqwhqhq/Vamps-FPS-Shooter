@@ -64,8 +64,10 @@ namespace Vamp.Weapons
         public bool usesHeat = false;
         [Tooltip("Heat added per shot (0..1 scale).")]
         public float heatPerShot = 0.04f;
-        [Tooltip("Heat removed per second when not firing.")]
+        [Tooltip("Heat removed per second once the weapon has stopped firing for heatCoolDelay seconds.")]
         public float heatCoolRate = 0.45f;
+        [Tooltip("Seconds after the last shot before the weapon starts to cool (no cooling while you hold the trigger).")]
+        public float heatCoolDelay = 0.4f;
         [Tooltip("Lockout when the weapon overheats.")]
         public float overheatLockout = 1.4f;
 

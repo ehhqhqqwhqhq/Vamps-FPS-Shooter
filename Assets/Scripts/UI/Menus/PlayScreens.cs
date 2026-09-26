@@ -56,6 +56,15 @@ namespace Vamp.UI.Menus
                     if (!on) _prefs.modes.Remove(m);
                 });
             }
+            for (int size = 1; size <= 3; size++)
+            {
+                int s = size;
+                UIKit.Toggle(col, s + "V" + s + " ARENA", _prefs.arenaSizes.Contains(s), on =>
+                {
+                    if (on && !_prefs.arenaSizes.Contains(s)) _prefs.arenaSizes.Add(s);
+                    if (!on) _prefs.arenaSizes.Remove(s);
+                });
+            }
             UIKit.Selector(col, "REGION", MatchmakingService.Regions, 0, i => _prefs.region = MatchmakingService.Regions[i]);
             var pingNames = new List<string>();
             foreach (var p in Pings) pingNames.Add(p + " MS");
@@ -86,9 +95,29 @@ namespace Vamp.UI.Menus
 
         private void Find()
         {
-            if (_prefs.modes.Count == 0)
+            if (_prefs.modes.Count == 0 && _prefs.arenaSizes.Count == 0)
             {
                 Toast("SELECT AT LEAST ONE MODE", "", true);
+                return;
+            }
+            var online = Game.Online;
+            if (online != null && online.InSession)
+            {
+                // In a party: the leader starts an online match for the whole party with one of the picked modes.
+                if (!online.IsHost) { Toast("PARTY", "ONLY THE PARTY LEADER CAN START A MATCH", true); return; }
+                var rng = new System.Random();
+                var choices = new List<MatchConfig>();
+                foreach (var m in _prefs.modes) if (m == GameMode.FreeForAll || m == GameMode.TeamDeathmatch) choices.Add(MatchConfig.Defaults(m));
+                foreach (var size in _prefs.arenaSizes)
+                    if (size * 2 >= online.Members.Count) choices.Add(MatchConfig.Arena(size)); // the whole party must fit
+                if (choices.Count == 0) { Toast("PARTY", "ONLINE PARTIES PLAY FREE FOR ALL, TEAM DEATHMATCH OR 1V1-3V3", true); return; }
+                var cfg = choices[rng.Next(choices.Count)];
+                cfg.mapId = MapCatalog.RandomBattleMap(rng, cfg.teamSize > 0);
+                cfg.isCustom = true;
+                cfg.isPrivate = online.Config != null && online.Config.isPrivate;
+                online.SetConfig(cfg);
+                online.StartMatch();
+                Toast("PARTY MATCH", cfg.ModeLabel + " · " + MapCatalog.Get(cfg.mapId).DisplayName);
                 return;
             }
             Game.Matchmaking.StartQuickPlay(_prefs);
@@ -123,7 +152,7 @@ namespace Vamp.UI.Menus
                     Audio.AudioController.PlayUI(Audio.SfxId.CountdownGo);
                 }
                 _autoStart -= dt;
-                _time.text = MatchConfig.ModeName(mm.FoundMatch.mode) + "  ·  " + MapCatalog.Get(mm.FoundMatch.mapId).DisplayName;
+                _time.text = mm.FoundMatch.ModeLabel + "  ·  " + MapCatalog.Get(mm.FoundMatch.mapId).DisplayName;
                 if (_autoStart <= 0f)
                 {
                     _autoStart = 999f;
@@ -194,7 +223,15 @@ namespace Vamp.UI.Menus
             BuildOptions();
 
             var buttons = UIKit.Row(col, 56f, 12f);
-            var start = UIKit.Button(buttons, "PLAY VS BOTS", () => Game.Scenes.StartMatch(_cfg.Clone()), UIKit.ButtonStyle.Primary, 22, 56f);
+            var start = UIKit.Button(buttons, "PLAY VS BOTS", () =>
+            {
+                if (Game.Online != null && Game.Online.InSession)
+                {
+                    Toast("YOU'RE IN A PARTY", "LEAVE THE PARTY TO PLAY VS BOTS, OR USE HOST ONLINE LOBBY TO PLAY THESE RULES WITH YOUR PARTY", true);
+                    return;
+                }
+                Game.Scenes.StartMatch(_cfg.Clone());
+            }, UIKit.ButtonStyle.Primary, 22, 56f);
             UIKit.Size(start, 56f, -1, 1f);
             if (Game.Online != null)
             {
@@ -204,6 +241,13 @@ namespace Vamp.UI.Menus
                     if (_cfg.mode != GameMode.FreeForAll && _cfg.mode != GameMode.TeamDeathmatch)
                     {
                         Toast("ONLINE LOBBIES", "CHOOSE FREE FOR ALL OR TEAM DEATHMATCH", true);
+                        return;
+                    }
+                    if (Game.Online.InSession)
+                    {
+                        if (!Game.Online.IsHost) { Toast("PARTY", "ONLY THE PARTY LEADER CAN CHANGE THE RULES", true); return; }
+                        Game.Online.SetConfig(_cfg.Clone()); // use these rules for the party
+                        Host.Push(new OnlineLobbyScreen());
                         return;
                     }
                     host.interactable = false;
@@ -228,19 +272,19 @@ namespace Vamp.UI.Menus
             UIKit.Clear(_options);
             var o = _options;
             var modeNames = new List<string>();
-            foreach (var m in Modes) modeNames.Add(MatchConfig.ModeName(m));
-            UIKit.Selector(o, "MODE", modeNames, Array.IndexOf(Modes, _cfg.mode), i =>
+            foreach (var m in MatchConfig.AllChoices) modeNames.Add(m.Label);
+            UIKit.Selector(o, "MODE", modeNames, MatchConfig.IndexOf(MatchConfig.AllChoices, _cfg), i =>
             {
                 string code = _cfg.lobbyCode;
                 var restricted = _cfg.restrictedWeapons;
-                _cfg = MatchConfig.Defaults(Modes[i]);
+                _cfg = MatchConfig.AllChoices[i].Create();
                 _cfg.isCustom = true;
                 _cfg.isPrivate = _private;
                 _cfg.lobbyCode = code;
                 _cfg.restrictedWeapons = restricted;
                 BuildOptions();
             });
-            UIKit.Caption(o, MatchConfig.ModeDescription(_cfg.mode), 13);
+            UIKit.Caption(o, _cfg.ModeLabelDescription, 13);
 
             var mapNames = new List<string>();
             int mapIdx = 0;
@@ -251,7 +295,12 @@ namespace Vamp.UI.Menus
             }
             UIKit.Selector(o, "MAP", mapNames, mapIdx, i => _cfg.mapId = MapCatalog.Maps[i].Id);
 
-            if (_cfg.mode != GameMode.Training && _cfg.mode != GameMode.MovementRace)
+            if (_cfg.teamSize > 0)
+            {
+                UIKit.Caption(o, _cfg.teamSize + " V " + _cfg.teamSize + "  ·  BOTS FILL THE EMPTY SLOTS", 13);
+                UIKit.Selector(o, "BOT DIFFICULTY", new[] { "EASY", "NORMAL", "HARD", "BRUTAL" }, (int)_cfg.botDifficulty, i => _cfg.botDifficulty = (BotDifficulty)i);
+            }
+            else if (_cfg.mode != GameMode.Training && _cfg.mode != GameMode.MovementRace)
             {
                 UIKit.SliderRow(o, "MAX PLAYERS", 2, 12, _cfg.maxPlayers, "0", v =>
                 {

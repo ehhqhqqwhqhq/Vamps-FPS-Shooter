@@ -20,6 +20,8 @@ namespace Vamp.Characters
         float WallSide { get; }
         float Crouch { get; }
         WeaponData Weapon { get; }
+        /// <summary>Camo / skin id of the held weapon (null = default).</summary>
+        string WeaponCamo { get; }
     }
 
     /// <summary>
@@ -128,7 +130,7 @@ namespace Vamp.Characters
                 _rig.WallRunning = Source.WallRunning;
                 _rig.WallSide = Source.WallSide;
                 _rig.Crouch = Source.Crouch;
-                _rig.SetWeapon(Source.Weapon);
+                _rig.SetWeapon(Source.Weapon, Source.WeaponCamo);
                 _rig.Pose(dt);
                 return;
             }
@@ -179,7 +181,7 @@ namespace Vamp.Characters
             WeaponData w = null;
             if (_weapons != null) w = _weapons.Current;
             else if (_bot != null) w = _bot.Weapon;
-            _rig.SetWeapon(w);
+            _rig.SetWeapon(w, _weapons != null ? WeaponCamo.LocalFor(w) : null);
             _rig.Pose(dt);
         }
     }

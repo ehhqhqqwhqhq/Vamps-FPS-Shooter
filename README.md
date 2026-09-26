@@ -7,7 +7,7 @@ Download **VAMP-Launcher.zip** from the [latest release](../../releases/latest),
 
 ## Develop
 1. Open this folder in Unity 6000.6.3f1 (Unity Hub ▸ Add ▸ this folder).
-2. Run **VAMP ▸ Build All Scenes**, open `Assets/Scenes/Boot/Boot.unity` and press Play.
+2. Import **[Free] Modern Combat Knife** (Asset Store, free) from Package Manager ▸ My Assets, then run **VAMP ▸ Build All Scenes**, open `Assets/Scenes/Boot/Boot.unity` and press Play.
 3. Ship updates with **VAMP ▸ Release** (builds the .exe and publishes a GitHub release that launchers download).
 
 Online custom lobbies use Unity Relay / Multiplayer Services (link the project to your Unity Cloud project).

@@ -41,9 +41,10 @@ MonoBehaviour:
   screenShake: 0.01
   airborneSelfKnockback: 0
   usesHeat: 1
-  heatPerShot: 0.028
+  heatPerShot: 0.035
   heatCoolRate: 0.5
-  overheatLockout: 1.4
+  heatCoolDelay: 0.4
+  overheatLockout: 2
   meleeRange: 2.4
   meleeRadius: 0.6
   backstabMultiplier: 2

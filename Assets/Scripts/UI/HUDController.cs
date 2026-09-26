@@ -499,7 +499,7 @@ namespace Vamp.UI
             else
             {
                 var cfg = match.Config;
-                mode = MatchConfig.ModeName(cfg.mode);
+                mode = cfg.ModeLabel;
                 var me = match.Local;
                 seconds = match.TimeRemaining >= 0f ? match.TimeRemaining : match.Elapsed;
                 switch (cfg.mode)

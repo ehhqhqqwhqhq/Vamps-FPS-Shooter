@@ -125,7 +125,7 @@ namespace Vamp.UI
             protected override void OnBuild(RectTransform root)
             {
                 var m = MatchController.Instance;
-                string sub = m != null ? MatchConfig.ModeName(m.Config.mode) + "  ·  " + m.Map.DisplayName : null;
+                string sub = m != null ? m.Config.ModeLabel + "  ·  " + m.Map.DisplayName : null;
                 var col = Page(root, "PAUSED", sub, 560f, 140f);
                 UIKit.Button(col, "RESUME", () => _menu.Close(), UIKit.ButtonStyle.Menu, 32, 58f);
                 UIKit.Button(col, "SETTINGS", () => Host.Push(new SettingsScreen()), UIKit.ButtonStyle.Menu, 32, 58f);

@@ -31,6 +31,8 @@ namespace Vamp.Match
         /// <summary>Weapon ids NOT allowed (weapon restrictions).</summary>
         public List<string> restrictedWeapons = new List<string>();
         public string lobbyCode = "";
+        /// <summary>Arena modes: 1 = 1V1, 2 = 2V2, 3 = 3V3 (team deathmatch with fixed teams). 0 = normal.</summary>
+        public int teamSize = 0;
         /// <summary>Run the graphics benchmark instead of a normal match.</summary>
         public bool benchmark = false;
 
@@ -82,6 +84,65 @@ namespace Vamp.Match
         }
 
         public bool IsTeamMode { get { return mode == GameMode.TeamDeathmatch || mode == GameMode.Elimination; } }
+
+        /// <summary>Name shown to players ("2V2" for arena modes).</summary>
+        public string ModeLabel { get { return teamSize > 0 ? teamSize + "V" + teamSize : ModeName(mode); } }
+
+        public string ModeLabelDescription
+        {
+            get
+            {
+                return teamSize == 1 ? "ONE ON ONE. FIRST TO THE SCORE LIMIT WINS."
+                     : teamSize > 1 ? "TWO TEAMS OF " + teamSize + ". FIRST TEAM TO THE SCORE LIMIT WINS."
+                     : ModeDescription(mode);
+            }
+        }
+
+        /// <summary>1V1 / 2V2 / 3V3 arena rules: small maps, short matches, fixed team sizes.</summary>
+        public static MatchConfig Arena(int size)
+        {
+            size = UnityEngine.Mathf.Clamp(size, 1, 3);
+            var c = Defaults(GameMode.TeamDeathmatch);
+            c.teamSize = size;
+            c.maxPlayers = size * 2;
+            c.bots = size * 2 - 1;
+            c.scoreLimit = size == 1 ? 10 : size == 2 ? 15 : 20;
+            c.timeLimitMinutes = size == 1 ? 5f : 6f;
+            c.respawnDelay = 3f;
+            c.mapId = "foundry";
+            return c;
+        }
+
+        /// <summary>A mode as offered in menus (arena sizes are separate entries).</summary>
+        public struct ModeChoice
+        {
+            public GameMode Mode;
+            public int TeamSize;
+            public string Label { get { return TeamSize > 0 ? TeamSize + "V" + TeamSize : ModeName(Mode); } }
+            public ModeChoice(GameMode mode, int teamSize) { Mode = mode; TeamSize = teamSize; }
+            public MatchConfig Create() { return TeamSize > 0 ? Arena(TeamSize) : Defaults(Mode); }
+            public bool Matches(MatchConfig c) { return c != null && c.mode == Mode && c.teamSize == TeamSize; }
+        }
+
+        public static readonly ModeChoice[] OnlineChoices =
+        {
+            new ModeChoice(GameMode.FreeForAll, 0), new ModeChoice(GameMode.TeamDeathmatch, 0),
+            new ModeChoice(GameMode.TeamDeathmatch, 1), new ModeChoice(GameMode.TeamDeathmatch, 2), new ModeChoice(GameMode.TeamDeathmatch, 3),
+        };
+
+        public static readonly ModeChoice[] AllChoices =
+        {
+            new ModeChoice(GameMode.FreeForAll, 0), new ModeChoice(GameMode.TeamDeathmatch, 0),
+            new ModeChoice(GameMode.TeamDeathmatch, 1), new ModeChoice(GameMode.TeamDeathmatch, 2), new ModeChoice(GameMode.TeamDeathmatch, 3),
+            new ModeChoice(GameMode.GunGame, 0), new ModeChoice(GameMode.MovementRace, 0), new ModeChoice(GameMode.Elimination, 0),
+            new ModeChoice(GameMode.Training, 0),
+        };
+
+        public static int IndexOf(ModeChoice[] list, MatchConfig c)
+        {
+            for (int i = 0; i < list.Length; i++) if (list[i].Matches(c)) return i;
+            return 0;
+        }
     }
 
     /// <summary>Hand-off from menus to the match scene.</summary>

@@ -22,7 +22,7 @@ namespace Vamp.Progression
     {
         public string primary = "brute";
         public string secondary = "v9";
-        public string melee = "blade";
+        public string melee = "knife";
         /// <summary>weapon id → skin id (cosmetic only).</summary>
         public List<IdPair> weaponSkins = new List<IdPair>();
 

@@ -45,6 +45,7 @@ namespace Vamp.Online
         public float Pitch;
         public byte Flags;     // 1 grounded, 2 sliding, 4 wall running, 8 wall on right, 16 crouched
         public sbyte Weapon;   // index into the weapon catalog (-1 none)
+        public byte Camo;      // WeaponCamo index of the held weapon (0 default)
 
         public const byte Grounded = 1, Sliding = 2, WallRunning = 4, WallRight = 8, Crouched = 16;
 
@@ -56,11 +57,12 @@ namespace Vamp.Online
             s.SerializeValue(ref Pitch);
             s.SerializeValue(ref Flags);
             s.SerializeValue(ref Weapon);
+            s.SerializeValue(ref Camo);
         }
 
         public bool Equals(NetMotion o)
         {
-            return Position == o.Position && Velocity == o.Velocity && Yaw == o.Yaw && Pitch == o.Pitch && Flags == o.Flags && Weapon == o.Weapon;
+            return Position == o.Position && Velocity == o.Velocity && Yaw == o.Yaw && Pitch == o.Pitch && Flags == o.Flags && Weapon == o.Weapon && Camo == o.Camo;
         }
     }
 }

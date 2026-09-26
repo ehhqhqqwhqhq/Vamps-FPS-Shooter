@@ -22,6 +22,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ab9cf4d2465e0dc428c3fd986c2f734e, type: 2}
   - {fileID: 11400000, guid: ace24f5c97cffe94985035524a3f5a15, type: 2}
   - {fileID: 11400000, guid: 636d43e614235134588995f4cd0ab81a, type: 2}
+  - {fileID: 11400000, guid: 4c9f2b5a4d55648409d839188bb0e90e, type: 2}
   gunGameOrder:
   - {fileID: 11400000, guid: 7c726c6db133c3e4eb861df4897cca52, type: 2}
   - {fileID: 11400000, guid: 5a92205c7d166254d8f43ed69d67d85b, type: 2}

@@ -30,6 +30,8 @@ namespace Vamp.Core
         public static ISocialService Social { get; private set; }
         /// <summary>Set by the online assembly (before Init) to provide the online friends service.</summary>
         public static System.Func<IAccountService, ISocialService> SocialFactory;
+        /// <summary>Set by the online assembly (before Init) to provide the online party.</summary>
+        public static System.Func<IAccountService, ProgressionService, IPartyService> PartyFactory;
         public static IPartyService Party { get; private set; }
         public static MatchmakingService Matchmaking { get; private set; }
         public static WeaponCatalog Weapons { get; private set; }
@@ -74,7 +76,7 @@ namespace Vamp.Core
             Progression = new ProgressionService(accounts);
             Customization = new CustomizationService(Progression);
             Social = SocialFactory != null ? SocialFactory(accounts) : new OfflineSocialService(accounts);
-            Party = new LocalPartyService(accounts, Progression);
+            Party = PartyFactory != null ? PartyFactory(accounts, Progression) : new LocalPartyService(accounts, Progression);
             Matchmaking = new MatchmakingService(Party);
             Matchmaking.Game_Notify = () => Notifications.Push(NotificationKind.MatchFound, "MATCH FOUND", "");
             accounts.LoggedIn += a => Settings.LoadForAccount(a.id);

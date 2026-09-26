@@ -128,11 +128,14 @@ namespace Vamp.Characters
             foreach (var r in GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = mode;
         }
 
-        public void SetWeapon(WeaponData weapon)
+        private string _camo;
+
+        public void SetWeapon(WeaponData weapon, string camo = null)
         {
             Init();
-            if (_weapon == weapon && (_gun != null || weapon == null)) return;
+            if (_weapon == weapon && _camo == camo && (_gun != null || weapon == null)) return;
             _weapon = weapon;
+            _camo = camo;
             if (_gun != null) Destroy(_gun.gameObject);
             _gun = _grip = _offhand = null;
             if (weapon == null) return;
@@ -157,6 +160,7 @@ namespace Vamp.Characters
                 off.localPosition = blade ? new Vector3(-0.05f, -0.2f, -0.2f) : new Vector3(0f, -0.06f, 0.35f);
             }
             g.name = "HeldWeapon";
+            WeaponCamo.Apply(g, camo);
             foreach (var c in g.GetComponentsInChildren<Collider>()) Destroy(c);
             foreach (var r in g.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = _shadowMode;
             _gun = g.transform;

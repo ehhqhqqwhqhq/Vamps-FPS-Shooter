@@ -97,7 +97,7 @@ namespace Vamp.Online
             if (_results) { _title.text = online.LastWinner; }
             else _title.text = "SCOREBOARD";
             int[] s = online.TeamScores;
-            _sub.text = (cfg != null ? MatchConfig.ModeName(cfg.mode) + "  ·  " + MapCatalog.Get(cfg.mapId).DisplayName : "")
+            _sub.text = (cfg != null ? cfg.ModeLabel + "  ·  " + MapCatalog.Get(cfg.mapId).DisplayName : "")
                         + (teams ? "  ·  TEAM A " + s[0] + " — " + s[1] + " TEAM B" : "")
                         + (_results && _xpLine.Length > 0 ? "  ·  " + _xpLine : "");
 

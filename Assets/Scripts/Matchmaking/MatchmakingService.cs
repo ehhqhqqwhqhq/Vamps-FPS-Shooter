@@ -14,6 +14,8 @@ namespace Vamp.Matchmaking
         public List<GameMode> modes = new List<GameMode> { GameMode.FreeForAll, GameMode.TeamDeathmatch };
         public string region = "AUTO";
         public int maxPing = 80;
+        /// <summary>Arena sizes wanted (1 = 1V1, 2 = 2V2, 3 = 3V3).</summary>
+        public List<int> arenaSizes = new List<int>();
     }
 
     /// <summary>
@@ -52,12 +54,23 @@ namespace Vamp.Matchmaking
         public void StartQuickPlay(QuickPlayPreferences prefs)
         {
             if (prefs != null) Preferences = prefs;
-            if (Preferences.modes == null || Preferences.modes.Count == 0) Preferences.modes = new List<GameMode> { GameMode.FreeForAll };
+            if (Preferences.arenaSizes == null) Preferences.arenaSizes = new List<int>();
+            if ((Preferences.modes == null || Preferences.modes.Count == 0) && Preferences.arenaSizes.Count == 0)
+                Preferences.modes = new List<GameMode> { GameMode.FreeForAll };
+            if (Preferences.modes == null) Preferences.modes = new List<GameMode>();
 
-            GameMode mode = Preferences.modes[_rng.Next(Preferences.modes.Count)];
-            FoundMatch = MatchConfig.Defaults(mode);
+            int pick = _rng.Next(Preferences.modes.Count + Preferences.arenaSizes.Count);
+            if (pick < Preferences.modes.Count)
+            {
+                FoundMatch = MatchConfig.Defaults(Preferences.modes[pick]);
+                FoundMatch.mapId = Maps.MapCatalog.RandomBattleMap(_rng, false);
+            }
+            else
+            {
+                FoundMatch = MatchConfig.Arena(Preferences.arenaSizes[pick - Preferences.modes.Count]);
+                FoundMatch.mapId = Maps.MapCatalog.RandomBattleMap(_rng, true);
+            }
             FoundMatch.isPrivate = false;
-            FoundMatch.mapId = "vertex";
 
             PlayersNeeded = FoundMatch.maxPlayers;
             PlayersFound = Mathf.Max(1, _party.Members.Count);
