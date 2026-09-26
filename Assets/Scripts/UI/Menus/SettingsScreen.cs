@@ -173,7 +173,7 @@ namespace Vamp.UI.Menus
         private static readonly (string title, string[] labels)[] BindGroups =
         {
             ("MOVEMENT", new[] { "MOVE FORWARD", "MOVE BACKWARD", "MOVE LEFT", "MOVE RIGHT", "JUMP", "CROUCH", "SPRINT", "SLIDE", "WALL JUMP", "DASH" }),
-            ("COMBAT", new[] { "FIRE", "AIM", "RELOAD", "PRIMARY WEAPON", "SECONDARY WEAPON", "MELEE", "DROP WEAPON" }),
+            ("COMBAT", new[] { "FIRE", "AIM", "RELOAD", "INSPECT WEAPON", "PRIMARY WEAPON", "SECONDARY WEAPON", "MELEE", "DROP WEAPON" }),
             ("OTHER", new[] { "INTERACT", "SCOREBOARD", "PUSH TO TALK" }),
         };
 

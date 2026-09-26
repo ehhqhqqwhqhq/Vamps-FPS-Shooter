@@ -40,6 +40,17 @@ namespace Vamp.Weapons
         private bool _melee;
         private float _stab;
 
+        // Inspect (style only - no gameplay effect)
+        private float _inspectT = -1f;
+        private float _inspectDur = 2.6f;
+        private WeaponData _data;
+        // Butterfly knife
+        private BalisongModel _balisong;
+        private float _balEquip = 1f;
+
+        /// <summary>True while the inspect animation plays.</summary>
+        public bool Inspecting { get { return _inspectT >= 0f; } }
+
         private void Awake()
         {
             if (weapons == null) weapons = GetComponentInParent<WeaponController>();
@@ -64,6 +75,7 @@ namespace Vamp.Weapons
 
         private void OnFired(WeaponData d)
         {
+            _inspectT = -1f; // firing cancels an inspect
             if (d.delivery == DeliveryType.Melee) { _stab = 1f; return; }
             _kick = Mathf.Min(1.5f, _kick + (d.pelletsPerShot > 1 || d.delivery == DeliveryType.Projectile ? 1f : 0.45f));
         }
@@ -72,11 +84,29 @@ namespace Vamp.Weapons
         {
             if (_model != null) Destroy(_model.gameObject);
             _model = null;
+            _balisong = null;
+            _inspectT = -1f;
+            _data = d;
             if (d == null) return;
             _equipLower = 1f;
 
             GameObject root;
-            if (d.viewModelPrefab != null)
+            if (d.id == "balisong")
+            {
+                // Procedural butterfly knife with a flip-open on every equip.
+                root = new GameObject("VM_balisong");
+                root.transform.SetParent(transform, false);
+                _balisong = BalisongModel.Build(root.transform);
+                var tip = _balisong.Tip;
+                tip.name = "BladeTipPoint";
+                var muzzle = new GameObject("Muzzle").transform;
+                muzzle.SetParent(root.transform, false);
+                muzzle.localPosition = new Vector3(0f, 0f, 0.2f);
+                _hip = _ads = new Vector3(0.19f, -0.15f, 0.27f);
+                _balEquip = 0f;
+                _balisong.SetPose(180f, 0f);
+            }
+            else if (d.viewModelPrefab != null)
             {
                 // Imported model: origin = grip, barrel +Z, real-world scale (see VampArtBuilder).
                 root = Instantiate(d.viewModelPrefab, transform);
@@ -182,13 +212,140 @@ namespace Vamp.Weapons
                 stab = t < 0.25f ? t / 0.25f : 1f - (t - 0.25f) / 0.75f;
             }
             pos += new Vector3(-0.1f, 0.04f, 0.26f) * stab;
+
+            // ---- Inspect
+            var frame = input != null ? input.Frame : default(PlayerInputFrame);
+            bool busy = weapons.IsReloading || weapons.AimBlend > 0.2f || _equipLower > 0.3f || stab > 0f;
+            if (frame.InspectPressed && !busy && _data != null)
+            {
+                _inspectT = 0f;
+                _inspectDur = _balisong != null ? 3.4f : _melee ? 2.3f : 2.8f;
+            }
+            if (_inspectT >= 0f && (weapons.IsReloading || weapons.AimBlend > 0.3f)) _inspectT = -1f;
+            Vector3 inspectPos = Vector3.zero, inspectEuler = Vector3.zero;
+            if (_inspectT >= 0f)
+            {
+                _inspectT += dt;
+                float u = _inspectT / _inspectDur;
+                if (u >= 1f) _inspectT = -1f;
+                else if (_melee) KnifeInspect(u, out inspectPos, out inspectEuler);
+                else GunInspect(u, out inspectPos, out inspectEuler);
+            }
+            pos += inspectPos;
+            if (_balisong != null) AnimateBalisong(dt);
             _model.localPosition = pos;
             var rot = Quaternion.Euler(-_kick * kickPitch + reload * 35f + _sway.y, _sway.x, reload * -15f);
             // Knife held tip-up towards the centre of the screen; the stab straightens it out.
             if (_melee) rot *= Quaternion.Euler(Mathf.Lerp(-22f, 4f, stab), Mathf.Lerp(-28f, -8f, stab), Mathf.Lerp(-35f, -10f, stab));
+            rot *= Quaternion.Euler(inspectEuler);
             _model.localRotation = rot;
             bool scoped = weapons.ShowScope;
             if (_model.gameObject.activeSelf == scoped) _model.gameObject.SetActive(!scoped);
+        }
+
+        // ------------------------------------------------------------------ Inspect animations
+
+        private struct Key
+        {
+            public float T;
+            public Vector3 Pos, Euler;
+            public Key(float t, Vector3 pos, Vector3 euler) { T = t; Pos = pos; Euler = euler; }
+        }
+
+        private static readonly Key[] GunKeys =
+        {
+            new Key(0f,    Vector3.zero,                       Vector3.zero),
+            new Key(0.16f, new Vector3(-0.11f, 0.06f, 0.03f),  new Vector3(-8f, -58f, 24f)),   // turn to show the left side
+            new Key(0.46f, new Vector3(-0.1f, 0.065f, 0.035f), new Vector3(-14f, -68f, 30f)),  // hold
+            new Key(0.64f, new Vector3(-0.09f, 0.08f, 0.04f),  new Vector3(12f, 48f, -36f)),   // flip to the right side
+            new Key(0.86f, new Vector3(-0.085f, 0.075f, 0.04f),new Vector3(16f, 56f, -40f)),   // hold
+            new Key(1f,    Vector3.zero,                       Vector3.zero),
+        };
+
+        private static readonly Key[] KnifeKeys =
+        {
+            new Key(0f,    Vector3.zero,                        Vector3.zero),
+            new Key(0.15f, new Vector3(-0.1f, 0.05f, 0.02f),    new Vector3(10f, -40f, 60f)),    // show the blade
+            new Key(0.3f,  new Vector3(-0.1f, 0.06f, 0.02f),    new Vector3(10f, -45f, 70f)),
+            new Key(0.42f, new Vector3(-0.08f, 0.2f, 0.06f),    new Vector3(180f, -20f, 420f)),  // toss + spin
+            new Key(0.56f, new Vector3(-0.08f, 0.05f, 0.03f),   new Vector3(360f, 0f, 720f)),    // catch
+            new Key(0.8f,  new Vector3(-0.1f, 0.06f, 0.02f),    new Vector3(360f, 40f, 690f)),   // other side
+            new Key(1f,    Vector3.zero,                        new Vector3(360f, 0f, 720f)),
+        };
+
+        private static void Eval(Key[] keys, float u, out Vector3 pos, out Vector3 euler)
+        {
+            int i = 0;
+            while (i < keys.Length - 2 && u > keys[i + 1].T) i++;
+            var a = keys[i];
+            var b = keys[i + 1];
+            float t = Mathf.InverseLerp(a.T, b.T, u);
+            t = t * t * (3f - 2f * t);
+            pos = Vector3.Lerp(a.Pos, b.Pos, t);
+            euler = Vector3.Lerp(a.Euler, b.Euler, t);
+        }
+
+        private void GunInspect(float u, out Vector3 pos, out Vector3 euler)
+        {
+            Eval(GunKeys, u, out pos, out euler);
+            // A little life while holding it.
+            euler += new Vector3(Mathf.Sin(u * 17f) * 1.2f, Mathf.Sin(u * 11f) * 1.5f, 0f);
+        }
+
+        private void KnifeInspect(float u, out Vector3 pos, out Vector3 euler)
+        {
+            Eval(KnifeKeys, u, out pos, out euler);
+        }
+
+        // ------------------------------------------------------------------ Butterfly knife
+
+        private struct BalKey
+        {
+            public float T, Blade, Latch, Roll;
+            public BalKey(float t, float blade, float latch, float roll) { T = t; Blade = blade; Latch = latch; Roll = roll; }
+        }
+
+        // Inspect trick: close, flip open, close again, aerial spin, flip open.
+        private static readonly BalKey[] BalTrick =
+        {
+            new BalKey(0f,    0f,   0f,    0f),
+            new BalKey(0.12f, 180f, 360f,  0f),    // flip closed (latch swings round)
+            new BalKey(0.24f, 0f,   0f,    0f),    // flip open
+            new BalKey(0.36f, 180f, -360f, 90f),   // reverse flip closed
+            new BalKey(0.46f, 180f, -360f, 90f),
+            new BalKey(0.66f, 180f, -360f, 450f),  // aerial - spins closed in the air
+            new BalKey(0.8f,  0f,   0f,    450f),  // snap open
+            new BalKey(0.9f,  0f,   0f,    450f),
+            new BalKey(1f,    0f,   0f,    360f),
+        };
+
+        private void AnimateBalisong(float dt)
+        {
+            float blade, latch, roll = 0f;
+            if (_balEquip < 1f)
+            {
+                // Equip: flip it open
+                _balEquip = Mathf.MoveTowards(_balEquip, 1f, dt / 0.55f);
+                float e = _balEquip * _balEquip * (3f - 2f * _balEquip);
+                blade = Mathf.Lerp(180f, 0f, e);
+                latch = Mathf.Lerp(0f, -360f, e);
+            }
+            else if (_inspectT >= 0f)
+            {
+                float u = Mathf.Clamp01(_inspectT / _inspectDur);
+                int i = 0;
+                while (i < BalTrick.Length - 2 && u > BalTrick[i + 1].T) i++;
+                var a = BalTrick[i];
+                var b = BalTrick[i + 1];
+                float t = Mathf.InverseLerp(a.T, b.T, u);
+                t = t * t * (3f - 2f * t);
+                blade = Mathf.Lerp(a.Blade, b.Blade, t);
+                latch = Mathf.Lerp(a.Latch, b.Latch, t);
+                roll = Mathf.Lerp(a.Roll, b.Roll, t);
+            }
+            else { blade = 0f; latch = 0f; }
+            _balisong.SetPose(blade, latch);
+            _balisong.transform.localRotation = Quaternion.Euler(0f, 0f, roll);
         }
     }
 }

@@ -26,6 +26,7 @@ namespace Vamp.Core
         public const string Fire = "Fire";
         public const string Aim = "Aim";
         public const string Reload = "Reload";
+        public const string Inspect = "Inspect";
         public const string Interact = "Interact";
         public const string DropWeapon = "DropWeapon";
         public const string PrimaryWeapon = "PrimaryWeapon";
@@ -68,6 +69,7 @@ namespace Vamp.Core
             Btn(map, Fire, "<Mouse>/leftButton");
             Btn(map, Aim, "<Mouse>/rightButton");
             Btn(map, Reload, "<Keyboard>/r");
+            Btn(map, Inspect, "<Keyboard>/f");
             Btn(map, Interact, "<Keyboard>/e");
             Btn(map, DropWeapon, "<Keyboard>/g");
 
@@ -103,7 +105,7 @@ namespace Vamp.Core
             ("MOVE FORWARD", Move, 1, false), ("MOVE BACKWARD", Move, 2, false), ("MOVE LEFT", Move, 3, false), ("MOVE RIGHT", Move, 4, false),
             ("JUMP", Jump, 0, true), ("CROUCH", Crouch, 0, true), ("SPRINT", Sprint, 0, true), ("SLIDE", Slide, 0, true),
             ("WALL JUMP", WallJump, 0, true), ("DASH", Dash, 0, true), ("FIRE", Fire, 0, true), ("AIM", Aim, 0, true),
-            ("RELOAD", Reload, 0, true), ("PRIMARY WEAPON", PrimaryWeapon, 0, true), ("SECONDARY WEAPON", SecondaryWeapon, 0, true),
+            ("RELOAD", Reload, 0, true), ("INSPECT WEAPON", Inspect, 0, true), ("PRIMARY WEAPON", PrimaryWeapon, 0, true), ("SECONDARY WEAPON", SecondaryWeapon, 0, true),
             ("MELEE", Melee, 0, true), ("INTERACT", Interact, 0, true), ("DROP WEAPON", DropWeapon, 0, true),
             ("SCOREBOARD", Scoreboard, 0, true), ("PUSH TO TALK", VoiceChat, 0, true),
         };

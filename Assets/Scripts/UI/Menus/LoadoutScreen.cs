@@ -161,6 +161,7 @@ namespace Vamp.UI.Menus
                 case "arc": return "ENERGY BEAM. NO RELOAD - MANAGE THE HEAT.";
                 case "reaper": return "DEVASTATING AT POINT BLANK, USELESS BEYOND IT.";
                 case "blade": return "MELEE. QUICK, SILENT, LETHAL FROM BEHIND.";
+                case "balisong": return "BUTTERFLY KNIFE. FLIPS OPEN ON EVERY EQUIP - PRESS F TO SHOW OFF.";
                 case "knife": return "COMBAT KNIFE. FASTEST STAB IN THE GAME - 2.5× BACKSTAB DAMAGE.";
                 default: return "";
             }

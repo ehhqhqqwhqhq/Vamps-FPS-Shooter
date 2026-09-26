@@ -44,6 +44,9 @@ namespace Vamp.EditorTools
         {
             var w = GetWindow<VampReleaseWindow>(true, "VAMP Release", true);
             w.minSize = new Vector2(560f, 560f);
+            // Always bring it back over the editor (it could end up off-screen after layout / monitor changes).
+            var main = EditorGUIUtility.GetMainWindowPosition();
+            w.position = new Rect(main.center.x - 320f, main.center.y - 330f, 640f, 660f);
         }
 
         private void OnEnable()

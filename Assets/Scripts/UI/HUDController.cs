@@ -404,7 +404,7 @@ namespace Vamp.UI
                 _heatFill.transform.parent.gameObject.SetActive(w.Current != null && w.Current.usesHeat);
                 var sb = new System.Text.StringBuilder();
                 for (int i = 0; i < w.LoadoutCount; i++) sb.Append(i + 1).Append(' ').Append(w.WeaponAt(i).displayName).Append("   ");
-                _hint.text = sb + "·   TAB SCOREBOARD   ·   ESC MENU   ·   F1 MOVEMENT DEBUG";
+                _hint.text = sb + "·   F INSPECT   ·   TAB SCOREBOARD   ·   ESC MENU   ·   F1 MOVEMENT DEBUG";
             }
             if (w.Current == null)
             {

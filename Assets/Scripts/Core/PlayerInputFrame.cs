@@ -26,6 +26,8 @@ namespace Vamp.Core
         public bool FireHeld;
         public bool AimHeld;
         public bool ReloadPressed;
+        /// <summary>Weapon inspect (style only).</summary>
+        public bool InspectPressed;
         public bool InteractPressed;
 
         /// <summary>-1 = no switch requested, otherwise loadout slot index (0 = primary, 1 = secondary, 2 = melee/third).</summary>

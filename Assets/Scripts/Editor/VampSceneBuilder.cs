@@ -109,6 +109,7 @@ namespace Vamp.EditorTools
             var reaper = B.LoadOrCreateWeapon("Reaper", ConfigureReaper);
             var blade = B.LoadOrCreateWeapon("Blade_Melee", ConfigureBlade);
             var knife = B.LoadOrCreateWeapon("Knife_Melee", ConfigureKnife);
+            var balisong = B.LoadOrCreateWeapon("Balisong_Melee", ConfigureBalisong);
             ArcHeat(arc);
 
             string catPath = ResourcesFolder + "/VampWeaponCatalog.asset";
@@ -118,7 +119,7 @@ namespace Vamp.EditorTools
                 cat = ScriptableObject.CreateInstance<WeaponCatalog>();
                 AssetDatabase.CreateAsset(cat, catPath);
             }
-            cat.weapons = new List<WeaponData> { brute, ripper, havoc, widow, blast, arc, v9, reaper, blade, knife }; // append only: online uses the index
+            cat.weapons = new List<WeaponData> { brute, ripper, havoc, widow, blast, arc, v9, reaper, blade, knife, balisong }; // append only: online uses the index
             VampArtBuilder.AssignWeaponModels(cat.weapons);
             cat.gunGameOrder = new List<WeaponData> { havoc, ripper, arc, brute, widow, v9, reaper, blast, blade };
             EditorUtility.SetDirty(cat);
@@ -227,6 +228,16 @@ namespace Vamp.EditorTools
             w.fireMode = FireMode.SemiAuto; w.delivery = DeliveryType.Melee;
             w.damage = 50f; w.headshotMultiplier = 1f; w.backstabMultiplier = 2.5f; w.meleeRange = 2.2f; w.meleeRadius = 0.55f;
             w.fireRate = 110f; w.magazineSize = 1; w.reserveAmmo = 0; w.equipTime = 0.15f;
+            w.hipSpread = 0f; w.adsSpread = 0f; w.canAim = false; w.showTracers = false;
+            w.recoilPitch = 0f; w.viewKick = 1.6f; w.screenShake = 0.04f;
+        }
+
+        private static void ConfigureBalisong(WeaponData w)
+        {
+            w.id = "balisong"; w.displayName = "BUTTERFLY KNIFE"; w.slot = WeaponSlot.Melee;
+            w.fireMode = FireMode.SemiAuto; w.delivery = DeliveryType.Melee;
+            w.damage = 50f; w.headshotMultiplier = 1f; w.backstabMultiplier = 2.5f; w.meleeRange = 2.2f; w.meleeRadius = 0.55f;
+            w.fireRate = 110f; w.magazineSize = 1; w.reserveAmmo = 0; w.equipTime = 0.45f; // time for the flip-open
             w.hipSpread = 0f; w.adsSpread = 0f; w.canAim = false; w.showTracers = false;
             w.recoilPitch = 0f; w.viewKick = 1.6f; w.screenShake = 0.04f;
         }

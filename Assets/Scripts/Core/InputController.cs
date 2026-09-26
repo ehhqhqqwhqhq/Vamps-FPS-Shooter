@@ -43,6 +43,7 @@ namespace Vamp.Core
         private InputActionMap _gameplay;
         private InputActionMap _debug;
         private InputAction _move, _look, _jump, _crouch, _sprint, _slide, _dash, _wallJump;
+        private InputAction _inspect;
         private InputAction _fire, _aim, _reload, _interact, _primary, _secondary, _melee, _scoreboard, _voice;
         private InputAction _toggleDebug, _toggleCursor, _pause;
         private bool _crouchToggled, _aimToggled;
@@ -68,6 +69,7 @@ namespace Vamp.Core
             _fire = _gameplay.FindAction(VampInputActions.Fire, true);
             _aim = _gameplay.FindAction(VampInputActions.Aim, true);
             _reload = _gameplay.FindAction(VampInputActions.Reload, true);
+            _inspect = _gameplay.FindAction(VampInputActions.Inspect, true);
             _interact = _gameplay.FindAction(VampInputActions.Interact, true);
             _primary = _gameplay.FindAction(VampInputActions.PrimaryWeapon, true);
             _secondary = _gameplay.FindAction(VampInputActions.SecondaryWeapon, true);
@@ -153,6 +155,7 @@ namespace Vamp.Core
             }
             else f.AimHeld = !cursorFree && _aim.IsPressed();
             f.ReloadPressed = _reload.WasPressedThisFrame();
+            f.InspectPressed = !cursorFree && _inspect.WasPressedThisFrame();
             f.InteractPressed = _interact.WasPressedThisFrame();
 
             if (_primary.WasPressedThisFrame()) f.WeaponSlotPressed = 0;
