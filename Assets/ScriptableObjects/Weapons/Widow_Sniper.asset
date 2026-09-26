@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4f5e88f09fae6c47a4578dac34cf674, type: 3}
+  m_Name: Widow_Sniper
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
+  id: widow
+  displayName: WIDOW
+  slot: 0
+  fireMode: 0
+  delivery: 0
+  damage: 95
+  pelletsPerShot: 1
+  headshotMultiplier: 2
+  range: 320
+  falloffStart: 300
+  falloffEnd: 320
+  minDamageMultiplier: 1
+  fireRate: 45
+  magazineSize: 5
+  reserveAmmo: 30
+  reloadTime: 2.4
+  reloadPerShell: 0
+  equipTime: 0.5
+  hipSpread: 6
+  adsSpread: 0
+  movingSpreadAdd: 2
+  airborneSpreadAdd: 4
+  fixedPelletPattern: 1
+  recoilPitch: 4
+  recoilYawRandom: 0.6
+  viewKick: 5
+  screenShake: 0.2
+  airborneSelfKnockback: 0
+  usesHeat: 0
+  heatPerShot: 0.04
+  heatCoolRate: 0.45
+  overheatLockout: 1.4
+  meleeRange: 2.4
+  meleeRadius: 0.6
+  backstabMultiplier: 2
+  canAim: 1
+  adsFovMultiplier: 0.3
+  adsTime: 0.22
+  isSniper: 1
+  scopeOverlay: 1
+  projectileSpeed: 45
+  projectileGravity: 0
+  projectileLifetime: 5
+  projectileRadius: 0.1
+  explosionRadius: 0
+  explosionDamage: 0
+  explosionKnockback: 0
+  explosionMinFalloff: 0.3
+  selfDamageMultiplier: 0.35
+  selfKnockbackMultiplier: 1.15
+  knockbackUpBias: 0.35
+  viewModelPrefab: {fileID: 6584420776554269104, guid: 1b01e625d044ef24a8b53163b6750986, type: 3}
+  muzzleFlashPrefab: {fileID: 0}
+  impactPrefab: {fileID: 0}
+  fireSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  tracerColor: {r: 1, g: 0.2, b: 0.25, a: 0.9}
+  showTracers: 1

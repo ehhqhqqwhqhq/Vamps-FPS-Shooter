@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4f5e88f09fae6c47a4578dac34cf674, type: 3}
+  m_Name: Havoc_AR
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
+  id: havoc
+  displayName: HAVOC
+  slot: 0
+  fireMode: 1
+  delivery: 0
+  damage: 22
+  pelletsPerShot: 1
+  headshotMultiplier: 1.6
+  range: 180
+  falloffStart: 25
+  falloffEnd: 60
+  minDamageMultiplier: 0.7
+  fireRate: 600
+  magazineSize: 28
+  reserveAmmo: 140
+  reloadTime: 1.8
+  reloadPerShell: 0
+  equipTime: 0.35
+  hipSpread: 1.2
+  adsSpread: 0.2
+  movingSpreadAdd: 0.8
+  airborneSpreadAdd: 1.5
+  fixedPelletPattern: 1
+  recoilPitch: 0.55
+  recoilYawRandom: 0.2
+  viewKick: 0.7
+  screenShake: 0.04
+  airborneSelfKnockback: 0
+  usesHeat: 0
+  heatPerShot: 0.04
+  heatCoolRate: 0.45
+  overheatLockout: 1.4
+  meleeRange: 2.4
+  meleeRadius: 0.6
+  backstabMultiplier: 2
+  canAim: 1
+  adsFovMultiplier: 0.75
+  adsTime: 0.16
+  isSniper: 0
+  scopeOverlay: 0
+  projectileSpeed: 45
+  projectileGravity: 0
+  projectileLifetime: 5
+  projectileRadius: 0.1
+  explosionRadius: 0
+  explosionDamage: 0
+  explosionKnockback: 0
+  explosionMinFalloff: 0.3
+  selfDamageMultiplier: 0.35
+  selfKnockbackMultiplier: 1.15
+  knockbackUpBias: 0.35
+  viewModelPrefab: {fileID: 2060788669358634237, guid: 2be7bb5b6c168684ba4204b2ebdde213, type: 3}
+  muzzleFlashPrefab: {fileID: 0}
+  impactPrefab: {fileID: 0}
+  fireSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  tracerColor: {r: 1, g: 0.85, b: 0.8, a: 0.55}
+  showTracers: 1

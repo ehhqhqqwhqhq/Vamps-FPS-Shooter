@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4f5e88f09fae6c47a4578dac34cf674, type: 3}
+  m_Name: Reaper
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponData
+  id: reaper
+  displayName: REAPER
+  slot: 1
+  fireMode: 0
+  delivery: 0
+  damage: 12
+  pelletsPerShot: 14
+  headshotMultiplier: 1.2
+  range: 14
+  falloffStart: 3
+  falloffEnd: 8
+  minDamageMultiplier: 0.1
+  fireRate: 50
+  magazineSize: 2
+  reserveAmmo: 16
+  reloadTime: 2
+  reloadPerShell: 0
+  equipTime: 0.4
+  hipSpread: 7
+  adsSpread: 6
+  movingSpreadAdd: 0.5
+  airborneSpreadAdd: 0.5
+  fixedPelletPattern: 1
+  recoilPitch: 5
+  recoilYawRandom: 1
+  viewKick: 6
+  screenShake: 0.35
+  airborneSelfKnockback: 10
+  usesHeat: 0
+  heatPerShot: 0.04
+  heatCoolRate: 0.45
+  overheatLockout: 1.4
+  meleeRange: 2.4
+  meleeRadius: 0.6
+  backstabMultiplier: 2
+  canAim: 1
+  adsFovMultiplier: 0.95
+  adsTime: 0.12
+  isSniper: 0
+  scopeOverlay: 0
+  projectileSpeed: 45
+  projectileGravity: 0
+  projectileLifetime: 5
+  projectileRadius: 0.1
+  explosionRadius: 0
+  explosionDamage: 0
+  explosionKnockback: 0
+  explosionMinFalloff: 0.3
+  selfDamageMultiplier: 0.35
+  selfKnockbackMultiplier: 1.15
+  knockbackUpBias: 0.35
+  viewModelPrefab: {fileID: 8607153061015215321, guid: f91ccaf7910e72347b4b69601530054d, type: 3}
+  muzzleFlashPrefab: {fileID: 0}
+  impactPrefab: {fileID: 0}
+  fireSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  tracerColor: {r: 1, g: 0.3, b: 0.3, a: 0.7}
+  showTracers: 1

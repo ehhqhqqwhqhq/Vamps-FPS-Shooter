@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 553e226851cf68e4e92a464fce9ac6cf, type: 3}
+  m_Name: VampWeaponCatalog
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponCatalog
+  weapons:
+  - {fileID: 11400000, guid: caa8566a90425b244949572af348645c, type: 2}
+  - {fileID: 11400000, guid: 5a92205c7d166254d8f43ed69d67d85b, type: 2}
+  - {fileID: 11400000, guid: 7c726c6db133c3e4eb861df4897cca52, type: 2}
+  - {fileID: 11400000, guid: a6f8977eede55004699a012bbf22720b, type: 2}
+  - {fileID: 11400000, guid: e00b12f498563c445852f77be0d2734f, type: 2}
+  - {fileID: 11400000, guid: c693df9567ca8f14eb4ed804638290e5, type: 2}
+  - {fileID: 11400000, guid: ab9cf4d2465e0dc428c3fd986c2f734e, type: 2}
+  - {fileID: 11400000, guid: ace24f5c97cffe94985035524a3f5a15, type: 2}
+  - {fileID: 11400000, guid: 636d43e614235134588995f4cd0ab81a, type: 2}
+  gunGameOrder:
+  - {fileID: 11400000, guid: 7c726c6db133c3e4eb861df4897cca52, type: 2}
+  - {fileID: 11400000, guid: 5a92205c7d166254d8f43ed69d67d85b, type: 2}
+  - {fileID: 11400000, guid: c693df9567ca8f14eb4ed804638290e5, type: 2}
+  - {fileID: 11400000, guid: caa8566a90425b244949572af348645c, type: 2}
+  - {fileID: 11400000, guid: a6f8977eede55004699a012bbf22720b, type: 2}
+  - {fileID: 11400000, guid: ab9cf4d2465e0dc428c3fd986c2f734e, type: 2}
+  - {fileID: 11400000, guid: ace24f5c97cffe94985035524a3f5a15, type: 2}
+  - {fileID: 11400000, guid: e00b12f498563c445852f77be0d2734f, type: 2}
+  - {fileID: 11400000, guid: 636d43e614235134588995f4cd0ab81a, type: 2}

@@ -1,0 +1,423 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &957096426022054406
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3898096853323391362}
+  - component: {fileID: 3260323166981482014}
+  - component: {fileID: 906147418399083751}
+  - component: {fileID: 8196978955839259742}
+  - component: {fileID: 6404510802639416555}
+  - component: {fileID: 784312561190191400}
+  - component: {fileID: 2380662145314185573}
+  - component: {fileID: 346795098581210877}
+  - component: {fileID: 7772637816323805246}
+  - component: {fileID: 3308376781922348057}
+  - component: {fileID: 1251852229123777677}
+  - component: {fileID: 2631495964717564494}
+  - component: {fileID: 6246322899672245121}
+  - component: {fileID: 1538313274215893367}
+  m_Layer: 0
+  m_Name: Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3898096853323391362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.05, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5473982707603278481}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &3260323166981482014
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &906147418399083751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6d0b03cf1b494842b8adb0982fcb631, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Movement.MovementController
+  settings: {fileID: 11400000, guid: 63117d6db122c8643878acfbf53bd61f, type: 2}
+--- !u!114 &8196978955839259742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67e12b6ff19147d4cb6aca9f46c085ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Movement.DashAbility
+--- !u!114 &6404510802639416555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb989934ea560f2439db242c68df7de7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Movement.WallRunAbility
+--- !u!114 &784312561190191400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ab99d105c99f574a89860b5d187a726, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Movement.SlideAbility
+--- !u!114 &2380662145314185573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee1654272c50ce249946922b1b5a27d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Core.InputController
+  lockCursorOnStart: 1
+  enableDebugBindings: 1
+--- !u!114 &346795098581210877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c9573bd4c393054189198addc594d1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Combat.HealthController
+  maxHealth: 100
+  maxArmor: 50
+  startingArmor: 0
+  armorAbsorption: 0.66
+  selfDamageMultiplier: 1
+  regenDelay: 2.5
+  regenPerSecond: 40
+--- !u!114 &7772637816323805246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db57d684cc836324bbc959eb11519ec1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Player.CameraController
+  cameraRoot: {fileID: 5473982707603278481}
+  playerCamera: {fileID: 3145518374985154421}
+  look:
+    sensitivity: 1
+    adsSensitivity: 1
+    sniperSensitivity: 1
+    invertY: 0
+    invertX: 0
+    fieldOfView: 90
+    screenShake: 0.5
+    speedFovBonus: 8
+    degreesPerCount: 0.022
+  wallRunTilt: 9
+  slideTilt: 3
+  strafeTilt: 0.8
+  tiltSharpness: 8
+  speedFovStart: 11.5
+  speedFovFull: 30
+  fovSharpness: 6
+  landingDipPerSpeed: 0.035
+  maxLandingDipVelocity: 1.2
+  dipSpring: 90
+  dipDamping: 14
+  maxShakeAngle: 2.5
+  shakeFrequency: 22
+  traumaDecay: 2.2
+  kickRecoverSharpness: 16
+--- !u!114 &3308376781922348057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71dfa396574f80745829f06a26d7c610, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponController
+  loadout:
+  - {fileID: 11400000, guid: caa8566a90425b244949572af348645c, type: 2}
+  - {fileID: 11400000, guid: ab9cf4d2465e0dc428c3fd986c2f734e, type: 2}
+  - {fileID: 11400000, guid: e00b12f498563c445852f77be0d2734f, type: 2}
+  aimOrigin: {fileID: 5473982707603278481}
+  muzzle: {fileID: 0}
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  infiniteReserve: 1
+--- !u!114 &1251852229123777677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c90ecbe3a3a673743b5838e45ad085e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Player.PlayerController
+  respawnDelay: 1.5
+  killPlaneY: -40
+  maxSimulationStep: 0.05
+  RespawnEnabled: 1
+--- !u!114 &2631495964717564494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 495e535729e889044bab9afb5a60eb6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Player.PlayerFeedback
+  minLandingSoundSpeed: 4
+--- !u!114 &6246322899672245121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8beacc7213063714ab4c2827ca2c707c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Combat.CombatIdentity
+  displayName: YOU
+--- !u!114 &1538313274215893367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957096426022054406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0b25b824c6cd904eac31840d1e06915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Characters.CharacterPresenter
+  LocalView: 1
+  Tint: {r: 0.85, g: 0.85, b: 0.87, a: 1}
+  TintEmission: 0
+--- !u!1 &2276769577529021927
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4647082553072373225}
+  - component: {fileID: 3145518374985154421}
+  - component: {fileID: 8187603525626206686}
+  - component: {fileID: 5231036211982323273}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4647082553072373225
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2276769577529021927}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5473982707603278481}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &3145518374985154421
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2276769577529021927}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.55, g: 0.65, b: 0.8, a: 1}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.03
+  far clip plane: 600
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!81 &8187603525626206686
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2276769577529021927}
+  m_Enabled: 1
+--- !u!114 &5231036211982323273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2276769577529021927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d8769c9ead4c0942a2e032e250e5f19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Weapons.WeaponViewModel
+  weapons: {fileID: 3308376781922348057}
+  input: {fileID: 0}
+  movement: {fileID: 0}
+  bodyMaterial: {fileID: 2100000, guid: 9ac966b164154874e90691d31bd77a51, type: 2}
+  accentMaterial: {fileID: 2100000, guid: 4b5ba1f3ee1ff564b9e73eba16ee0e98, type: 2}
+  hipPosition: {x: 0.2, y: -0.2, z: 0.42}
+  adsPosition: {x: 0, y: -0.13, z: 0.32}
+  kickBack: 0.07
+  kickPitch: 8
+  kickRecover: 14
+  swayAmount: 0.02
+  swayMax: 4
+  bobAmount: 0.012
+  bobFrequency: 11
+--- !u!1 &3513044801859173574
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5473982707603278481}
+  m_Layer: 0
+  m_Name: CameraRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5473982707603278481
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3513044801859173574}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.65, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4647082553072373225}
+  m_Father: {fileID: 3898096853323391362}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

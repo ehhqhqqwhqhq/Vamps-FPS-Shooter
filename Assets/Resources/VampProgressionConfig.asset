@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00fe58a43d798494395d3178394ac43a, type: 3}
+  m_Name: VampProgressionConfig
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Progression.ProgressionConfig
+  xpForLevel2: 1000
+  xpIncreasePerLevel: 200
+  maxLevel: 100
+  maxPrestige: 10
+  matchCompletion: 250
+  matchVictory: 500
+  kill: 50
+  headshot: 25
+  assist: 20
+  objective: 100
+  wallRun: 5
+  wallJump: 5
+  airborneKill: 50
+  rocketJump: 10
+  highSpeedKill: 75
+  movementCombo: 100
+  highSpeedKillThreshold: 18
+  movementRaceFinish: 300
+  movementXpCap: 600
+  maxWallRunEvents: 40
+  maxWallJumpEvents: 40
+  maxRocketJumpEvents: 20
+  fullMovementXpAfterSeconds: 120
+  maxKillsPerMinute: 30

@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf5c67ac1b2c1ae489114171e9e4ca2f, type: 3}
+  m_Name: MovementSettings_Default
+  m_EditorClassIdentifier: Vamp.Runtime::Vamp.Movement.MovementSettings
+  walkSpeed: 7.5
+  sprintSpeed: 11
+  crouchSpeed: 4
+  groundAcceleration: 12
+  groundFriction: 7
+  stopSpeed: 3
+  groundDeceleration: 4
+  landingFrictionGrace: 0.09
+  sprintMinForwardInput: 0.3
+  airAcceleration: 40
+  airWishSpeedCap: 1.4
+  airControlTurnRate: 70
+  airLowSpeedAcceleration: 10
+  gravity: 24
+  fallGravityMultiplier: 1.25
+  jumpForce: 7.6
+  coyoteTime: 0.1
+  jumpBufferTime: 0.12
+  upwardVelocityCarryOnJump: 0.5
+  maxFallSpeed: 55
+  maxHorizontalSpeed: 40
+  standingHeight: 1.8
+  crouchHeight: 1
+  capsuleRadius: 0.4
+  crouchTransitionSpeed: 10
+  eyeOffsetFromTop: 0.15
+  environmentMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  groundCheckDistance: 0.12
+  maxGroundAngle: 50
+  groundSnapDistance: 0.3
+  slideMinStartSpeed: 6.5
+  slideBoost: 4
+  slideBoostCooldown: 1.1
+  slideBoostMaxSpeed: 18
+  slideFriction: 0.55
+  slideSlopeAcceleration: 22
+  slideEndSpeed: 3.5
+  slideSteerRate: 60
+  slideOnLandWhileCrouching: 1
+  requireWallRunSurface: 1
+  wallCheckDistance: 0.55
+  wallRunMinHeight: 1
+  wallRunMinSpeed: 6
+  wallRunSpeed: 12.5
+  wallRunAcceleration: 10
+  wallRunGravity: 5
+  wallRunEntryMinUpSpeed: 1.5
+  wallRunMaxFallSpeed: 3
+  wallRunMaxDuration: 1.75
+  wallRunStickForce: 3
+  wallRunRequiresForwardInput: 1
+  maxWallAngleFromVertical: 20
+  wallRunRefreshesAirDash: 1
+  wallJumpUpForce: 7.5
+  wallJumpOutForce: 7
+  wallJumpInputInfluence: 0.55
+  wallJumpForwardBoost: 1.5
+  sameWallLockout: 0.6
+  wallJumpCooldown: 0.15
+  allowWallJumpWithoutWallRun: 1
+  dashSpeed: 24
+  dashDuration: 0.14
+  dashExitSpeedFraction: 0.6
+  dashMaxCharges: 2
+  dashRechargeTime: 1.8
+  dashCooldown: 0.35
+  airDashesPerAirtime: 1
+  dashIgnoresGravity: 1
+  allowDashJump: 1
+  externalImpulseMultiplier: 1
+  impulseUngroundTime: 0.15
