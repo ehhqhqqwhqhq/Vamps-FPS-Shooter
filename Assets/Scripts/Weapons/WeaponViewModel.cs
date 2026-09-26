@@ -153,16 +153,16 @@ namespace Vamp.Weapons
                 }
                 var sight = root.transform.Find("Sight");
                 _ads = sight != null ? new Vector3(0f, -sight.localPosition.y - 0.005f, 0.24f) : adsPosition;
-                _hip = d.slot == WeaponSlot.Secondary ? new Vector3(0.17f, -0.16f, 0.36f) : new Vector3(0.18f, -0.17f, 0.24f);
-                if (d.delivery == DeliveryType.Melee) _hip = _ads = new Vector3(0.19f, -0.15f, 0.27f);
+                _hip = ArmsFitting.Hip(d, false, hipPosition);
+                if (d.delivery == DeliveryType.Melee) _ads = _hip;
             }
             else
             {
                 root = new GameObject("VM_" + d.id);
                 root.transform.SetParent(transform, false);
-                BuildPlaceholder(root.transform, d);
+                BuildPlaceholder(root.transform, d, bodyMaterial, accentMaterial);
                 _ads = adsPosition;
-                _hip = hipPosition;
+                _hip = ArmsFitting.Hip(d, true, hipPosition);
             }
             if (_arms == null) camoTarget = root;
             if (camoTarget != null) WeaponCamo.Apply(camoTarget, WeaponCamo.LocalFor(d));
@@ -184,7 +184,7 @@ namespace Vamp.Weapons
             if (weapons != null) weapons.SetMuzzle(_muzzle);
         }
 
-        private void BuildPlaceholder(Transform root, WeaponData d)
+        public static void BuildPlaceholder(Transform root, WeaponData d, Material bodyMaterial, Material accentMaterial)
         {
             // Rough silhouettes so weapons read differently at a glance.
             float length = 0.35f, height = 0.09f, width = 0.07f;
@@ -196,7 +196,11 @@ namespace Vamp.Weapons
             else if (d.slot == WeaponSlot.Secondary) { length = 0.22f; height = 0.08f; width = 0.05f; }   // pistol
 
             Part(root, "Body", new Vector3(0f, 0f, length * 0.35f), new Vector3(width, height, length), bodyMaterial);
-            Part(root, "Grip", new Vector3(0f, -height * 0.9f, 0f), new Vector3(width * 0.8f, height * 1.3f, width), bodyMaterial);
+            // Grip sized for a hand (the arms wrap it). Blades get a handle behind the blade instead.
+            if (d.delivery == DeliveryType.Melee)
+                Part(root, "Grip", new Vector3(0f, 0f, -0.12f), new Vector3(0.024f, 0.03f, 0.11f), bodyMaterial);
+            else
+                Part(root, "Grip", new Vector3(0f, -height * 0.5f - 0.05f, 0f), new Vector3(0.032f, 0.11f, 0.045f), bodyMaterial);
             Part(root, "Accent", new Vector3(0f, height * 0.55f, length * 0.4f), new Vector3(width * 1.02f, height * 0.12f, length * 0.7f), accentMaterial);
             if (d.isSniper) Part(root, "Scope", new Vector3(0f, height * 1.1f, length * 0.25f), new Vector3(width * 0.8f, width * 0.8f, length * 0.35f), bodyMaterial);
 
@@ -210,7 +214,7 @@ namespace Vamp.Weapons
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
             go.layer = 2; // Ignore Raycast
-            Destroy(go.GetComponent<Collider>());
+            if (Application.isPlaying) Destroy(go.GetComponent<Collider>()); else DestroyImmediate(go.GetComponent<Collider>());
             go.transform.SetParent(parent, false);
             go.transform.localPosition = pos;
             go.transform.localScale = scale;
@@ -354,39 +358,7 @@ namespace Vamp.Weapons
             _gunArms = FirstPersonArms.Create(_gunArmsGo);
             if (!_gunArms.Ready) { Destroy(_gunArmsGo); _gunArmsGo = null; _gunArms = null; return; }
 
-            var gripT = root.Find("Grip");
-            var muzzleT = root.Find("Muzzle");
-            var offT = root.Find("Offhand");
-            Vector3 grip = gripT != null ? gripT.localPosition : new Vector3(0f, -0.06f, 0f);
-            Vector3 muzzle = muzzleT != null ? muzzleT.localPosition : new Vector3(0f, 0.03f, 0.45f);
-
-            if (d.delivery == DeliveryType.Melee)
-            {
-                // Knuckles up, index finger towards the blade; the left hand stays up in a guard.
-                _rGrip = grip;
-                _rGripRot = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-                _hasLeft = false;
-                return;
-            }
-            // Right: pinky→index along the grip (raked like a real pistol grip), knuckles forward.
-            _rGrip = grip;
-            _rGripRot = Quaternion.Euler(14f, 0f, 0f);
-            _hasLeft = true;
-            float length = muzzle.z - grip.z;
-            if (length < 0.3f)
-            {
-                // Pistol: left hand wraps the right from the left side, palm facing the grip.
-                _lGrip = grip + new Vector3(-0.03f, -0.012f, 0.004f);
-                _lGripRot = Quaternion.Euler(14f, 0f, 0f) * Quaternion.LookRotation(Vector3.up, Vector3.right);
-            }
-            else
-            {
-                // Long gun: palm up under the handguard, index finger forward.
-                Vector3 off = offT != null ? offT.localPosition + new Vector3(0f, 0.01f, 0f) : new Vector3(0f, muzzle.y - 0.03f, muzzle.z * 0.5f);
-                off.z = Mathf.Clamp(off.z, grip.z + 0.16f, grip.z + 0.34f);
-                _lGrip = off;
-                _lGripRot = Quaternion.identity;
-            }
+            ArmsFitting.Compute(root, d, out _rGrip, out _rGripRot, out _hasLeft, out _lGrip, out _lGripRot);
         }
 
         // ------------------------------------------------------------------ Inspect animations
