@@ -191,7 +191,7 @@ namespace Vamp.EditorTools
             w.damage = 95f; w.headshotMultiplier = 2f; w.range = 320f;
             w.falloffStart = 300f; w.falloffEnd = 320f; w.minDamageMultiplier = 1f;
             w.fireRate = 45f; w.magazineSize = 5; w.reserveAmmo = 30; w.reloadTime = 2.4f; w.equipTime = 0.5f;
-            w.hipSpread = 6f; w.adsSpread = 0f; w.movingSpreadAdd = 2f; w.airborneSpreadAdd = 4f;
+            w.hipSpread = 0f; w.adsSpread = 0f; w.movingSpreadAdd = 0f; w.airborneSpreadAdd = 0f; w.perfectAccuracy = true;
             w.recoilPitch = 4f; w.recoilYawRandom = 0.6f; w.viewKick = 5f; w.screenShake = 0.2f;
             w.isSniper = true; w.scopeOverlay = true; w.adsFovMultiplier = 0.3f; w.adsTime = 0.22f;
             w.tracerColor = new Color(1f, 0.2f, 0.25f, 0.9f);
@@ -318,11 +318,11 @@ namespace Vamp.EditorTools
             a.Reload();
 
             _hazard = B.Mat("Hazard", new Color(0.55f, 0.04f, 0.07f), 0.3f, 0.5f, new Color(0.6f, 0.02f, 0.04f));
-            _vent = B.Mat("Vent", new Color(0.12f, 0.12f, 0.13f), 0.9f, 0.4f, Color.black);
-            _floorDark = B.Mat("FloorDark", new Color(0.09f, 0.09f, 0.1f), 0.2f, 0.3f, Color.black);
+            _vent = B.Mat("Vent", new Color(0.32f, 0.33f, 0.36f), 0.9f, 0.4f, Color.black);
+            _floorDark = B.Mat("FloorDark", new Color(0.24f, 0.24f, 0.26f), 0.2f, 0.3f, Color.black);
 
             // Lighting: dark facility, cold key light, red practicals
-            VampArtBuilder.SetupDayLighting(new Vector3(52f, 30f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(52f, 30f, 0f), "sunset");
 
             var root = new GameObject("VERTEX").transform;
             var low = B.Group("Low", root);
@@ -473,7 +473,7 @@ namespace Vamp.EditorTools
             cam.tag = "MainCamera";
             cam.AddComponent<Camera>().clearFlags = CameraClearFlags.Skybox;
             cam.AddComponent<AudioListener>();
-            VampArtBuilder.SetupDayLighting(new Vector3(38f, -25f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(20f, -25f, 0f), "sunset");
             new GameObject("Menu").AddComponent<MenuController>();
             EditorSceneManager.SaveScene(scene, MenuPath);
         }

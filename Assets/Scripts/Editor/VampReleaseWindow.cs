@@ -425,7 +425,8 @@ namespace Vamp.EditorTools
                     if (File.Exists(cachePath)) foreach (var line in File.ReadAllLines(cachePath)) if (line.Length == 40) sent.Add(line);
 
                     // Upload changed blobs
-                    var entries = new StringBuilder();
+                    var changes = new List<string>();          // new / modified files
+                    var inProject = new HashSet<string>();
                     int uploaded = 0, done = 0;
                     foreach (var rel in files)
                     {
@@ -441,17 +442,30 @@ namespace Vamp.EditorTools
                             uploaded++;
                             await Task.Delay(900); // GitHub allows ~80 content-creating requests a minute
                         }
-                        if (entries.Length > 0) entries.Append(',');
-                        entries.Append("{\"path\":").Append(Json(rel)).Append(",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"").Append(sha).Append("\"}");
+                        if (!existing.TryGetValue(rel, out known) || known != sha)
+                            changes.Add("{\"path\":" + Json(rel) + ",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":\"" + sha + "\"}");
+                        inProject.Add(rel);
                         done++;
                         if (done % 25 == 0) EditorUtility.DisplayProgressBar("VAMP", "Uploading source " + done + "/" + files.Count + " (" + uploaded + " changed)", done / (float)files.Count);
                     }
 
-                    // Tree (full snapshot of the project) → commit → move the branch
-                    var tree = await http.PostAsync(api + "/git/trees", new StringContent("{\"tree\":[" + entries + "]}", Encoding.UTF8, "application/json"));
-                    string treeText = await tree.Content.ReadAsStringAsync();
-                    if (!tree.IsSuccessStatusCode) throw new Exception("tree failed (" + (int)tree.StatusCode + "): " + Short(treeText));
-                    string newTree = Regex.Match(treeText, "\"sha\"\\s*:\\s*\"([0-9a-f]{40})\"").Groups[1].Value;
+                    // Files that were removed from the project are deleted from the repo too.
+                    foreach (var path in existing.Keys)
+                        if (!inProject.Contains(path)) changes.Add("{\"path\":" + Json(path) + ",\"mode\":\"100644\",\"type\":\"blob\",\"sha\":null}");
+                    if (changes.Count == 0) { Log("Source code is already up to date on GitHub."); return; }
+
+                    // Tree built in small steps on top of the current one (one huge tree request times out on GitHub).
+                    string newTree = baseTree;
+                    for (int i = 0; i < changes.Count; i += 120)
+                    {
+                        var chunk = changes.GetRange(i, Math.Min(120, changes.Count - i));
+                        string body = "{" + (newTree.Length > 0 ? "\"base_tree\":\"" + newTree + "\"," : "") + "\"tree\":[" + string.Join(",", chunk.ToArray()) + "]}";
+                        var tree = await http.PostAsync(api + "/git/trees", new StringContent(body, Encoding.UTF8, "application/json"));
+                        string treeText = await tree.Content.ReadAsStringAsync();
+                        if (!tree.IsSuccessStatusCode) throw new Exception("tree failed (" + (int)tree.StatusCode + "): " + Short(treeText));
+                        newTree = Regex.Match(treeText, "\"sha\"\\s*:\\s*\"([0-9a-f]{40})\"").Groups[1].Value;
+                        EditorUtility.DisplayProgressBar("VAMP", "Building tree " + Math.Min(changes.Count, i + 120) + "/" + changes.Count, Math.Min(1f, (i + 120) / (float)changes.Count));
+                    }
                     if (newTree == baseTree) { Log("Source code is already up to date on GitHub."); return; }
 
                     string msg = "VAMP v" + PlayerSettings.bundleVersion + " source" + (string.IsNullOrEmpty(_notes) ? "" : "\n\n" + _notes);

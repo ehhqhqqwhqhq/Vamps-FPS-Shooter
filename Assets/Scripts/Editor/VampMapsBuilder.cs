@@ -31,8 +31,8 @@ namespace Vamp.EditorTools
             _sand = B.Mat("Sand", new Color(0.78f, 0.67f, 0.48f), 0f, 0.1f, Color.black);
             _rock = B.Mat("Rock", new Color(0.52f, 0.45f, 0.38f), 0f, 0.15f, Color.black);
             _brick = B.Mat("Brick", new Color(0.55f, 0.32f, 0.26f), 0f, 0.2f, Color.black);
-            _roof = B.Mat("Rooftop", new Color(0.36f, 0.36f, 0.38f), 0.1f, 0.25f, Color.black);
-            _steel = B.Mat("Steel", new Color(0.3f, 0.32f, 0.35f), 0.8f, 0.5f, Color.black);
+            _roof = B.Mat("Rooftop", new Color(0.46f, 0.45f, 0.47f), 0.1f, 0.25f, Color.black);
+            _steel = B.Mat("Steel", new Color(0.44f, 0.46f, 0.5f), 0.8f, 0.5f, Color.black);
             _water = B.Mat("Water", new Color(0.08f, 0.22f, 0.3f), 0f, 0.92f, Color.black);
             _container = B.Mat("ContainerRed", new Color(0.55f, 0.12f, 0.1f), 0.5f, 0.35f, Color.black);
             _containerB = B.Mat("ContainerBlue", new Color(0.1f, 0.25f, 0.5f), 0.5f, 0.35f, Color.black);
@@ -61,7 +61,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(55f, -40f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(55f, -40f, 0f), "golden");
             var root = new GameObject("FOUNDRY").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);
@@ -123,7 +123,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(48f, 20f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(48f, 20f, 0f), "desert");
             var root = new GameObject("OUTPOST").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);
@@ -206,7 +206,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(40f, -60f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(40f, -60f, 0f), "sunset");
             var root = new GameObject("SKYLINE").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);
@@ -270,7 +270,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(35f, -120f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(35f, -120f, 0f), "golden");
             var root = new GameObject("HARBOR").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);
@@ -396,7 +396,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(52f, 150f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(52f, 150f, 0f), "desert");
             var root = new GameObject("CANYON").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);
@@ -513,7 +513,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(60f, 30f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(60f, 30f, 0f), "dusk");
             var root = new GameObject("PIT").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);
@@ -565,7 +565,7 @@ namespace Vamp.EditorTools
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             a.Reload();
             Materials();
-            VampArtBuilder.SetupDayLighting(new Vector3(45f, 70f, 0f));
+            VampArtBuilder.SetupDayLighting(new Vector3(45f, 70f, 0f), "day");
             var root = new GameObject("CROSSFIRE").transform;
             var world = B.Group("World", root);
             var spawns = B.Group("SpawnPoints", root);

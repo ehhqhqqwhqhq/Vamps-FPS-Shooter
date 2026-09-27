@@ -227,6 +227,47 @@ namespace Vamp.EditorTools
                     Object.DestroyImmediate(at);
                     root.transform.localPosition = hipKeep;
                 }
+
+                // Attachments: the gun with a full kit (side view, hip view from the eye, ADS through the optic).
+                if (!placeholder && Attachments.SlotAllowed(d, AttachmentSlot.Muzzle))
+                {
+                    var kit = new List<AttachmentDef>();
+                    foreach (var slot in new[] { AttachmentSlot.Optic, AttachmentSlot.Muzzle, AttachmentSlot.Underbarrel, AttachmentSlot.Magazine })
+                    {
+                        var opts = Attachments.For(d, slot);
+                        if (opts.Count > 0) kit.Add(opts[(d.id.Length + (int)slot) % opts.Count]);
+                    }
+                    var kr = (GameObject)PrefabUtility.InstantiatePrefab(d.viewModelPrefab);
+                    kr.transform.SetParent(eye, false);
+                    Vector3 lensK;
+                    bool opticK = AttachmentMount.Fit(kr.transform, d, kit, out lensK);
+                    if (opticK) AttachmentMount.AddReticle(kr.transform, lensK);
+                    root.SetActive(false);
+                    a.SetActive(false);
+                    var kt = new Texture2D(W * 3, H, TextureFormat.RGB24, false);
+                    kr.transform.localPosition = ArmsFitting.Hip(d, false, Vector3.zero);
+                    Vector3 kf = kr.transform.TransformPoint(new Vector3(0f, 0.02f, 0.15f));
+                    Vector3 ks = kf + eye.right * 1.0f;
+                    Shot(cam, rt, kt, 0, 0, ks, Quaternion.LookRotation(kf - ks, eye.up), 40f);
+                    Shot(cam, rt, kt, 1, 0, eye.position, eye.rotation, 58.7f);
+                    kr.transform.localPosition = opticK ? new Vector3(-lensK.x, -lensK.y, 0.22f) : ArmsFitting.Ads(kr.transform, d, Vector3.zero);
+                    Shot(cam, rt, kt, 2, 0, eye.position, eye.rotation, 30f);
+                    for (int k = -14; k <= 14; k++)
+                    {
+                        if (Mathf.Abs(k) < 3) continue;
+                        kt.SetPixel(2 * W + W / 2 + k, H / 2, Color.green);
+                        kt.SetPixel(2 * W + W / 2, H / 2 + k, Color.green);
+                    }
+                    kt.Apply();
+                    File.WriteAllBytes(Path.Combine(outDir, d.id + "_kit.png"), kt.EncodeToPNG());
+                    Object.DestroyImmediate(kt);
+                    var kitNames = new List<string>();
+                    foreach (var att in kit) kitNames.Add(att.Name);
+                    log.Add(d.id + " kit: " + string.Join(", ", kitNames.ToArray()) + (opticK ? " lens " + lensK.ToString("F4") : ""));
+                    Object.DestroyImmediate(kr);
+                    root.SetActive(true);
+                    a.SetActive(true);
+                }
             }
             File.WriteAllLines(Path.Combine(outDir, "log.txt"), log.ToArray());
             cam.targetTexture = null;

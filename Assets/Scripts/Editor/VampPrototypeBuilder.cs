@@ -103,10 +103,10 @@ namespace Vamp.EditorTools
 
         internal static void CreateMaterials()
         {
-            _concrete = Mat("Concrete", new Color(0.15f, 0.15f, 0.16f), 0f, 0.2f, Color.black);
-            _concreteLight = Mat("ConcreteLight", new Color(0.27f, 0.27f, 0.29f), 0f, 0.25f, Color.black);
-            _metal = Mat("Metal", new Color(0.23f, 0.23f, 0.25f), 0.75f, 0.55f, Color.black);
-            _wallRun = Mat("WallRunSurface", new Color(0.2f, 0.05f, 0.07f), 0.5f, 0.6f, new Color(0.25f, 0.01f, 0.03f));
+            _concrete = Mat("Concrete", new Color(0.4f, 0.39f, 0.38f), 0f, 0.2f, Color.black);
+            _concreteLight = Mat("ConcreteLight", new Color(0.62f, 0.6f, 0.58f), 0f, 0.25f, Color.black);
+            _metal = Mat("Metal", new Color(0.46f, 0.48f, 0.52f), 0.75f, 0.55f, Color.black);
+            _wallRun = Mat("WallRunSurface", new Color(0.62f, 0.08f, 0.1f), 0.4f, 0.6f, new Color(0.35f, 0.01f, 0.03f));
             _redGlow = Mat("RedGlow", new Color(0.8f, 0.05f, 0.1f), 0f, 0.5f, new Color(2.5f, 0.1f, 0.2f));
             _whiteGlow = Mat("WhiteGlow", Color.white, 0f, 0.5f, new Color(1.6f, 1.6f, 1.7f));
             _dummy = Mat("Dummy", new Color(0.75f, 0.75f, 0.78f), 0f, 0.3f, Color.black);

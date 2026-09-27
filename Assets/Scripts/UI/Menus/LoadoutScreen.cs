@@ -21,7 +21,7 @@ namespace Vamp.UI.Menus
         {
             var col = Page(root, "LOADOUT", "ANY GUN CAN BE YOUR PRIMARY OR SECONDARY · NOTHING IS LOCKED · LEVEL A WEAPON TO UNLOCK ITS CAMOS", 1100f);
             _tabs = UIKit.Tabs(col, SlotNames, 0, i => { _slot = i; Refresh(); });
-            var body = UIKit.Row(col, 520f, 24f, "Body");
+            var body = UIKit.Row(col, 580f, 24f, "Body");
             ScrollRect scroll;
             _list = UIKit.ScrollList(body, out scroll, 6f);
             UIKit.Size(scroll, 520f, 420f);
@@ -29,6 +29,11 @@ namespace Vamp.UI.Menus
             UIKit.Size(_details, 520f, -1, 1f);
             UIKit.Button(col, "BACK", () => Host.Back(), UIKit.ButtonStyle.Ghost, 18, 44f);
             Refresh();
+        }
+
+        public override void OnShow()
+        {
+            if (_list != null) Refresh(); // back from ATTACHMENTS: update the fitted count
         }
 
         private string Equipped()
@@ -119,6 +124,14 @@ namespace Vamp.UI.Menus
             swatch = sw.GetComponent<RawImage>();
             UIKit.Size(swatch, 54f, -1, 1f);
             ShowSwatch(swatch, skins[idx]);
+
+            // Attachments (guns only)
+            if (Attachments.SlotAllowed(w, AttachmentSlot.Muzzle))
+            {
+                int fitted = Attachments.LocalFor(w).Count;
+                var data = w;
+                UIKit.Button(_details, "ATTACHMENTS  ·  " + fitted + " FITTED", () => Host.Push(new AttachmentsScreen(data)), UIKit.ButtonStyle.Primary, 18, 46f);
+            }
         }
 
         private static string _swatchWeapon;

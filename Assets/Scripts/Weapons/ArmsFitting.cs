@@ -16,19 +16,20 @@ namespace Vamp.Weapons
             public Vector3 LeftPos, LeftEuler;     // added to the left-hand point / rotation
             public Vector3 Hip;                    // added to the hip-fire view position
             public Vector3 Ads;                    // added to the aim-down-sights position (lines the sights up with the crosshair)
+            public Vector2 Rail;                   // optic mount (height y, position z) on the top rail; zero = on the rear sight
         }
 
         /// <summary>Per weapon id. Anything missing = zero.</summary>
         public static readonly Dictionary<string, Fit> Fits = new Dictionary<string, Fit>
         {
-            { "havoc",  new Fit { RightPos = new Vector3(0f, 0.02f, 0.01f), RightEuler = new Vector3(8f, 0f, 0f), Ads = new Vector3(0.0065f, -0.003f, 0f) } },
+            { "havoc",  new Fit { RightPos = new Vector3(0f, 0.02f, 0.01f), RightEuler = new Vector3(8f, 0f, 0f), Ads = new Vector3(0.0065f, -0.003f, 0f), Rail = new Vector2(0.119f, 0.06f) } },
             { "arc",    new Fit { RightPos = new Vector3(0f, 0.015f, 0f) } },
             { "widow",  new Fit { RightPos = new Vector3(0f, -0.03f, 0.04f), Ads = new Vector3(0.0054f, 0.025f, 0f) } },
             { "ripper", new Fit { RightPos = new Vector3(0f, 0.04f, 0.07f), RightEuler = new Vector3(10f, 0f, 0f), Ads = new Vector3(-0.0051f, 0.0145f, 0f) } },
-            { "brute",  new Fit { RightPos = new Vector3(0f, 0.01f, 0f) } },
+            { "brute",  new Fit { RightPos = new Vector3(0f, 0.01f, 0f), Rail = new Vector2(0.099f, 0.25f) } },
             { "blast",  new Fit { LeftPos = new Vector3(0f, -0.06f, 0f) } },
-            { "v9",     new Fit { Hip = new Vector3(0f, 0.03f, -0.02f) } },
-            { "reaper", new Fit { Hip = new Vector3(0f, 0.03f, -0.02f) } },
+            { "v9",     new Fit { Hip = new Vector3(0f, 0.03f, -0.02f), Rail = new Vector2(0.0584f, -0.02f) } },
+            { "reaper", new Fit { Hip = new Vector3(0f, 0.03f, -0.02f), Rail = new Vector2(0.0641f, 0.045f) } },
             { "blade",  new Fit { Hip = new Vector3(0f, 0.05f, 0.13f) } },
         };
 

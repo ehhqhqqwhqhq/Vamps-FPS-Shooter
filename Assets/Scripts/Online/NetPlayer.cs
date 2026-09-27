@@ -124,8 +124,8 @@ namespace Vamp.Online
 
             if (!Mathf.Approximately(cfg.gravityMultiplier, 1f) || !Mathf.Approximately(cfg.movementSpeedMultiplier, 1f))
                 _pc.Movement.SetSettings(_pc.Movement.CreateScaledCopy(cfg.gravityMultiplier, cfg.movementSpeedMultiplier));
-            Weapons.SetLoadout(BuildLoadout(cfg));
-            LoadoutChange.Setup(_pc, cfg, () => BuildLoadout(cfg));
+            Weapons.SetLoadout(Attachments.ApplyLocal(BuildLoadout(cfg)));
+            LoadoutChange.Setup(_pc, cfg, () => Attachments.ApplyLocal(BuildLoadout(cfg)));
             _pc.RespawnDelay = cfg.respawnDelay;
             _pc.RespawnEnabled = cfg.respawns;
             int team = session != null && cfg.IsTeamMode ? session.TeamOf(OwnerClientId) : -1;
@@ -268,7 +268,9 @@ namespace Vamp.Online
         public static int WeaponIndex(WeaponData d)
         {
             if (d == null || Game.Weapons == null) return -1;
-            return Game.Weapons.weapons.IndexOf(d);
+            int i = Game.Weapons.weapons.IndexOf(d);
+            if (i < 0) i = Game.Weapons.weapons.FindIndex(w => w != null && w.id == d.id); // runtime copy (attachments)
+            return i;
         }
 
         public static WeaponData WeaponByIndex(int i)

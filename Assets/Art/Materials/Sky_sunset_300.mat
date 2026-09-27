@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sky_sunset_300
+  m_Shader: {fileID: 4800000, guid: 41eddb185af797b47a9af5b7e2b91a09, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CloudTex:
+        m_Texture: {fileID: 2800000, guid: 46cfb71aa6acc9d4691d5b02d86dabe5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CloudCover: 0.52
+    - _CloudScale: 0.14
+    - _CloudSpeed: 0.004
+    - _Exposure: 1
+    - _HorizonSharpness: 2.5
+    - _SunGlow: 0.8
+    - _SunSize: 0.0025
+    m_Colors:
+    - _BottomColor: {r: 0.24, g: 0.19, b: 0.2, a: 1}
+    - _CloudColor: {r: 1.7, g: 0.95, b: 0.62, a: 1}
+    - _CloudShade: {r: 0.42, g: 0.3, b: 0.48, a: 1}
+    - _HorizonColor: {r: 1, g: 0.52, b: 0.28, a: 1}
+    - _SunColor: {r: 7, g: 3.4, b: 1.5, a: 1}
+    - _SunDir: {r: 0.83247715, g: 0.27563742, b: -0.4806308, a: 0}
+    - _TopColor: {r: 0.12, g: 0.17, b: 0.42, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

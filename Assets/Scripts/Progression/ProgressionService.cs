@@ -73,6 +73,7 @@ namespace Vamp.Progression
             if (Profile.seen_unlocks == null) Profile.seen_unlocks = new List<string>();
             if (Profile.loadout == null) Profile.loadout = new LoadoutData();
             if (Profile.loadout.weaponSkins == null) Profile.loadout.weaponSkins = new List<IdPair>();
+            if (Profile.loadout.attachments == null) Profile.loadout.attachments = new List<IdPair>();
             if (Profile.weapon_xp == null) Profile.weapon_xp = new List<IdCount>();
             if (string.IsNullOrEmpty(Profile.weapon_trail)) Profile.weapon_trail = "trail_none";
             if (string.IsNullOrEmpty(Profile.gloves)) Profile.gloves = "glove_tactical";
@@ -311,6 +312,9 @@ namespace Vamp.Progression
             {
                 if (Profile.title_auto) Profile.title = CosmeticCatalog.TierTitleId(Profile.level);
                 Notify(NotificationKind.LevelUp, "LEVEL UP", "LEVEL " + Profile.level + " REACHED");
+                foreach (var att in Weapons.Attachments.All)
+                    if (att.UnlockLevel > oldLevel && att.UnlockLevel <= Profile.level && Profile.prestige_level == 0)
+                        Notify(NotificationKind.LevelUp, "NEW ATTACHMENT", att.Name + " · FIT IT IN LOADOUT ▸ ATTACHMENTS");
                 if (LeveledUp != null) LeveledUp(oldLevel, Profile.level);
             }
         }

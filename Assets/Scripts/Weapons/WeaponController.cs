@@ -267,7 +267,7 @@ namespace Vamp.Weapons
             if (d.delivery == DeliveryType.Hitscan) FireHitscan(d, origin, forward, muzzlePos);
             else FireProjectile(d, origin, forward, muzzlePos);
 
-            SimpleVfx.MuzzleFlash(muzzlePos, forward, FlashSize(d));
+            SimpleVfx.MuzzleFlash(muzzlePos, forward, FlashSize(d) * (d.suppressed ? 0.25f : 1f));
             PlayFireSound(d);
 
             if (d.airborneSelfKnockback > 0f && _movement != null && !_movement.IsGrounded)
@@ -437,15 +437,15 @@ namespace Vamp.Weapons
                 int pellets = Mathf.Max(1, d.pelletsPerShot);
                 for (int p = 0; p < pellets; p++)
                 {
-                    Vector3 dir = SpreadDirection(forward, d.hipSpread, p, pellets, d.fixedPelletPattern);
+                    Vector3 dir = SpreadDirection(forward, d.perfectAccuracy ? 0f : d.hipSpread, p, pellets, d.fixedPelletPattern);
                     RaycastHit hit;
                     Vector3 end = RaycastIgnoringSelf(origin, dir, d.range, out hit) ? hit.point : origin + dir * d.range;
                     if (d.showTracers) CosmeticFx.Tracer(muzzlePos, end, d, TrailId, pellets);
                     if (hit.collider != null) SimpleVfx.Impact(hit.point, new Color(1f, 0.85f, 0.6f, 1f), 0.1f);
                 }
             }
-            if (d.delivery != DeliveryType.Melee) SimpleVfx.MuzzleFlash(muzzlePos, forward, FlashSize(d));
-            AudioController.Play(SoundFor(d), muzzlePos);
+            if (d.delivery != DeliveryType.Melee) SimpleVfx.MuzzleFlash(muzzlePos, forward, FlashSize(d) * (d.suppressed ? 0.25f : 1f));
+            AudioController.Play(SoundFor(d), muzzlePos, d.suppressed ? 0.35f : 1f, d.suppressed ? 1.35f : 1f);
         }
 
         /// <summary>The last melee attack was the overhead downward stab (every other swing, and always on a backstab).</summary>
@@ -537,7 +537,8 @@ namespace Vamp.Weapons
                 return;
             }
             SfxId id = SoundFor(d);
-            AudioController.Play2D(id, 0.9f, UnityEngine.Random.Range(0.96f, 1.04f));
+            if (d.suppressed) AudioController.Play2D(id, 0.4f, UnityEngine.Random.Range(1.3f, 1.4f)); // suppressed: quiet, thin crack
+            else AudioController.Play2D(id, 0.9f, UnityEngine.Random.Range(0.96f, 1.04f));
         }
 
         public static SfxId SoundFor(WeaponData d)
@@ -554,6 +555,7 @@ namespace Vamp.Weapons
 
         private float ComputeSpread(WeaponData d)
         {
+            if (d.perfectAccuracy || d.id == "widow") return 0f; // AWP: always dead centre
             float s = Mathf.Lerp(d.hipSpread, d.adsSpread, _aimBlend);
             if (_movement != null)
             {

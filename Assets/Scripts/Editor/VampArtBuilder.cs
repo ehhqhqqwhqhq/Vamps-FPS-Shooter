@@ -72,6 +72,7 @@ namespace Vamp.EditorTools
                 if (p != null) prefabs[kv.Key] = p;
             }
             BuildCharacterPrefab();
+            BuildAttachmentPrefabs();
             BuildKnifePrefab();
             VampArmsBuilder.Build();
             AssetDatabase.SaveAssets();
@@ -161,28 +162,104 @@ namespace Vamp.EditorTools
 
         // ================================================================== Lighting
 
-        public static void SetupDayLighting(Vector3 sunEuler)
+        /// <summary>Lighting theme: sun, sky gradient, ambient, fog and clouds that belong together.</summary>
+        public struct Theme
         {
+            public Color Sun; public float SunIntensity; public float MaxPitch;
+            public Color Top, Horizon, Ground, SunSky, CloudLight, CloudShade; public float CloudCover;
+            public Color AmbSky, AmbEquator, AmbGround; public float AmbIntensity;
+            public Color Fog; public float FogDensity;
+        }
+
+        public static readonly Dictionary<string, Theme> Themes = new Dictionary<string, Theme>
+        {
+            { "day", new Theme {
+                Sun = new Color(1f, 0.96f, 0.88f), SunIntensity = 2.2f, MaxPitch = 90f,
+                Top = new Color(0.16f, 0.4f, 0.88f), Horizon = new Color(0.7f, 0.83f, 0.97f), Ground = new Color(0.36f, 0.35f, 0.34f),
+                SunSky = new Color(5f, 4.6f, 4f), CloudLight = new Color(1.3f, 1.27f, 1.22f), CloudShade = new Color(0.58f, 0.64f, 0.76f), CloudCover = 0.55f,
+                AmbSky = new Color(0.56f, 0.7f, 0.95f), AmbEquator = new Color(0.64f, 0.67f, 0.72f), AmbGround = new Color(0.38f, 0.34f, 0.3f), AmbIntensity = 1.15f,
+                Fog = new Color(0.68f, 0.8f, 0.94f), FogDensity = 0.0024f } },
+            { "sunset", new Theme {
+                Sun = new Color(1f, 0.62f, 0.36f), SunIntensity = 2.0f, MaxPitch = 16f,
+                Top = new Color(0.12f, 0.17f, 0.42f), Horizon = new Color(1f, 0.52f, 0.28f), Ground = new Color(0.24f, 0.19f, 0.2f),
+                SunSky = new Color(7f, 3.4f, 1.5f), CloudLight = new Color(1.7f, 0.95f, 0.62f), CloudShade = new Color(0.42f, 0.3f, 0.48f), CloudCover = 0.52f,
+                AmbSky = new Color(0.46f, 0.45f, 0.74f), AmbEquator = new Color(0.9f, 0.56f, 0.4f), AmbGround = new Color(0.32f, 0.22f, 0.2f), AmbIntensity = 1.1f,
+                Fog = new Color(0.92f, 0.56f, 0.4f), FogDensity = 0.0028f } },
+            { "golden", new Theme {
+                Sun = new Color(1f, 0.8f, 0.52f), SunIntensity = 2.2f, MaxPitch = 30f,
+                Top = new Color(0.2f, 0.36f, 0.72f), Horizon = new Color(1f, 0.78f, 0.54f), Ground = new Color(0.36f, 0.3f, 0.26f),
+                SunSky = new Color(6f, 4.2f, 2.2f), CloudLight = new Color(1.55f, 1.2f, 0.85f), CloudShade = new Color(0.55f, 0.5f, 0.62f), CloudCover = 0.52f,
+                AmbSky = new Color(0.5f, 0.6f, 0.85f), AmbEquator = new Color(0.92f, 0.74f, 0.56f), AmbGround = new Color(0.38f, 0.3f, 0.24f), AmbIntensity = 1.1f,
+                Fog = new Color(0.95f, 0.8f, 0.64f), FogDensity = 0.0022f } },
+            { "desert", new Theme {
+                Sun = new Color(1f, 0.92f, 0.74f), SunIntensity = 2.2f, MaxPitch = 90f,
+                Top = new Color(0.2f, 0.46f, 0.86f), Horizon = new Color(0.96f, 0.86f, 0.7f), Ground = new Color(0.62f, 0.5f, 0.38f),
+                SunSky = new Color(6f, 5.3f, 4f), CloudLight = new Color(1.3f, 1.25f, 1.15f), CloudShade = new Color(0.7f, 0.66f, 0.66f), CloudCover = 0.22f,
+                AmbSky = new Color(0.6f, 0.7f, 0.9f), AmbEquator = new Color(0.9f, 0.78f, 0.62f), AmbGround = new Color(0.6f, 0.48f, 0.34f), AmbIntensity = 1.1f,
+                Fog = new Color(0.93f, 0.85f, 0.72f), FogDensity = 0.002f } },
+            { "dusk", new Theme {
+                Sun = new Color(0.9f, 0.62f, 1f), SunIntensity = 1.5f, MaxPitch = 22f,
+                Top = new Color(0.06f, 0.07f, 0.24f), Horizon = new Color(0.62f, 0.34f, 0.62f), Ground = new Color(0.12f, 0.1f, 0.15f),
+                SunSky = new Color(3.5f, 1.8f, 3.4f), CloudLight = new Color(1.1f, 0.66f, 0.95f), CloudShade = new Color(0.22f, 0.18f, 0.34f), CloudCover = 0.5f,
+                AmbSky = new Color(0.38f, 0.34f, 0.7f), AmbEquator = new Color(0.62f, 0.4f, 0.62f), AmbGround = new Color(0.2f, 0.15f, 0.22f), AmbIntensity = 1.25f,
+                Fog = new Color(0.5f, 0.32f, 0.55f), FogDensity = 0.0032f } },
+        };
+
+        public static void SetupDayLighting(Vector3 sunEuler, string theme = "day")
+        {
+            Theme th;
+            if (!Themes.TryGetValue(theme ?? "day", out th)) th = Themes["day"];
+            sunEuler.x = Mathf.Min(sunEuler.x, th.MaxPitch);
+
             var sun = new GameObject("Sun").AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = new Color(1f, 0.95f, 0.86f);
-            sun.intensity = 1.9f;
+            sun.color = th.Sun;
+            sun.intensity = th.SunIntensity;
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.85f;
+            sun.shadowStrength = 0.9f;
+            sun.shadowBias = 0.04f;
+            sun.shadowNormalBias = 0.3f;
             sun.transform.rotation = Quaternion.Euler(sunEuler);
 
             RenderSettings.sun = sun;
-            RenderSettings.skybox = DaySky();
+            RenderSettings.skybox = Sky(theme ?? "day", th, -sun.transform.forward);
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.6f, 0.7f, 0.85f);
-            RenderSettings.ambientEquatorColor = new Color(0.5f, 0.52f, 0.55f);
-            RenderSettings.ambientGroundColor = new Color(0.3f, 0.28f, 0.25f);
-            RenderSettings.ambientIntensity = 1f;
+            RenderSettings.ambientSkyColor = th.AmbSky;
+            RenderSettings.ambientEquatorColor = th.AmbEquator;
+            RenderSettings.ambientGroundColor = th.AmbGround;
+            RenderSettings.ambientIntensity = th.AmbIntensity;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+            RenderSettings.reflectionIntensity = 1f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.7f, 0.78f, 0.88f);
-            RenderSettings.fogDensity = 0.0035f;
+            RenderSettings.fogColor = th.Fog;
+            RenderSettings.fogDensity = th.FogDensity;
+        }
+
+        /// <summary>VAMP/Sky material for a theme (one asset per theme + sun direction).</summary>
+        private static Material Sky(string theme, Theme th, Vector3 sunDir)
+        {
+            var sh = Shader.Find("VAMP/Sky");
+            if (sh == null) return DaySky();
+            B.EnsureFolder(ArtMaterials);
+            string path = ArtMaterials + "/Sky_" + theme + "_" + Mathf.RoundToInt(Mathf.Atan2(sunDir.x, sunDir.z) * Mathf.Rad2Deg + 180f) + ".mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null) { mat = new Material(sh); AssetDatabase.CreateAsset(mat, path); }
+            mat.shader = sh;
+            mat.SetColor("_TopColor", th.Top);
+            mat.SetColor("_HorizonColor", th.Horizon);
+            mat.SetColor("_BottomColor", th.Ground);
+            mat.SetColor("_SunColor", th.SunSky);
+            mat.SetVector("_SunDir", new Vector4(sunDir.x, sunDir.y, sunDir.z, 0f));
+            mat.SetColor("_CloudColor", th.CloudLight);
+            mat.SetColor("_CloudShade", th.CloudShade);
+            mat.SetFloat("_CloudCover", th.CloudCover);
+            mat.SetFloat("_CloudScale", 0.14f);
+            mat.SetFloat("_SunGlow", 0.8f);
+            var clouds = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Surfaces/Clouds.png");
+            if (clouds != null) mat.SetTexture("_CloudTex", clouds);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         public static Material DaySky()
@@ -662,6 +739,80 @@ namespace Vamp.EditorTools
             float m = float.MinValue;
             foreach (var p in v) if (p.z >= z0 && p.z <= z1) m = Mathf.Max(m, p.y);
             return m > float.MinValue ? m : fallback;
+        }
+
+        // ================================================================== Attachments
+
+        private const string AttachmentArt = "Assets/Art/Attachments";
+
+        /// <summary>(fbx name, prefab name, length in m, optic?, lens height fraction, extra rotation)</summary>
+        private static readonly (string fbx, string name, float length, bool optic, float lens, Vector3 euler)[] AttachmentModels =
+        {
+            ("Red_Dot_Sight", "RedDot", 0.075f, true, 0.62f, Vector3.zero),
+            ("EOTechSight", "Holo", 0.095f, true, 0.6f, Vector3.zero),
+            ("2xRedDotOptic", "Optic2x", 0.11f, true, 0.36f, Vector3.zero),
+            ("Silencer", "Suppressor", 0.15f, false, 0f, Vector3.zero),
+            ("Silencer_Fat", "HeavySuppressor", 0.18f, false, 0f, Vector3.zero),
+            ("Silencer_Rectangle", "MuzzleBrake", 0.075f, false, 0f, Vector3.zero),
+        };
+
+        /// <summary>
+        /// Attachment prefabs in Resources/Attachments: longest side along +Z (towards the muzzle), real-world size.
+        /// Muzzle devices: origin at the back end, on the bore axis. Optics: origin at the middle of the base, with a
+        /// "Lens" point in the middle of the sight window (the aim point).
+        /// </summary>
+        private static void BuildAttachmentPrefabs()
+        {
+            B.EnsureFolder("Assets/Resources/Attachments");
+            foreach (var spec in AttachmentModels)
+            {
+                string fbx = AttachmentArt + "/" + spec.fbx + ".fbx";
+                if (AssetDatabase.LoadMainAssetAtPath(fbx) == null) { Debug.LogWarning("[VAMP] Attachment model missing: " + fbx); continue; }
+                ConfigureImporter(fbx, false);
+                var src = AssetDatabase.LoadAssetAtPath<GameObject>(fbx);
+                if (src == null) continue;
+                var root = new GameObject(spec.name);
+                var inst = (GameObject)PrefabUtility.InstantiatePrefab(src);
+                inst.name = "Model";
+                inst.transform.SetParent(root.transform, false);
+                foreach (var c in inst.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(c);
+                var verts = Collect(inst.transform, root.transform);
+                if (verts.Count == 0) { Object.DestroyImmediate(root); continue; }
+
+                var b = BoundsOf(verts);
+                var ext = b.size;
+                int[] order = { 0, 1, 2 };
+                System.Array.Sort(order, (p, q) => ext[q].CompareTo(ext[p]));
+                Vector3 fwd = Axis(order[0]);
+                // Optics: the base is the widest flat side, so "up" is the SHORTEST extent; tubes: second longest.
+                Vector3 up = spec.optic ? Axis(order[1]) : Axis(order[1]);
+                Rotate(inst.transform, verts, Quaternion.Inverse(Quaternion.LookRotation(fwd, up)));
+                if (spec.euler != Vector3.zero) Rotate(inst.transform, verts, Quaternion.Euler(spec.euler));
+
+                b = BoundsOf(verts);
+                float s = spec.length / Mathf.Max(0.0001f, b.size.z);
+                inst.transform.localScale *= s;
+                inst.transform.localPosition *= s;
+                for (int i = 0; i < verts.Count; i++) verts[i] *= s;
+                b = BoundsOf(verts);
+                Vector3 origin = spec.optic ? new Vector3(b.center.x, b.min.y, b.center.z) : new Vector3(b.center.x, b.center.y, b.min.z);
+                inst.transform.localPosition -= origin;
+                for (int i = 0; i < verts.Count; i++) verts[i] -= origin;
+                b = BoundsOf(verts);
+                if (spec.optic) Point(root, "Lens", new Vector3(0f, b.size.y * spec.lens, 0f));
+                else Point(root, "End", new Vector3(0f, 0f, b.max.z));
+
+                foreach (var r in inst.GetComponentsInChildren<Renderer>())
+                {
+                    var mats = new Material[Mathf.Max(1, r.sharedMaterials.Length)];
+                    for (int i = 0; i < mats.Length; i++) mats[i] = _gunMetal;
+                    r.sharedMaterials = mats;
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                }
+                PrefabUtility.SaveAsPrefabAsset(root, "Assets/Resources/Attachments/" + spec.name + ".prefab");
+                Debug.Log("[VAMP] Attachment " + spec.name + ": size " + b.size.ToString("F3") + " (raw extents " + ext.ToString("F3") + ")");
+                Object.DestroyImmediate(root);
+            }
         }
 
         // ================================================================== Character

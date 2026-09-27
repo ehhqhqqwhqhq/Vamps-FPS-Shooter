@@ -52,6 +52,8 @@ MonoBehaviour:
   adsFovMultiplier: 0.9
   adsTime: 0.1
   isSniper: 0
+  perfectAccuracy: 0
+  suppressed: 0
   scopeOverlay: 0
   projectileSpeed: 45
   projectileGravity: 0

@@ -84,6 +84,10 @@ namespace Vamp.Weapons
         public float adsTime = 0.15f;
         [Tooltip("Uses the sniper sensitivity slider instead of the ADS slider.")]
         public bool isSniper = false;
+        [Tooltip("Every shot goes exactly where the crosshair points - no spread at all (AWP).")]
+        public bool perfectAccuracy;
+        [Tooltip("Suppressor fitted: tiny muzzle flash, quieter shot (set by attachments at runtime).")]
+        public bool suppressed;
         [Tooltip("Show a scope overlay while fully aimed (hides the view model).")]
         public bool scopeOverlay = false;
 

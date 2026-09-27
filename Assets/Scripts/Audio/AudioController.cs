@@ -187,7 +187,28 @@ namespace Vamp.Audio
 
         // ------------------------------------------------------------------ Music
 
-        /// <summary>Crossfade to menu / match music ("menu", "match", or null to fade out).</summary>
+        private static readonly Dictionary<string, AudioClip[]> Playlists = new Dictionary<string, AudioClip[]>();
+        private int _lastTrack = -1;
+
+        /// <summary>Soundtrack for a context: Resources/Music/Menu_*.ogg or Match_*.ogg (procedural loop if none).</summary>
+        private static AudioClip[] PlaylistFor(string key)
+        {
+            AudioClip[] list;
+            if (Playlists.TryGetValue(key, out list)) return list;
+            var all = Resources.LoadAll<AudioClip>("Music");
+            var pick = new List<AudioClip>();
+            string prefix = key == "match" ? "Match_" : "Menu_";
+            foreach (var c in all) if (c != null && c.name.StartsWith(prefix)) pick.Add(c);
+            pick.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            list = pick.ToArray();
+            Playlists[key] = list;
+            return list;
+        }
+
+        /// <summary>Name of the track playing now ("" if none).</summary>
+        public static string NowPlaying { get { return _instance != null && _instance._music != null && _instance._music.clip != null ? _instance._music.clip.name : ""; } }
+
+        /// <summary>Crossfade to menu / match music ("menu", "match", or null to fade out). Tracks shuffle and move on when one ends.</summary>
         public static void SetMusic(string key, float volume = 0.7f)
         {
             var self = Instance;
@@ -201,11 +222,38 @@ namespace Vamp.Audio
             self._musicTarget = volume;
             if (self._musicKey == key && self._music.isPlaying) return;
             self._musicKey = key;
-            AudioClip clip = key == "match" ? (self.matchMusic != null ? self.matchMusic : ProceduralSfx.MusicLoop(true))
-                                            : (self.menuMusic != null ? self.menuMusic : ProceduralSfx.MusicLoop(false));
-            self._music.clip = clip;
-            self._music.volume = 0f;
-            self._music.Play();
+            self.PlayNext(true);
+        }
+
+        private void PlayNext(bool fadeIn)
+        {
+            var list = PlaylistFor(_musicKey);
+            AudioClip clip;
+            if (list.Length == 0)
+            {
+                clip = _musicKey == "match" ? (matchMusic != null ? matchMusic : ProceduralSfx.MusicLoop(true))
+                                            : (menuMusic != null ? menuMusic : ProceduralSfx.MusicLoop(false));
+                _music.loop = true;
+            }
+            else
+            {
+                int i = UnityEngine.Random.Range(0, list.Length);
+                if (list.Length > 1 && i == _lastTrack) i = (i + 1) % list.Length;
+                _lastTrack = i;
+                clip = list[i];
+                _music.loop = list.Length == 1;
+            }
+            _music.clip = clip;
+            if (fadeIn) _music.volume = 0f;
+            _music.Play();
+        }
+
+        private void LateUpdate()
+        {
+            // Next song when one finishes (playlists don't loop single tracks).
+            if (_music != null && _musicKey != null && _musicTarget > 0f && !_music.isPlaying && _music.clip != null
+                && Application.isFocused && _music.clip.loadState == AudioDataLoadState.Loaded)
+                PlayNext(false);
         }
     }
 }

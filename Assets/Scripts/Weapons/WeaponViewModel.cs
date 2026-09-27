@@ -40,6 +40,8 @@ namespace Vamp.Weapons
         private bool _melee;
         private float _stab;
         private float _down;   // overhead downward stab (1 → 0)
+        private bool _optic;
+        private Vector3 _lens;
 
         // Inspect (style only - no gameplay effect)
         private float _inspectT = -1f;
@@ -117,6 +119,7 @@ namespace Vamp.Weapons
             _pumpT = 1f;
             _inspectT = -1f;
             _data = d;
+            _optic = false;
             if (d == null) return;
             _equipLower = 1f;
 
@@ -169,7 +172,11 @@ namespace Vamp.Weapons
                     r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     r.gameObject.layer = 2;
                 }
-                _ads = ArmsFitting.Ads(root.transform, d, adsPosition);
+                // Attachments (optic / muzzle / underbarrel / mag). An optic moves the aim point to its lens.
+                Vector3 lens;
+                _optic = AttachmentMount.Fit(root.transform, d, Attachments.LocalFor(d), out lens);
+                _lens = lens;
+                _ads = _optic ? new Vector3(-lens.x, -lens.y, 0.22f) : ArmsFitting.Ads(root.transform, d, adsPosition);
                 _hip = ArmsFitting.Hip(d, false, hipPosition);
                 if (d.delivery == DeliveryType.Melee) _ads = _hip;
             }
@@ -183,6 +190,7 @@ namespace Vamp.Weapons
             }
             if (_arms == null) camoTarget = root;
             if (camoTarget != null) WeaponCamo.Apply(camoTarget, WeaponCamo.LocalFor(d));
+            if (_optic) AttachmentMount.AddReticle(root.transform, _lens);
             _melee = d.delivery == DeliveryType.Melee;
             if (_arms != null) GloveSkins.Apply(root, GloveSkins.Local);
             else if (_balisong == null) AttachArms(root.transform, d);

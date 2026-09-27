@@ -25,6 +25,8 @@ namespace Vamp.Progression
         public string melee = "knife";
         /// <summary>weapon id → skin id (cosmetic only).</summary>
         public List<IdPair> weaponSkins = new List<IdPair>();
+        /// <summary>"weaponId|slot" → attachment id (see Weapons.Attachments).</summary>
+        public List<IdPair> attachments = new List<IdPair>();
 
         public string SkinFor(string weaponId)
         {

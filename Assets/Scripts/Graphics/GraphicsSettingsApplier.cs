@@ -26,6 +26,7 @@ namespace Vamp.Graphics
             public int Msaa;
             public float RenderScale;
             public int AdditionalLights;
+            public int ShadowRes;
             public bool Captured;
         }
 
@@ -68,11 +69,13 @@ namespace Vamp.Graphics
                 switch (g.shadows)
                 {
                     case QualityTier.Off: urp.shadowDistance = 0f; urp.shadowCascadeCount = 1; break;
-                    case QualityTier.Low: urp.shadowDistance = 25f; urp.shadowCascadeCount = 1; break;
-                    case QualityTier.Medium: urp.shadowDistance = 50f; urp.shadowCascadeCount = 2; break;
-                    case QualityTier.High: urp.shadowDistance = 80f; urp.shadowCascadeCount = 3; break;
-                    default: urp.shadowDistance = 120f; urp.shadowCascadeCount = 4; break;
+                    case QualityTier.Low: urp.shadowDistance = 30f; urp.shadowCascadeCount = 1; break;
+                    case QualityTier.Medium: urp.shadowDistance = 60f; urp.shadowCascadeCount = 2; break;
+                    case QualityTier.High: urp.shadowDistance = 110f; urp.shadowCascadeCount = 4; break;
+                    default: urp.shadowDistance = 160f; urp.shadowCascadeCount = 4; break;
                 }
+                SetProp(urp, "mainLightShadowmapResolution", g.shadows >= QualityTier.Ultra ? 4096 : g.shadows >= QualityTier.Medium ? 2048 : 1024);
+                SetProp(urp, "supportsHDR", true);
                 urp.maxAdditionalLightsCount = g.lighting == QualityTier.Low ? 2 : g.lighting == QualityTier.Medium ? 4 : 8;
                 urp.renderScale = Mathf.Clamp(g.renderScale, 0.5f, 1f);
                 urp.msaaSampleCount = 1; // screen-space AA is handled per camera
@@ -129,6 +132,7 @@ namespace Vamp.Graphics
                 Msaa = urp.msaaSampleCount,
                 RenderScale = urp.renderScale,
                 AdditionalLights = urp.maxAdditionalLightsCount,
+                ShadowRes = urp.mainLightShadowmapResolution,
                 Captured = true
             };
         }
@@ -142,10 +146,23 @@ namespace Vamp.Graphics
             _asset.msaaSampleCount = _original.Msaa;
             _asset.renderScale = _original.RenderScale;
             _asset.maxAdditionalLightsCount = _original.AdditionalLights;
+            SetProp(_asset, "mainLightShadowmapResolution", _original.ShadowRes);
             foreach (var kv in OriginalFeatureState)
                 if (kv.Key != null) kv.Key.SetActive(kv.Value);
             OriginalFeatureState.Clear();
             _original.Captured = false;
+        }
+
+        /// <summary>Sets a URP asset property if this URP version exposes a setter (quietly skipped otherwise).</summary>
+        private static void SetProp(UniversalRenderPipelineAsset urp, string name, object value)
+        {
+            try
+            {
+                var p = typeof(UniversalRenderPipelineAsset).GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+                var set = p != null ? p.GetSetMethod(true) : null;
+                if (set != null) set.Invoke(urp, new[] { value });
+            }
+            catch (System.Exception) { }
         }
 
         private static void SetAmbientOcclusion(UniversalRenderPipelineAsset urp, bool enabled)

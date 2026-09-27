@@ -32,8 +32,11 @@ namespace Vamp.UI.Menus
 
             var btn = _root.gameObject.AddComponent<Button>();
             var bg = _root.gameObject.AddComponent<Image>();
-            bg.color = new Color(0f, 0f, 0f, 0.35f);
+            bg.color = new Color(0f, 0f, 0f, 0f); // no box - invisible, still clickable
             btn.targetGraphic = bg;
+            var cb = btn.colors;
+            cb.normalColor = cb.highlightedColor = cb.pressedColor = cb.selectedColor = Color.white;
+            btn.colors = cb;
             btn.onClick.AddListener(() => menu.Push(new ProfileScreen()));
 
             UIKit.HList(_root, 12f, 10);

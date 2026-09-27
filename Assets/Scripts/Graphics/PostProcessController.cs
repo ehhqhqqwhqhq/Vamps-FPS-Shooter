@@ -22,6 +22,7 @@ namespace Vamp.Graphics
         private static ColorAdjustments _color;
         private static WhiteBalance _white;
         private static LiftGammaGain _lgg;
+        private static ShadowsMidtonesHighlights _smh;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -43,7 +44,7 @@ namespace Vamp.Graphics
             _volume.sharedProfile = _profile;
 
             _bloom = _profile.Add<Bloom>(true);
-            _bloom.threshold.Override(0.95f);
+            _bloom.threshold.Override(0.9f);
             _bloom.scatter.Override(0.65f);
             _bloom.tint.Override(new Color(1f, 0.85f, 0.85f));
 
@@ -56,23 +57,27 @@ namespace Vamp.Graphics
             _dof.gaussianEnd.Override(120f);
 
             _vignette = _profile.Add<Vignette>(true);
-            _vignette.intensity.Override(0.3f);
+            _vignette.intensity.Override(0.22f);
             _vignette.smoothness.Override(0.4f);
 
             _tonemapping = _profile.Add<Tonemapping>(true);
             _tonemapping.mode.Override(TonemappingMode.ACES);
 
             _color = _profile.Add<ColorAdjustments>(true);
-            _color.postExposure.Override(0.15f);
-            _color.contrast.Override(18f);
-            _color.saturation.Override(4f);
+            _color.postExposure.Override(0.2f);
+            _color.contrast.Override(20f);
+            _color.saturation.Override(18f);
 
             // Graphics revamp: warmer light, cooler shadows, a touch more punch.
             _white = _profile.Add<WhiteBalance>(true);
             _white.temperature.Override(6f);
             _lgg = _profile.Add<LiftGammaGain>(true);
             _lgg.lift.Override(new Vector4(0.97f, 0.99f, 1.03f, -0.02f));
-            _lgg.gain.Override(new Vector4(1.02f, 1.0f, 0.97f, 0.02f));
+            _lgg.gain.Override(new Vector4(1.02f, 1.0f, 0.97f, 0.03f));
+            // Cool teal shadows, warm highlights: colour where there used to be grey.
+            _smh = _profile.Add<ShadowsMidtonesHighlights>(true);
+            _smh.shadows.Override(new Vector4(0.94f, 1.0f, 1.08f, 0f));
+            _smh.highlights.Override(new Vector4(1.06f, 1.0f, 0.94f, 0f));
         }
 
         public static void Apply(GraphicsSettingsData g)
@@ -94,6 +99,7 @@ namespace Vamp.Graphics
             _color.active = postOn && g.postProcessing >= QualityTier.Medium;
             _white.active = _color.active;
             _lgg.active = _color.active;
+            _smh.active = _color.active;
         }
     }
 }
