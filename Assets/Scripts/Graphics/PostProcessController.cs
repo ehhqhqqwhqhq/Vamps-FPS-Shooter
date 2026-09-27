@@ -20,6 +20,8 @@ namespace Vamp.Graphics
         private static Vignette _vignette;
         private static Tonemapping _tonemapping;
         private static ColorAdjustments _color;
+        private static WhiteBalance _white;
+        private static LiftGammaGain _lgg;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -41,8 +43,8 @@ namespace Vamp.Graphics
             _volume.sharedProfile = _profile;
 
             _bloom = _profile.Add<Bloom>(true);
-            _bloom.threshold.Override(1.0f);
-            _bloom.scatter.Override(0.6f);
+            _bloom.threshold.Override(0.95f);
+            _bloom.scatter.Override(0.65f);
             _bloom.tint.Override(new Color(1f, 0.85f, 0.85f));
 
             _motionBlur = _profile.Add<MotionBlur>(true);
@@ -61,8 +63,16 @@ namespace Vamp.Graphics
             _tonemapping.mode.Override(TonemappingMode.ACES);
 
             _color = _profile.Add<ColorAdjustments>(true);
-            _color.contrast.Override(12f);
-            _color.saturation.Override(-8f);
+            _color.postExposure.Override(0.15f);
+            _color.contrast.Override(18f);
+            _color.saturation.Override(4f);
+
+            // Graphics revamp: warmer light, cooler shadows, a touch more punch.
+            _white = _profile.Add<WhiteBalance>(true);
+            _white.temperature.Override(6f);
+            _lgg = _profile.Add<LiftGammaGain>(true);
+            _lgg.lift.Override(new Vector4(0.97f, 0.99f, 1.03f, -0.02f));
+            _lgg.gain.Override(new Vector4(1.02f, 1.0f, 0.97f, 0.02f));
         }
 
         public static void Apply(GraphicsSettingsData g)
@@ -82,6 +92,8 @@ namespace Vamp.Graphics
             _vignette.active = postOn && g.vignette && !competitive;
             _tonemapping.active = postOn;
             _color.active = postOn && g.postProcessing >= QualityTier.Medium;
+            _white.active = _color.active;
+            _lgg.active = _color.active;
         }
     }
 }

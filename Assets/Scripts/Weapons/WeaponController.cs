@@ -267,7 +267,7 @@ namespace Vamp.Weapons
             if (d.delivery == DeliveryType.Hitscan) FireHitscan(d, origin, forward, muzzlePos);
             else FireProjectile(d, origin, forward, muzzlePos);
 
-            SimpleVfx.MuzzleFlash(muzzlePos);
+            SimpleVfx.MuzzleFlash(muzzlePos, forward, FlashSize(d));
             PlayFireSound(d);
 
             if (d.airborneSelfKnockback > 0f && _movement != null && !_movement.IsGrounded)
@@ -420,6 +420,14 @@ namespace Vamp.Weapons
         /// no damage; rockets explode locally so knockback feels right, but their damage is blocked by
         /// <see cref="HealthController.Intercept"/> (only the shooter's own machine reports hits).
         /// </summary>
+        private static float FlashSize(WeaponData d)
+        {
+            if (d.pelletsPerShot > 1) return 0.5f;
+            if (d.delivery == DeliveryType.Projectile) return 0.45f;
+            if (d.usesHeat) return 0.22f;
+            return d.slot == WeaponSlot.Secondary ? 0.24f : d.isSniper ? 0.5f : 0.34f;
+        }
+
         public void SimulateRemoteShot(WeaponData d, Vector3 origin, Vector3 forward, Vector3 muzzlePos)
         {
             if (d == null) return;
@@ -436,7 +444,7 @@ namespace Vamp.Weapons
                     if (hit.collider != null) SimpleVfx.Impact(hit.point, new Color(1f, 0.85f, 0.6f, 1f), 0.1f);
                 }
             }
-            if (d.delivery != DeliveryType.Melee) SimpleVfx.MuzzleFlash(muzzlePos);
+            if (d.delivery != DeliveryType.Melee) SimpleVfx.MuzzleFlash(muzzlePos, forward, FlashSize(d));
             AudioController.Play(SoundFor(d), muzzlePos);
         }
 

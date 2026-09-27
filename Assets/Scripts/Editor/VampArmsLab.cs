@@ -157,6 +157,51 @@ namespace Vamp.EditorTools
                     parts.ResetParts();
                     if (shell != null) shell.SetActive(false);
                 }
+
+                // Muzzle flash preview (hip pose): player view + a close side view of the muzzle.
+                if (d.delivery != DeliveryType.Melee && (d.id == "havoc" || d.id == "v9" || d.id == "brute" || d.id == "widow"))
+                {
+                    var mz = root.transform.Find("Muzzle");
+                    if (mz != null)
+                    {
+                        Vamp.VFX.MuzzleFx.Play(mz.position, root.transform.forward, d.pelletsPerShot > 1 ? 0.5f : d.slot == WeaponSlot.Secondary ? 0.24f : 0.34f);
+                        var ft = new Texture2D(W * 2, H, TextureFormat.RGB24, false);
+                        Shot(cam, rt, ft, 0, 0, eye.position, eye.rotation, 58.7f);
+                        Vector3 side2 = mz.position + eye.right * 0.6f + eye.forward * 0.15f;
+                        Shot(cam, rt, ft, 1, 0, side2, Quaternion.LookRotation(mz.position + eye.forward * 0.15f - side2, eye.up), 40f);
+                        ft.Apply();
+                        File.WriteAllBytes(Path.Combine(outDir, d.id + "_flash.png"), ft.EncodeToPNG());
+                        Object.DestroyImmediate(ft);
+                        Vamp.VFX.MuzzleFx.DestroyPool();
+                    }
+                }
+
+                // Aim down sights: the sights must sit on the crosshair (screen centre).
+                if (d.delivery != DeliveryType.Melee && d.canAim)
+                {
+                    Vector3 ads = placeholder ? new Vector3(0f, -0.13f, 0.32f) + ArmsFitting.For(d.id).Ads
+                                              : ArmsFitting.Ads(root.transform, d, new Vector3(0f, -0.13f, 0.32f));
+                    Vector3 hipKeep = root.transform.localPosition;
+                    root.transform.localPosition = ads;
+                    root.transform.localRotation = Quaternion.identity;
+                    var partsA = root.GetComponent<WeaponParts>();
+                    if (partsA != null) partsA.ResetParts();
+                    fp.Solve(root.transform, rp, rr, left, lp, lr);
+                    var at = new Texture2D(W * 2, H, TextureFormat.RGB24, false);
+                    Shot(cam, rt, at, 0, 0, eye.position, eye.rotation, 58.7f);
+                    Shot(cam, rt, at, 1, 0, eye.position, eye.rotation, 14f);
+                    for (int c = 0; c < 2; c++)
+                        for (int k = -14; k <= 14; k++)
+                        {
+                            if (Mathf.Abs(k) < 3) continue;
+                            at.SetPixel(c * W + W / 2 + k, H / 2, Color.green);
+                            at.SetPixel(c * W + W / 2, H / 2 + k, Color.green);
+                        }
+                    at.Apply();
+                    File.WriteAllBytes(Path.Combine(outDir, d.id + "_ads.png"), at.EncodeToPNG());
+                    Object.DestroyImmediate(at);
+                    root.transform.localPosition = hipKeep;
+                }
             }
             File.WriteAllLines(Path.Combine(outDir, "log.txt"), log.ToArray());
             cam.targetTexture = null;

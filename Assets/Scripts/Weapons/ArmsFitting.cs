@@ -15,6 +15,7 @@ namespace Vamp.Weapons
             public Vector3 RightPos, RightEuler;   // added to the right-hand grip point / rotation
             public Vector3 LeftPos, LeftEuler;     // added to the left-hand point / rotation
             public Vector3 Hip;                    // added to the hip-fire view position
+            public Vector3 Ads;                    // added to the aim-down-sights position (lines the sights up with the crosshair)
         }
 
         /// <summary>Per weapon id. Anything missing = zero.</summary>
@@ -22,8 +23,8 @@ namespace Vamp.Weapons
         {
             { "havoc",  new Fit { RightPos = new Vector3(0f, 0.02f, 0.01f), RightEuler = new Vector3(8f, 0f, 0f) } },
             { "arc",    new Fit { RightPos = new Vector3(0f, 0.015f, 0f) } },
-            { "widow",  new Fit { RightPos = new Vector3(0f, -0.03f, 0.04f) } },
-            { "ripper", new Fit { RightPos = new Vector3(0f, 0.04f, 0.07f), RightEuler = new Vector3(10f, 0f, 0f) } },
+            { "widow",  new Fit { RightPos = new Vector3(0f, -0.03f, 0.04f), Ads = new Vector3(0f, 0.025f, 0f) } },
+            { "ripper", new Fit { RightPos = new Vector3(0f, 0.04f, 0.07f), RightEuler = new Vector3(10f, 0f, 0f), Ads = new Vector3(0f, 0.01f, 0f) } },
             { "brute",  new Fit { RightPos = new Vector3(0f, 0.01f, 0f) } },
             { "blast",  new Fit { LeftPos = new Vector3(0f, -0.06f, 0f) } },
             { "v9",     new Fit { Hip = new Vector3(0f, 0.03f, -0.02f) } },
@@ -45,6 +46,14 @@ namespace Vamp.Weapons
             else if (placeholder) hip = placeholderHip;
             else hip = d.slot == WeaponSlot.Secondary ? new Vector3(0.15f, -0.14f, 0.34f) : new Vector3(0.18f, -0.17f, 0.24f);
             return hip + For(d.id).Hip;
+        }
+
+        /// <summary>Aim-down-sights position of the weapon root: the sight line on the eye (screen centre).</summary>
+        public static Vector3 Ads(Transform root, WeaponData d, Vector3 fallback)
+        {
+            var sight = root != null ? root.Find("Sight") : null;
+            Vector3 ads = sight != null ? new Vector3(-sight.localPosition.x, -sight.localPosition.y, 0.24f) : fallback;
+            return ads + For(d.id).Ads;
         }
 
         /// <summary>Grip targets for the arms on this weapon (weapon space).</summary>

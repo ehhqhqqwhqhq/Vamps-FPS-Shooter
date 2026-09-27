@@ -160,8 +160,7 @@ namespace Vamp.Weapons
                     r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     r.gameObject.layer = 2;
                 }
-                var sight = root.transform.Find("Sight");
-                _ads = sight != null ? new Vector3(0f, -sight.localPosition.y - 0.005f, 0.24f) : adsPosition;
+                _ads = ArmsFitting.Ads(root.transform, d, adsPosition);
                 _hip = ArmsFitting.Hip(d, false, hipPosition);
                 if (d.delivery == DeliveryType.Melee) _ads = _hip;
             }
@@ -170,7 +169,7 @@ namespace Vamp.Weapons
                 root = new GameObject("VM_" + d.id);
                 root.transform.SetParent(transform, false);
                 BuildPlaceholder(root.transform, d, bodyMaterial, accentMaterial);
-                _ads = adsPosition;
+                _ads = adsPosition + ArmsFitting.For(d.id).Ads;
                 _hip = ArmsFitting.Hip(d, true, hipPosition);
             }
             if (_arms == null) camoTarget = root;
@@ -287,7 +286,7 @@ namespace Vamp.Weapons
             }
             if (_gunArms != null) UpdateShell(rp);
 
-            Vector3 pos = Vector3.Lerp(_hip, _ads, weapons.AimBlend) + bob;
+            Vector3 pos = Vector3.Lerp(_hip, _ads, weapons.AimBlend) + bob * (1f - 0.8f * weapons.AimBlend);
             pos.z -= _kick * kickBack;
             pos.y -= (reload * 0.12f) + _equipLower * 0.25f;
             pos += rp.GunPos;
@@ -338,7 +337,9 @@ namespace Vamp.Weapons
             pos += inspectPos;
             if (_balisong != null) AnimateBalisong(dt);
             _model.localPosition = pos;
-            var rot = Quaternion.Euler(-_kick * kickPitch + reload * 35f + _sway.y, _sway.x, reload * -15f);
+            // Aiming: the sights stay on the crosshair - kick goes straight back, sway and bob nearly vanish.
+            float aimSteady = 1f - 0.9f * weapons.AimBlend;
+            var rot = Quaternion.Euler(-_kick * kickPitch * aimSteady + reload * 35f + _sway.y * aimSteady, _sway.x * aimSteady, reload * -15f);
             // Knife held tip-up towards the centre of the screen; the stab straightens it out.
             if (_arms != null) rot *= Quaternion.Euler(-6f * stab, -4f * stab, 0f);
             else if (_melee) rot *= Quaternion.Euler(Mathf.Lerp(-22f, 4f, stab), Mathf.Lerp(-28f, -8f, stab), Mathf.Lerp(-35f, -10f, stab));

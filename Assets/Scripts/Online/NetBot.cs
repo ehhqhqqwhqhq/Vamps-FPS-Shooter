@@ -196,7 +196,7 @@ namespace Vamp.Online
             var d = NetPlayer.WeaponByIndex(weapon);
             Vector3 dir = (end - origin).normalized;
             if (d == null || d.showTracers) SimpleVfx.TracerLine(origin + dir * 0.5f, end, d != null ? d.tracerColor : Color.white, 0.02f);
-            SimpleVfx.MuzzleFlash(origin + dir * 0.6f, 0.2f);
+            SimpleVfx.MuzzleFlash(origin + dir * 0.6f, dir, 0.32f);
             if (d != null) AudioController.Play(WeaponController.SoundFor(d), origin, 0.8f, Random.Range(0.95f, 1.05f));
         }
 

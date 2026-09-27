@@ -129,7 +129,15 @@ namespace Vamp.VFX
 
         public static void MuzzleFlash(Vector3 position, float size = 0.25f)
         {
-            SpawnFlash(position, new Color(1f, 0.55f, 0.35f, 0.9f), size, size * 1.6f, 0.05f);
+            var cam = Camera.main;
+            Vector3 fwd = cam != null ? (position - cam.transform.position) : Vector3.forward;
+            MuzzleFlash(position, fwd, size * 1.2f);
+        }
+
+        /// <summary>Sprite muzzle flash (Kenney Particle Pack) pointing along forward; size = flash length (m).</summary>
+        public static void MuzzleFlash(Vector3 position, Vector3 forward, float size)
+        {
+            MuzzleFx.Play(position, forward, size);
         }
 
         public static void Explosion(Vector3 position, float radius)

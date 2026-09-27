@@ -96,6 +96,7 @@ namespace Vamp.EditorTools
                 mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 mat.SetColor("_EmissionColor", emission);
             }
+            VampGraphicsBuilder.Surface(mat, name, metallic);
             EditorUtility.SetDirty(mat);
             return mat;
         }

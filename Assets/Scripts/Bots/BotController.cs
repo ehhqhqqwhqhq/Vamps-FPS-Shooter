@@ -248,7 +248,7 @@ namespace Vamp.Bots
             }
 
             if (ShotFired != null) ShotFired(origin, hitPoint, Weapon);
-            SimpleVfx.MuzzleFlash(origin + dir * 0.6f, 0.2f);
+            SimpleVfx.MuzzleFlash(origin + dir * 0.6f, dir, 0.32f);
             AudioController.Play(WeaponController.SoundFor(Weapon), origin, 0.8f, Random.Range(0.95f, 1.05f));
 
             if (victim != null && total > 0f)

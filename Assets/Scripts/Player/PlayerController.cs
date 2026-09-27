@@ -151,8 +151,10 @@ namespace Vamp.Player
 
         private void OnFired(WeaponData d)
         {
-            View.AddRecoil(d.recoilPitch, d.recoilYawRandom);
-            View.AddViewKick(d.viewKick);
+            // Straight-up recoil: every shot climbs the same amount, no sideways kick - pull straight down to control it.
+            View.AddRecoil(d.recoilPitch, 0f);
+            // Visual punch only moves the picture, not the aim - keep it small while aiming so the sights stay true.
+            View.AddViewKick(d.viewKick * (1f - 0.75f * Weapons.AimBlend));
             View.AddShake(d.screenShake);
         }
     }

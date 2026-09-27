@@ -95,6 +95,7 @@ namespace Vamp.EditorTools
             foreach (var f in new[] { ResourcesFolder, "Assets/Scenes/Boot", "Assets/Scenes/MainMenu", "Assets/Scenes/Maps" }) B.EnsureFolder(f);
             EditorUtility.DisplayProgressBar("VAMP", "Importing weapon + character models...", 0.08f);
             VampArtBuilder.ImportModels(); // first: may reimport FBX files
+            VampGraphicsBuilder.SetupRenderer();
             B.CreateMaterials();
             B._font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 

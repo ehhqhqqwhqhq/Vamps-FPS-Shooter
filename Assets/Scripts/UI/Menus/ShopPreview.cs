@@ -139,7 +139,7 @@ namespace Vamp.UI.Menus
                         Vector3 from = _muzzle != null ? _muzzle.position : _gun.position + _gun.forward * 0.5f;
                         Vector3 to = from + _gun.forward * 9f + Random.insideUnitSphere * 0.2f;
                         CosmeticFx.Tracer(from, to, _weapon, _item.Id, 1);
-                        SimpleVfx.MuzzleFlash(from, 0.18f);
+                        SimpleVfx.MuzzleFlash(from, _gun.forward, 0.3f);
                     }
                     break;
                 case CosmeticType.KillEffect:
