@@ -72,6 +72,11 @@ namespace Vamp.EditorTools
                 VampMapsBuilder.BuildFoundry(assets);
                 VampMapsBuilder.BuildOutpost(assets);
                 VampMapsBuilder.BuildSkyline(assets);
+                EditorUtility.DisplayProgressBar("VAMP", "Building HARBOR, CANYON, THE PIT, CROSSFIRE...", 0.75f);
+                VampMapsBuilder.BuildHarbor(assets);
+                VampMapsBuilder.BuildCanyon(assets);
+                VampMapsBuilder.BuildPit(assets);
+                VampMapsBuilder.BuildCrossfire(assets);
                 EditorUtility.DisplayProgressBar("VAMP", "Building menus...", 0.8f);
                 BuildMenuScene();
                 BuildBootScene();
@@ -489,7 +494,8 @@ namespace Vamp.EditorTools
         public static void ApplyBuildSettings()
         {
             var ordered = new List<string> { BootPath, MenuPath, B.ScenePath, VertexPath,
-                                             VampMapsBuilder.FoundryPath, VampMapsBuilder.OutpostPath, VampMapsBuilder.SkylinePath };
+                                             VampMapsBuilder.FoundryPath, VampMapsBuilder.OutpostPath, VampMapsBuilder.SkylinePath,
+                                             VampMapsBuilder.HarborPath, VampMapsBuilder.CanyonPath, VampMapsBuilder.PitPath, VampMapsBuilder.CrossfirePath };
             var list = new List<EditorBuildSettingsScene>();
             foreach (var path in ordered)
                 if (System.IO.File.Exists(path)) list.Add(new EditorBuildSettingsScene(path, true));

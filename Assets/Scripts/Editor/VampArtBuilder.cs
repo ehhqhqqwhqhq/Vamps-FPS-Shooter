@@ -666,6 +666,27 @@ namespace Vamp.EditorTools
 
         // ================================================================== Character
 
+        /// <summary>
+        /// Copy of the character mesh with its rest-pose positions (in metres) in UV3, so the VAMP/Character shader
+        /// can project skin patterns that stick to the body while it animates.
+        /// </summary>
+        private static Mesh BakeRestPose(Mesh src, int index)
+        {
+            string path = "Assets/Art/Characters/StickManSkin" + index + ".asset";
+            AssetDatabase.DeleteAsset(path);
+            var m = Object.Instantiate(src);
+            m.name = src.name + "_Skin";
+            var v = m.vertices;
+            var b = new Bounds(v.Length > 0 ? v[0] : Vector3.zero, Vector3.zero);
+            foreach (var p in v) b.Encapsulate(p);
+            float k = 1.8f / Mathf.Max(0.0001f, Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)));
+            var rest = new List<Vector3>(v.Length);
+            foreach (var p in v) rest.Add((p - b.min) * k);
+            m.SetUVs(3, rest);
+            AssetDatabase.CreateAsset(m, path);
+            return m;
+        }
+
         private static void BuildCharacterPrefab()
         {
             if (AssetDatabase.LoadMainAssetAtPath(CharacterFbx) == null) { Debug.LogWarning("[VAMP] " + CharacterFbx + " missing - characters keep capsule placeholders."); return; }
@@ -687,10 +708,12 @@ namespace Vamp.EditorTools
                 inst.transform.localScale *= s;
                 inst.transform.localPosition = new Vector3(-b.center.x * s, -b.min.y * s, -b.center.z * s);
             }
+            int meshIndex = 0;
             foreach (var r in inst.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 r.sharedMaterial = _stick;
                 r.updateWhenOffscreen = true;
+                if (r.sharedMesh != null) r.sharedMesh = BakeRestPose(r.sharedMesh, meshIndex++);
             }
             root.AddComponent<CharacterRig>();
             PrefabUtility.SaveAsPrefabAsset(root, CharacterPrefab);

@@ -430,7 +430,8 @@ namespace Vamp.UI
         }
 
         /// <summary>"LABEL      &lt; VALUE &gt;" option cycler - the VAMP replacement for dropdowns.</summary>
-        public static OptionSelector Selector(Transform parent, string label, IList<string> options, int index, Action<int> onChanged, float labelWidth = 300f)
+        public static OptionSelector Selector(Transform parent, string label, IList<string> options, int index, Action<int> onChanged, float labelWidth = 300f,
+                                              float valueWidth = 220f, float arrowWidth = 40f)
         {
             var row = Row(parent, 44f, 12f, "Selector_" + label);
             var l = Label(row, label, 17, Text, TextAnchor.MiddleLeft);
@@ -439,11 +440,19 @@ namespace Vamp.UI
 
             var sel = row.gameObject.AddComponent<OptionSelector>();
             var left = Button(row, "<", null, ButtonStyle.Ghost, 18, 36f);
-            Size(left, 36f, 40f);
+            Size(left, 36f, arrowWidth);
             var value = Label(row, "", 18, Text, TextAnchor.MiddleCenter);
-            Size(value, -1, 220f);
+            Size(value, -1, valueWidth);
+            if (valueWidth < 200f)
+            {
+                // Narrow selectors (side panels): shrink long values instead of spilling out of the panel.
+                value.resizeTextForBestFit = true;
+                value.resizeTextMinSize = 10;
+                value.resizeTextMaxSize = 16;
+                value.horizontalOverflow = HorizontalWrapMode.Wrap;
+            }
             var right = Button(row, ">", null, ButtonStyle.Ghost, 18, 36f);
-            Size(right, 36f, 40f);
+            Size(right, 36f, arrowWidth);
             sel.Init(options, index, value, onChanged);
             left.onClick.AddListener(() => sel.Step(-1));
             right.onClick.AddListener(() => sel.Step(1));

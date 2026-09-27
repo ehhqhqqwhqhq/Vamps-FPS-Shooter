@@ -16,6 +16,7 @@ namespace Vamp.Progression
     {
         private readonly ProgressionConfig _config;
         private string _accountId;
+        private string _username;
 
         public PlayerProfileData Profile { get; private set; }
         public PlayerStatsData Stats { get; private set; }
@@ -53,6 +54,7 @@ namespace Vamp.Progression
         {
             _accountId = account.id;
             IsTester = IsTesterName(account.username);
+            _username = account.username;
             PlayerProfileData p;
             PlayerStatsData s;
             ChallengeSaveData c;
@@ -85,6 +87,7 @@ namespace Vamp.Progression
             if (Challenges.states == null) Challenges.states = new List<ChallengeState>();
 
             if (IsTester) ApplyTesterPerks();
+            ApplyGifts(_username);
             Profile.level = Mathf.Clamp(Profile.level, 1, _config.maxLevel);
             Profile.prestige_level = Mathf.Clamp(Profile.prestige_level, 0, _config.maxPrestige);
             Profile.xp = Mathf.Clamp(Profile.xp, 0, Mathf.Max(0, _config.XpToNext(Profile.level) - 1));

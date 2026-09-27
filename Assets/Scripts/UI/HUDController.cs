@@ -85,6 +85,7 @@ namespace Vamp.UI
             if (player == null) player = PlayerController.Local != null ? PlayerController.Local : FindAnyObjectByType<PlayerController>();
             if (player == null || player.Weapons == null || player.Health == null) return;
             player.Weapons.HitConfirmed += OnHitConfirmed;
+            player.Weapons.BackstabLanded += OnBackstab;
             player.Health.Damaged += OnDamaged;
             _subscribed = true;
         }
@@ -93,6 +94,7 @@ namespace Vamp.UI
         {
             if (!_subscribed || player == null) return;
             if (player.Weapons != null) player.Weapons.HitConfirmed -= OnHitConfirmed;
+            if (player.Weapons != null) player.Weapons.BackstabLanded -= OnBackstab;
             if (player.Health != null) player.Health.Damaged -= OnDamaged;
             _subscribed = false;
         }
@@ -553,8 +555,34 @@ namespace Vamp.UI
             }
         }
 
+        private Text _backstab;
+        private float _backstabT;
+
+        private void OnBackstab()
+        {
+            if (_backstab == null && _damageRoot != null)
+            {
+                _backstab = UIKit.Label(_damageRoot.parent, "BACKSTAB", 34, UIKit.EnemyColor(), TextAnchor.MiddleCenter);
+                var rt = _backstab.rectTransform;
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(400f, 50f);
+                rt.anchoredPosition = new Vector2(0f, -90f);
+                _backstab.raycastTarget = false;
+            }
+            _backstabT = 1.3f;
+        }
+
         private void UpdateHitMarker(float dt)
         {
+            if (_backstab != null)
+            {
+                _backstabT -= dt;
+                var bc = _backstab.color;
+                bc.a = Mathf.Clamp01(_backstabT / 0.4f);
+                _backstab.color = bc;
+                _backstab.enabled = _backstabT > 0f;
+                _backstab.rectTransform.localScale = Vector3.one * (1f + 0.25f * Mathf.Clamp01((_backstabT - 1f) / 0.3f));
+            }
             if (_hitTimer <= 0f) return;
             _hitTimer -= dt;
             float a = Mathf.Clamp01(_hitTimer / hitMarkerDuration);

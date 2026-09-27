@@ -101,11 +101,34 @@ namespace Vamp.Characters
 
         // ------------------------------------------------------------------ Appearance
 
+        private string _skin = "char_default";
+        private Color _team = new Color(0.85f, 0.85f, 0.87f);
+        private float _teamGlow;
+
+        /// <summary>Character skin (CosmeticType.CharacterSkin id); the team colour stays as a glowing rim.</summary>
+        public void SetSkin(string skinId)
+        {
+            _skin = string.IsNullOrEmpty(skinId) ? "char_default" : skinId;
+            SetTint(_team, _teamGlow);
+        }
+
+        public string Skin { get { return _skin; } }
+
         public void SetTint(Color c, float emission = 0f)
         {
             Init();
+            _team = c;
+            _teamGlow = emission;
+            var skinMat = CharacterSkins.MaterialFor(_skin, c, emission);
             foreach (var r in GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
+                if (skinMat != null)
+                {
+                    if (_tint == null) _tint = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "StickManTint" };
+                    _tint.color = c;
+                    r.sharedMaterial = skinMat;
+                    continue;
+                }
                 if (_tint == null)
                 {
                     _tint = new Material(r.sharedMaterial != null ? r.sharedMaterial : new Material(Shader.Find("Universal Render Pipeline/Lit")));

@@ -448,11 +448,14 @@ namespace Vamp.Weapons
             AudioController.Play(SoundFor(d), muzzlePos);
         }
 
+        /// <summary>The last melee attack was the overhead downward stab (every other swing, and always on a backstab).</summary>
+        public bool LastMeleeDown { get; private set; }
+        private int _meleeCount;
+
         private void Melee(WeaponData d)
         {
             _nextFireTime = _time + d.SecondsPerShot;
             AudioController.Play2D(SfxId.MeleeSwing, 0.9f, UnityEngine.Random.Range(0.95f, 1.05f));
-            if (Fired != null) Fired(d);
 
             Vector3 origin = aimOrigin.position;
             Vector3 forward = aimOrigin.forward;
@@ -465,20 +468,34 @@ namespace Vamp.Weapons
                 if (RayHits[i].collider.transform.IsChildOf(transform)) continue;
                 if (RayHits[i].distance < bestDist) { bestDist = RayHits[i].distance; best = RayHits[i]; found = true; }
             }
+
+            Hitbox hb = found ? best.collider.GetComponent<Hitbox>() : null;
+            IDamageable target = !found ? null : hb != null ? hb.Owner : best.collider.GetComponentInParent<IDamageable>();
+            bool valid = target != null && target.IsAlive && target.Owner != gameObject;
+            // Backstab: attacker is behind the victim (both facing the same way) = instant kill.
+            bool back = false;
+            if (valid)
+            {
+                Vector3 flatFwd = new Vector3(forward.x, 0f, forward.z).normalized;
+                back = Vector3.Dot(FacingOf(target.Owner), flatFwd) > 0.45f;
+            }
+            LastMeleeDown = back || (_meleeCount++ % 2 == 1);
+            if (Fired != null) Fired(d);
             if (!found) return;
 
-            Hitbox hb = best.collider.GetComponent<Hitbox>();
-            IDamageable target = hb != null ? hb.Owner : best.collider.GetComponentInParent<IDamageable>();
             Vector3 point = best.distance <= 0f ? origin + forward * 0.5f : best.point;
             SimpleVfx.Impact(point, new Color(1f, 0.9f, 0.9f, 1f), 0.25f);
-            if (target == null || !target.IsAlive || target.Owner == gameObject) return;
+            if (!valid) return;
 
-            // Backstab: attacker is behind the victim.
-            bool back = Vector3.Dot(target.Owner.transform.forward, forward) > 0.5f;
             bool head = hb != null && hb.IsHead;
+            if (back)
+            {
+                SimpleVfx.Impact(point, new Color(1f, 0.1f, 0.12f, 1f), 0.6f);
+                if (BackstabLanded != null) BackstabLanded();
+            }
             var info = new DamageInfo
             {
-                Amount = d.damage * (back ? d.backstabMultiplier : 1f) * (head ? d.headshotMultiplier : 1f),
+                Amount = back ? BackstabDamage : d.damage * (head ? d.headshotMultiplier : 1f),
                 Type = DamageType.Melee,
                 Instigator = gameObject,
                 WeaponId = d.id,
@@ -488,6 +505,27 @@ namespace Vamp.Weapons
                 Distance = best.distance
             };
             Report(target, target.ApplyDamage(info), info);
+        }
+
+        /// <summary>Melee from behind always kills (goes through armour too).</summary>
+        public const float BackstabDamage = 999f;
+        /// <summary>Raised on the attacker when a melee hit lands from behind (for the "BACKSTAB" hit text).</summary>
+        public event Action BackstabLanded;
+
+        /// <summary>Which way a player / bot is looking (flat): the character's facing, else its camera yaw, else its transform.</summary>
+        public static Vector3 FacingOf(GameObject owner)
+        {
+            if (owner == null) return Vector3.forward;
+            var pres = owner.GetComponent<Characters.CharacterPresenter>();
+            Vector3 f;
+            if (pres != null && pres.Rig != null) f = pres.Rig.transform.forward;
+            else
+            {
+                var cam = owner.GetComponent<Player.CameraController>();
+                f = cam != null ? Quaternion.Euler(0f, cam.Yaw, 0f) * Vector3.forward : owner.transform.forward;
+            }
+            f.y = 0f;
+            return f.sqrMagnitude > 1e-4f ? f.normalized : Vector3.forward;
         }
 
         private void PlayFireSound(WeaponData d)

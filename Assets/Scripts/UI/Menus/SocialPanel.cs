@@ -43,7 +43,7 @@ namespace Vamp.UI.Menus
             _status = UIKit.Selector(_root, "STATUS", StatusNames, 0, i =>
             {
                 if (Game.Social != null) Game.Social.SetStatus((PresenceStatus)i);
-            }, 80f);
+            }, 74f, 96f, 32f);
 
             UIKit.Divider(_root);
             UIKit.Caption(_root, "PARTY", 13);

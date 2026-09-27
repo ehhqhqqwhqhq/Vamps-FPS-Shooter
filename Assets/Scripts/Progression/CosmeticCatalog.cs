@@ -247,6 +247,18 @@ namespace Vamp.Progression
             Camo("camo_toxic", "TOXIC", "Toxic", new Color(0.1f, 1f, 0.1f), UnlockSource.WeaponLevel, 10, 0);
             Camo("camo_riptide", "RIPTIDE", "Riptide", new Color(0.1f, 0.55f, 1f), UnlockSource.WeaponLevel, 14, 0);
             Camo("camo_bloodrush", "BLOOD RUSH", "BloodRush", new Color(0.85f, 0.05f, 0.05f), UnlockSource.WeaponLevel, 18, 0);
+            Camo("camo_woodland", "WOODLAND", "Woodland", new Color(0.25f, 0.35f, 0.15f), UnlockSource.WeaponLevel, 3, 0);
+            Camo("camo_desert", "DESERT STORM", "Desert", new Color(0.8f, 0.68f, 0.45f), UnlockSource.WeaponLevel, 5, 0);
+            Camo("camo_urban", "URBAN", "Urban", new Color(0.55f, 0.57f, 0.6f), UnlockSource.WeaponLevel, 7, 0);
+            Camo("camo_tiger", "TIGER", "Tiger", new Color(0.95f, 0.5f, 0.08f), UnlockSource.WeaponLevel, 9, 0);
+            Camo("camo_hex", "HEX GOLD", "Hex", new Color(1f, 0.8f, 0.2f), UnlockSource.WeaponLevel, 11, 0);
+            Camo("camo_candy", "COTTON CANDY", "Candy", new Color(1f, 0.5f, 0.8f), UnlockSource.WeaponLevel, 12, 0);
+            Camo("camo_magma", "MAGMA", "Magma", new Color(1f, 0.45f, 0.08f), UnlockSource.WeaponLevel, 13, 0);
+            Camo("camo_ocean", "DEEP OCEAN", "Ocean", new Color(0.1f, 0.5f, 0.8f), UnlockSource.WeaponLevel, 15, 0);
+            Camo("camo_circuit", "CIRCUIT", "Circuit", new Color(0.25f, 0.85f, 0.45f), UnlockSource.WeaponLevel, 16, 0);
+            Camo("camo_galaxy", "GALAXY", "Galaxy", new Color(0.55f, 0.25f, 0.9f), UnlockSource.WeaponLevel, 17, 0);
+            Camo("camo_obsidian", "OBSIDIAN", "Obsidian", new Color(0.6f, 0.25f, 1f), UnlockSource.WeaponLevel, 19, 0);
+            Camo("camo_diamond", "DIAMOND", "Diamond", new Color(0.85f, 0.95f, 1f), UnlockSource.WeaponLevel, 20, 0);
             // Ranked shop camos (work on every weapon).
             Camo("camo_voidreaper", "VOID REAPER", "VoidReaper", new Color(0.8f, 0.05f, 0.08f), UnlockSource.Shop, 1, 3950)
                 .Description = "AGGRESSIVE RED AND BLACK FRACTURED SKIN. BUILT TO DOMINATE.";
@@ -312,9 +324,25 @@ namespace Vamp.Progression
             Shop("glove_void", "VOID", CosmeticType.Gloves, 2950, new Color(0.4f, 0.08f, 0.75f), "SWIRLING PURPLE NEBULA.");
             Shop("glove_gold", "GOLD PLATED", CosmeticType.Gloves, 3950, new Color(1f, 0.78f, 0.25f), "SOLID GOLD. SUBTLE.");
 
-            Simple("char_default", "OPERATIVE", CosmeticType.CharacterSkin, UnlockSource.Default, 1, Steel);
-            Simple("char_night", "NIGHT OPS", CosmeticType.CharacterSkin, UnlockSource.Level, 21, Dark);
-            Simple("char_crimson", "CRIMSON", CosmeticType.CharacterSkin, UnlockSource.Level, 48, Red);
+            // Characters (your body as other players see it; your team colour always glows around the edges)
+            Char("char_default", "OPERATIVE", UnlockSource.Default, 1, Steel, null, "STANDARD ISSUE. WEARS YOUR TEAM COLOUR.");
+            Char("char_urban", "URBAN", UnlockSource.Level, 5, new Color(0.55f, 0.57f, 0.6f), "Urban", "GREY CITY CAMO FATIGUES.");
+            Char("char_woodland", "RANGER", UnlockSource.Level, 10, new Color(0.25f, 0.35f, 0.15f), "Woodland", "FOREST CAMO FROM HEAD TO TOE.");
+            Char("char_night", "NIGHT OPS", UnlockSource.Level, 21, Dark, null, "MATTE BLACK. GOOD LUCK SEEING THEM.");
+            Char("char_desert", "NOMAD", UnlockSource.Level, 30, new Color(0.8f, 0.68f, 0.45f), "Desert", "SUN-BLEACHED DESERT CAMO.");
+            Char("char_chrome", "CHROME", UnlockSource.Level, 40, new Color(0.92f, 0.92f, 0.95f), null, "POLISHED MIRROR FINISH.");
+            Char("char_crimson", "CRIMSON", UnlockSource.Level, 48, Red, null, "GLOSSY BLOOD RED.");
+            Char("char_tiger", "BENGAL", UnlockSource.Level, 55, new Color(0.95f, 0.5f, 0.08f), "Tiger", "ORANGE AND BLACK TIGER STRIPES.");
+            Char("char_magma", "MOLTEN", UnlockSource.Level, 65, new Color(1f, 0.45f, 0.08f), "Magma", "CRACKED ROCK WITH GLOWING LAVA SEAMS.");
+            Char("char_galaxy", "COSMIC", UnlockSource.Level, 75, new Color(0.55f, 0.25f, 0.9f), "Galaxy", "A NEBULA FULL OF STARS.");
+            Char("char_gold", "GOLDEN", UnlockSource.Level, 90, new Color(1f, 0.76f, 0.3f), null, "SOLID GOLD. YOU EARNED IT.");
+            Char("char_obsidian", "VOID WALKER", UnlockSource.Level, 100, new Color(0.6f, 0.25f, 1f), "Obsidian", "BLACK GLASS SHARDS WITH PURPLE LIGHT. LEVEL 100 ONLY.");
+            ShopChar("char_carbon", "CARBON OPS", 2450, new Color(0.2f, 0.2f, 0.22f), "Carbon", "WOVEN CARBON FIBRE ARMOUR.");
+            ShopChar("char_candy", "SUGAR RUSH", 2950, new Color(1f, 0.5f, 0.8f), "Candy", "PINK AND CYAN SWIRLS.");
+            ShopChar("char_neon", "NEON RUNNER", 3950, new Color(0.1f, 0.9f, 1f), "NeonGrid", "GLOWING CIRCUIT GRID.");
+            ShopChar("char_storm", "STORMBRINGER", 3950, new Color(0.3f, 0.6f, 1f), "Storm", "LIGHTNING CRACKLING ACROSS YOUR BODY.");
+            ShopChar("char_phantom", "PHANTOM", 4950, new Color(0.85f, 0.9f, 1f), null, "PALE, GLOWING, AND A LITTLE UNSETTLING.");
+            ShopChar("char_diamond", "DIAMOND", 5950, new Color(0.85f, 0.95f, 1f), "Diamond", "PRISMATIC CRYSTAL FACETS.");
 
             Simple("bg_default", "CONCRETE", CosmeticType.ProfileBackground, UnlockSource.Default, 1, Dark);
             Simple("bg_furnace", "FURNACE", CosmeticType.ProfileBackground, UnlockSource.Level, 29, Red);
@@ -345,6 +373,21 @@ namespace Vamp.Progression
         {
             var item = Simple(id, name, CosmeticType.WeaponSkin, source, level, color);
             item.Texture = texture;
+            item.Price = price;
+            return item;
+        }
+
+        private static CosmeticItem Char(string id, string name, UnlockSource source, int level, Color color, string texture, string description)
+        {
+            var item = Simple(id, name, CosmeticType.CharacterSkin, source, level, color);
+            item.Texture = texture;
+            item.Description = description;
+            return item;
+        }
+
+        private static CosmeticItem ShopChar(string id, string name, int price, Color color, string texture, string description)
+        {
+            var item = Char(id, name, UnlockSource.Shop, 1, color, texture, description);
             item.Price = price;
             return item;
         }

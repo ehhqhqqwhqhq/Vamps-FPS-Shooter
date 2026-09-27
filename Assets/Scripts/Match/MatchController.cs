@@ -199,6 +199,7 @@ namespace Vamp.Match
                 Player.Movement.SetSettings(Player.Movement.CreateScaledCopy(Config.gravityMultiplier, Config.movementSpeedMultiplier));
 
             Player.Weapons.SetLoadout(BuildLoadout(Local));
+            LoadoutChange.Setup(Player, Config, () => BuildLoadout(Local));
             Player.RespawnDelay = Config.respawnDelay;
             Player.RespawnEnabled = Config.respawns && Config.mode != GameMode.Elimination && Config.mode != GameMode.MovementRace;
             Player.SpawnSelector = p => Choose(Local);

@@ -86,6 +86,7 @@ namespace Vamp.EditorTools
                 ArmsFitting.Compute(root.transform, d, out rp, out rr, out left, out lp, out lr);
                 fp.Solve(root.transform, rp, rr, left, lp, lr);
                 log.Add(d.id + ": " + fp.Describe(root.transform, false) + " | " + fp.Describe(root.transform, true));
+                if (!placeholder && d.delivery != DeliveryType.Melee) log.Add(TopProfile(root.transform, d.id));
                 if (Markers)
                 {
                     Marker(root.transform, rp, rr, new Color(1f, 0.1f, 0.1f));
@@ -108,6 +109,30 @@ namespace Vamp.EditorTools
                 File.WriteAllBytes(Path.Combine(outDir, d.id + ".png"), sheet.EncodeToPNG());
                 Object.DestroyImmediate(sheet);
                 names.Add(d.id);
+
+                // Downward stab strip (knives): four moments from the player's eye.
+                if (d.delivery == DeliveryType.Melee)
+                {
+                    var ss = new Texture2D(W * 4, H, TextureFormat.RGB24, false);
+                    Vector3 hip0 = root.transform.localPosition;
+                    Quaternion held = root.transform.localRotation;
+                    float[] ts = { 0.15f, 0.3f, 0.42f, 0.7f };
+                    for (int k = 0; k < ts.Length; k++)
+                    {
+                        Vector3 dp, de; float dw;
+                        WeaponViewModel.DownStab(ts[k], false, out dp, out de, out dw);
+                        root.transform.localPosition = hip0 + dp;
+                        root.transform.localRotation = Quaternion.Slerp(held, Quaternion.Euler(de), dw);
+                        fp.Solve(root.transform, rp, rr, left, lp, lr);
+                        Shot(cam, rt, ss, k, 0, eye.position, eye.rotation, 58.7f);
+                    }
+                    ss.Apply();
+                    File.WriteAllBytes(Path.Combine(outDir, d.id + "_downstab.png"), ss.EncodeToPNG());
+                    Object.DestroyImmediate(ss);
+                    root.transform.localPosition = hip0;
+                    root.transform.localRotation = held;
+                    fp.Solve(root.transform, rp, rr, left, lp, lr);
+                }
 
                 // Reload strip: four moments of the reload from the player's eye (+ a wider view of the same moment).
                 var parts = root.GetComponent<WeaponParts>();
@@ -211,6 +236,37 @@ namespace Vamp.EditorTools
         }
 
         public static bool Markers = true;
+
+        /// <summary>Top silhouette of the gun along its length (root space): z, highest y, x of the top edge.</summary>
+        private static string TopProfile(Transform root, string id)
+        {
+            var pts = new List<Vector3>();
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh == null) continue;
+                var m = root.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+                foreach (var v in mf.sharedMesh.vertices) pts.Add(m.MultiplyPoint3x4(v));
+            }
+            if (pts.Count == 0) return id + " profile: no readable mesh";
+            float z0 = float.MaxValue, z1 = float.MinValue;
+            foreach (var p in pts) { z0 = Mathf.Min(z0, p.z); z1 = Mathf.Max(z1, p.z); }
+            var sb = new System.Text.StringBuilder(id + " profile z0 " + z0.ToString("F3") + " z1 " + z1.ToString("F3"));
+            var sight = root.Find("Sight");
+            if (sight != null) sb.Append(" sight " + sight.localPosition.ToString("F3"));
+            const int N = 48;
+            for (int b = 0; b < N; b++)
+            {
+                float a = Mathf.Lerp(z0, z1, b / (float)N), c = Mathf.Lerp(z0, z1, (b + 1) / (float)N);
+                float top = float.MinValue;
+                foreach (var p in pts) if (p.z >= a && p.z < c) top = Mathf.Max(top, p.y);
+                if (top == float.MinValue) continue;
+                float xs = 0f, xmin = float.MaxValue, xmax = float.MinValue; int n = 0;
+                foreach (var p in pts)
+                    if (p.z >= a && p.z < c && p.y > top - 0.004f) { xs += p.x; n++; xmin = Mathf.Min(xmin, p.x); xmax = Mathf.Max(xmax, p.x); }
+                sb.Append("\n  z " + ((a + c) * 0.5f).ToString("F3") + " top " + top.ToString("F4") + " x " + (xs / n).ToString("F4") + " [" + xmin.ToString("F3") + "," + xmax.ToString("F3") + "]");
+            }
+            return sb.ToString();
+        }
 
         private static void Marker(Transform parent, Vector3 pos, Quaternion rot, Color c)
         {

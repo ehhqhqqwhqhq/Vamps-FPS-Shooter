@@ -29,7 +29,7 @@ namespace Vamp.UI.Menus
         private string _focused;          // kill fx / tracers: the item being previewed
         private ShopPreview _live;
 
-        private static bool HasLivePreview(CosmeticType t) { return t == CosmeticType.KillEffect || t == CosmeticType.WeaponTrail || t == CosmeticType.Gloves; }
+        private static bool HasLivePreview(CosmeticType t) { return t == CosmeticType.KillEffect || t == CosmeticType.WeaponTrail || t == CosmeticType.Gloves || t == CosmeticType.CharacterSkin; }
 
         protected override void OnBuild(RectTransform root)
         {

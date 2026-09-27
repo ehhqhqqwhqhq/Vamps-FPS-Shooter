@@ -270,6 +270,7 @@ MonoBehaviour:
   LocalView: 1
   Tint: {r: 0.85, g: 0.85, b: 0.87, a: 1}
   TintEmission: 0
+  Skin: char_default
 --- !u!1 &2276769577529021927
 GameObject:
   m_ObjectHideFlags: 0

@@ -39,6 +39,7 @@ namespace Vamp.Weapons
         private Vector3 _hip, _ads;
         private bool _melee;
         private float _stab;
+        private float _down;   // overhead downward stab (1 → 0)
 
         // Inspect (style only - no gameplay effect)
         private float _inspectT = -1f;
@@ -91,7 +92,12 @@ namespace Vamp.Weapons
         {
             if (_arms != null && (_inspectT >= 0f || _arms.IsPlaying("Draw"))) PlayArms("Idle", 0.12f, 1f);
             _inspectT = -1f; // firing cancels an inspect
-            if (d.delivery == DeliveryType.Melee) { _stab = 1f; return; }
+            if (d.delivery == DeliveryType.Melee)
+            {
+                if (weapons != null && weapons.LastMeleeDown) { _down = 1f; _stab = 0f; }
+                else { _stab = 1f; _down = 0f; }
+                return;
+            }
             _kick = Mathf.Min(1.5f, _kick + (d.pelletsPerShot > 1 || d.delivery == DeliveryType.Projectile ? 1f : 0.45f));
             if (_parts != null && _parts.HasPump) _pumpT = -0.08f; // rack the pump just after the shot
         }
@@ -120,9 +126,12 @@ namespace Vamp.Weapons
             if (d.id == "balisong" && _armsPrefab != null)
             {
                 // Animated arms + butterfly knife: the rig's own camera sits at our origin.
-                root = Instantiate(_armsPrefab, transform);
-                root.name = "VM_balisong";
-                _arms = root.GetComponentInChildren<Animation>();
+                // Holder: the clips animate the rig's own root, so procedural stabs move this parent instead.
+                root = new GameObject("VM_balisong");
+                root.transform.SetParent(transform, false);
+                var rig = Instantiate(_armsPrefab, root.transform);
+                rig.name = "ArmsRig";
+                _arms = rig.GetComponentInChildren<Animation>();
                 var knife = FindDeep(root.transform, "KnifeMesh");
                 camoTarget = knife != null ? knife.gameObject : null;
                 var muzzle = new GameObject("Muzzle").transform;
@@ -178,6 +187,7 @@ namespace Vamp.Weapons
             if (_arms != null) GloveSkins.Apply(root, GloveSkins.Local);
             else if (_balisong == null) AttachArms(root.transform, d);
             _stab = 0f;
+            _down = 0f;
             _model = root.transform;
             _parts = root.GetComponent<WeaponParts>();
             if (_parts != null) _parts.ResetParts();
@@ -299,6 +309,16 @@ namespace Vamp.Weapons
                 stab = t < 0.25f ? t / 0.25f : 1f - (t - 0.25f) / 0.75f;
             }
             pos += (_arms != null ? new Vector3(-0.05f, 0.03f, 0.2f) : new Vector3(-0.1f, 0.04f, 0.26f)) * stab;
+            // Melee: overhead downward stab - raise the knife, tip down, drive it down and forward, recover.
+            Vector3 downEuler = Vector3.zero;
+            float downW = 0f;
+            if (_melee && _down > 0f)
+            {
+                _down = Mathf.MoveTowards(_down, 0f, dt * 2.1f);
+                Vector3 dp; DownStab(1f - _down, _arms != null, out dp, out downEuler, out downW);
+                pos += dp;
+                stab = Mathf.Max(stab, 0.01f); // counts as busy (no inspect)
+            }
 
             // ---- Inspect
             var frame = input != null ? input.Frame : default(PlayerInputFrame);
@@ -341,8 +361,12 @@ namespace Vamp.Weapons
             float aimSteady = 1f - 0.9f * weapons.AimBlend;
             var rot = Quaternion.Euler(-_kick * kickPitch * aimSteady + reload * 35f + _sway.y * aimSteady, _sway.x * aimSteady, reload * -15f);
             // Knife held tip-up towards the centre of the screen; the stab straightens it out.
-            if (_arms != null) rot *= Quaternion.Euler(-6f * stab, -4f * stab, 0f);
-            else if (_melee) rot *= Quaternion.Euler(Mathf.Lerp(-22f, 4f, stab), Mathf.Lerp(-28f, -8f, stab), Mathf.Lerp(-35f, -10f, stab));
+            if (_arms != null) rot *= Quaternion.Euler(-6f * stab, -4f * stab, 0f) * Quaternion.Euler(downEuler);
+            else if (_melee)
+            {
+                var held = Quaternion.Euler(Mathf.Lerp(-22f, 4f, stab), Mathf.Lerp(-28f, -8f, stab), Mathf.Lerp(-35f, -10f, stab));
+                rot *= downW > 0f ? Quaternion.Slerp(held, Quaternion.Euler(downEuler), downW) : held;
+            }
             rot *= Quaternion.Euler(inspectEuler);
             rot *= Quaternion.Euler(rp.GunEuler);
             _model.localRotation = rot;
@@ -353,6 +377,36 @@ namespace Vamp.Weapons
                 if (_gunArmsGo.activeSelf == scoped) _gunArmsGo.SetActive(!scoped);
                 if (!scoped && _gunArms != null) _gunArms.Solve(_model, _rGrip, _rGripRot, _hasLeft, rp.LeftPos, rp.LeftRot);
             }
+        }
+
+        private static float Ease(float a, float b, float t)
+        {
+            float x = Mathf.Clamp01((t - a) / (b - a));
+            return x * x * (3f - 2f * x);
+        }
+
+        /// <summary>
+        /// Overhead downward stab, t = 0..1. Knife models (grip origin): raised high with the tip pointing down, then
+        /// driven down and forward into the centre of the screen. Animated arms rig (origin at the eye): pitched up
+        /// then chopped down.
+        /// </summary>
+        public static void DownStab(float t, bool armsRig, out Vector3 pos, out Vector3 euler, out float weight)
+        {
+            float up = Ease(0f, 0.3f, t);          // wind-up
+            float strike = Ease(0.3f, 0.46f, t);   // drive down
+            float back = Ease(0.62f, 1f, t);       // recover
+            if (armsRig)
+            {
+                pos = (new Vector3(0f, 0.05f, -0.03f) * up * (1f - strike) + new Vector3(0f, -0.04f, 0.14f) * strike) * (1f - back);
+                euler = (new Vector3(-24f, 0f, 10f) * up * (1f - strike) + new Vector3(20f, 0f, -6f) * strike) * (1f - back);
+                weight = 1f - back;
+                return;
+            }
+            Vector3 raised = new Vector3(-0.06f, 0.12f, 0.06f), hit = new Vector3(-0.1f, -0.04f, 0.2f);
+            pos = Vector3.Lerp(Vector3.Lerp(Vector3.zero, raised, up), hit, strike) * (1f - back);
+            // Tip down: pitched forward past vertical while raised, a little flatter at the hit.
+            euler = Vector3.Lerp(new Vector3(95f, -12f, -8f), new Vector3(70f, -6f, -4f), strike);
+            weight = Ease(0f, 0.18f, t) * (1f - back);
         }
 
         // ------------------------------------------------------------------ Arms / hands

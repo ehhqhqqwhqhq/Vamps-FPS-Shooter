@@ -26,6 +26,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Maps/Skyline.unity
     guid: df5162a593b33df4e8e3559e8acd3404
+  - enabled: 1
+    path: Assets/Scenes/Maps/Harbor.unity
+    guid: ea38ae40dbf23d547ac1289dce58dd5d
+  - enabled: 1
+    path: Assets/Scenes/Maps/Canyon.unity
+    guid: 0e86f7c20b57f9f429544b659824cbff
+  - enabled: 1
+    path: Assets/Scenes/Maps/Pit.unity
+    guid: c8878f90ad291a84eacf633da48c164a
+  - enabled: 1
+    path: Assets/Scenes/Maps/Crossfire.unity
+    guid: 1feee306f0c7e02429da1973c29ca75c
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05

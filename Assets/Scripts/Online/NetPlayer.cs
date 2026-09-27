@@ -111,6 +111,7 @@ namespace Vamp.Online
                 Weapons.Fired -= OnFired;
                 if (LocalPlayer == this) LocalPlayer = null;
                 if (PlayerController.Local == _pc) PlayerController.Local = null;
+                LoadoutChange.Clear(_pc);
             }
         }
 
@@ -124,6 +125,7 @@ namespace Vamp.Online
             if (!Mathf.Approximately(cfg.gravityMultiplier, 1f) || !Mathf.Approximately(cfg.movementSpeedMultiplier, 1f))
                 _pc.Movement.SetSettings(_pc.Movement.CreateScaledCopy(cfg.gravityMultiplier, cfg.movementSpeedMultiplier));
             Weapons.SetLoadout(BuildLoadout(cfg));
+            LoadoutChange.Setup(_pc, cfg, () => BuildLoadout(cfg));
             _pc.RespawnDelay = cfg.respawnDelay;
             _pc.RespawnEnabled = cfg.respawns;
             int team = session != null && cfg.IsTeamMode ? session.TeamOf(OwnerClientId) : -1;
@@ -225,7 +227,8 @@ namespace Vamp.Online
                 Weapon = (sbyte)WeaponIndex(Weapons.Current),
                 Camo = Vamp.Weapons.WeaponCamo.ToIndex(Vamp.Weapons.WeaponCamo.LocalFor(Weapons.Current)),
                 Fx = CosmeticFx.ToIndex(CosmeticType.KillEffect, CosmeticFx.LocalKillFx),
-                Trail = CosmeticFx.ToIndex(CosmeticType.WeaponTrail, CosmeticFx.LocalTrail)
+                Trail = CosmeticFx.ToIndex(CosmeticType.WeaponTrail, CosmeticFx.LocalTrail),
+                Skin = CosmeticFx.ToIndex(CosmeticType.CharacterSkin, Characters.CharacterSkins.Local)
             };
         }
 
@@ -236,6 +239,7 @@ namespace Vamp.Online
         {
             var m = _motion.Value;
             Weapons.ProxyTrail = CosmeticFx.FromIndex(CosmeticType.WeaponTrail, m.Trail);
+            if (_presenter != null) _presenter.SetSkin(CosmeticFx.FromIndex(CosmeticType.CharacterSkin, m.Skin));
             if (m.Position == Vector3.zero && m.Velocity == Vector3.zero) return; // nothing received yet
             Vector3 target = m.Position + m.Velocity * 0.05f;
             if (_snapNext || (transform.position - target).sqrMagnitude > 25f)
@@ -362,6 +366,7 @@ namespace Vamp.Online
                 if (d == null) return;
                 float cap = Mathf.Max(d.damage * Mathf.Max(1, d.pelletsPerShot) * Mathf.Max(1f, d.headshotMultiplier),
                                       d.explosionDamage, d.damage * Mathf.Max(1f, d.backstabMultiplier)) * 1.25f + 1f;
+                if (d.delivery == DeliveryType.Melee) cap = Mathf.Max(cap, Vamp.Weapons.WeaponController.BackstabDamage); // backstab = one-hit kill
                 amount = Mathf.Clamp(amount, 0f, cap);
                 float reach = d.delivery == DeliveryType.Projectile ? 400f : d.delivery == DeliveryType.Melee ? d.meleeRange + 4f : d.range + 8f;
                 if (!self && Vector3.Distance(transform.position, no.transform.position) > reach + 10f) return;

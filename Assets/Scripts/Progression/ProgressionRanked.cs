@@ -96,6 +96,39 @@ namespace Vamp.Progression
             }
         }
 
+        // ------------------------------------------------------------------ One-time gifts
+
+        /// <summary>
+        /// One-time gifts for specific local account names (applied once per account, remembered in claimed_gifts).
+        /// (gift id, account name, coins added, level raised to)
+        /// </summary>
+        private static readonly (string id, string user, int coins, int level)[] Gifts =
+        {
+            ("gift_bamkeilo_1", "bamkeilo", 5000, 100),
+        };
+
+        private void ApplyGifts(string username)
+        {
+            string n = (username ?? "").Trim().ToLowerInvariant();
+            if (Profile.claimed_gifts == null) Profile.claimed_gifts = new System.Collections.Generic.List<string>();
+            foreach (var g in Gifts)
+            {
+                if (g.user != n || Profile.claimed_gifts.Contains(g.id)) continue;
+                Profile.claimed_gifts.Add(g.id);
+                Profile.ranked_coins += g.coins;
+                int target = Mathf.Min(g.level, _config.maxLevel);
+                if (Profile.level < target)
+                {
+                    long total = 0;
+                    for (int l = 1; l < target; l++) total += _config.XpToNext(l);
+                    Profile.level = target;
+                    Profile.xp = 0;
+                    Profile.total_xp = System.Math.Max(Profile.total_xp, total);
+                }
+                Notify(NotificationKind.LevelUp, "GIFT RECEIVED", "+" + g.coins.ToString("N0") + " COINS  ·  LEVEL " + Profile.level);
+            }
+        }
+
         // ------------------------------------------------------------------ Weapon levels
 
         public static int WeaponXpToNext(int level) { return 300 + 100 * (level - 1); }

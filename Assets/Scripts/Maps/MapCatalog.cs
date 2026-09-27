@@ -13,6 +13,10 @@ namespace Vamp.Maps
         public bool Arena;
         /// <summary>Real combat map (not the movement lab).</summary>
         public bool Battle = true;
+        /// <summary>Tiny map: only picked for 1V1 / 2V2 / 3V3, never for big quick-play lobbies.</summary>
+        public bool ArenaOnly;
+        /// <summary>Huge map: best with lots of players / bots.</summary>
+        public bool Large;
     }
 
     /// <summary>Playable maps. Adding a map = add its scene to Build Settings + one entry here.</summary>
@@ -31,6 +35,14 @@ namespace Vamp.Maps
                           Description = "DESERT BASE · ROCKS, BUNKER ROOF, TWO WATCHTOWERS" },
             new MapInfo { Id = "skyline", DisplayName = "SKYLINE", SceneName = "Skyline",
                           Description = "ROOFTOPS · BRIDGES, GAPS AND WALL-RUN ALLEYS" },
+            new MapInfo { Id = "harbor", DisplayName = "HARBOR", SceneName = "Harbor", Large = true,
+                          Description = "HUGE CARGO PORT · CONTAINER STACKS, CRANES AND A MOORED SHIP" },
+            new MapInfo { Id = "canyon", DisplayName = "CANYON", SceneName = "Canyon", Large = true,
+                          Description = "HUGE DESERT CANYON · CLIFF LEDGES, ROPE BRIDGES AND A RUINED TEMPLE" },
+            new MapInfo { Id = "pit", DisplayName = "THE PIT", SceneName = "Pit", Arena = true, ArenaOnly = true,
+                          Description = "TINY SUNKEN ARENA · RAISED RING, CORNER TOWERS · 1V1-3V3" },
+            new MapInfo { Id = "crossfire", DisplayName = "CROSSFIRE", SceneName = "Crossfire", Arena = true, ArenaOnly = true,
+                          Description = "TWO TIGHT LANES SPLIT BY A WINDOWED WALL · 1V1-3V3" },
             new MapInfo { Id = "movement_lab", DisplayName = "MOVEMENT LAB", SceneName = "MovementTest", Battle = false,
                           Description = "TRAINING FACILITY · EVERY MOVEMENT MECHANIC", SupportsRace = true },
         };
@@ -39,7 +51,7 @@ namespace Vamp.Maps
         public static string RandomBattleMap(System.Random rng, bool arena)
         {
             var pool = new List<MapInfo>();
-            foreach (var m in Maps) if (m.Battle && (!arena || m.Arena)) pool.Add(m);
+            foreach (var m in Maps) if (m.Battle && (arena ? m.Arena : !m.ArenaOnly)) pool.Add(m);
             if (pool.Count == 0) return Maps[0].Id;
             return pool[rng.Next(pool.Count)].Id;
         }

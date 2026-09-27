@@ -9,6 +9,7 @@ using Vamp.Characters;
 using Vamp.Combat;
 using Vamp.Core;
 using Vamp.Match;
+using Vamp.Progression;
 using Vamp.VFX;
 using Vamp.Weapons;
 
@@ -88,6 +89,14 @@ namespace Vamp.Online
             _health = GetComponent<HealthController>();
             _health.SetRegen(0f, 0f);
             _presenter = GetComponent<CharacterPresenter>();
+            if (_presenter != null)
+            {
+                // Same skin on every client without syncing it: pick from the bot's name.
+                var skins = CosmeticCatalog.OfType(CosmeticType.CharacterSkin);
+                int h = 0;
+                foreach (char ch in _name.Value.ToString()) h = h * 31 + ch;
+                if (skins.Count > 0) _presenter.SetSkin(skins[(h & 0x7fffffff) % skins.Count].Id);
+            }
             gameObject.name = "NetBot " + _name.Value;
             _yaw = transform.eulerAngles.y;
 

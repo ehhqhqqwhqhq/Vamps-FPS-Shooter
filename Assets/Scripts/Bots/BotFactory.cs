@@ -110,7 +110,7 @@ namespace Vamp.Bots
 
             // Stick-man character (imported model) replaces the capsule visuals; the capsule/sphere stay as hitboxes.
             var ch = Characters.CharacterPresenter.Attach(root, false,
-                allyOfLocal ? new Color(0.35f, 0.55f, 0.95f) : new Color(0.9f, 0.18f, 0.2f), 0.15f);
+                allyOfLocal ? new Color(0.35f, 0.55f, 0.95f) : new Color(0.9f, 0.18f, 0.2f), 0.15f, Characters.CharacterSkins.RandomSkin());
             if (ch != null && ch.HasCharacter)
             {
                 foreach (var go in new[] { body, head })

@@ -54,6 +54,7 @@ namespace Vamp.Online
         public byte Camo;      // WeaponCamo index of the held weapon (0 default)
         public byte Fx;        // kill effect index (Cosmetics.KillFxIndex)
         public byte Trail;     // bullet trail index (Cosmetics.TrailIndex)
+        public byte Skin;      // character skin index (CosmeticFx.ToIndex CharacterSkin)
 
         public const byte Grounded = 1, Sliding = 2, WallRunning = 4, WallRight = 8, Crouched = 16;
 
@@ -68,11 +69,12 @@ namespace Vamp.Online
             s.SerializeValue(ref Camo);
             s.SerializeValue(ref Fx);
             s.SerializeValue(ref Trail);
+            s.SerializeValue(ref Skin);
         }
 
         public bool Equals(NetMotion o)
         {
-            return Position == o.Position && Velocity == o.Velocity && Yaw == o.Yaw && Pitch == o.Pitch && Flags == o.Flags && Weapon == o.Weapon && Camo == o.Camo && Fx == o.Fx && Trail == o.Trail;
+            return Position == o.Position && Velocity == o.Velocity && Yaw == o.Yaw && Pitch == o.Pitch && Flags == o.Flags && Weapon == o.Weapon && Camo == o.Camo && Fx == o.Fx && Trail == o.Trail && Skin == o.Skin;
         }
     }
 }

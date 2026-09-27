@@ -21,10 +21,10 @@ namespace Vamp.Weapons
         /// <summary>Per weapon id. Anything missing = zero.</summary>
         public static readonly Dictionary<string, Fit> Fits = new Dictionary<string, Fit>
         {
-            { "havoc",  new Fit { RightPos = new Vector3(0f, 0.02f, 0.01f), RightEuler = new Vector3(8f, 0f, 0f) } },
+            { "havoc",  new Fit { RightPos = new Vector3(0f, 0.02f, 0.01f), RightEuler = new Vector3(8f, 0f, 0f), Ads = new Vector3(0.0065f, -0.003f, 0f) } },
             { "arc",    new Fit { RightPos = new Vector3(0f, 0.015f, 0f) } },
-            { "widow",  new Fit { RightPos = new Vector3(0f, -0.03f, 0.04f), Ads = new Vector3(0f, 0.025f, 0f) } },
-            { "ripper", new Fit { RightPos = new Vector3(0f, 0.04f, 0.07f), RightEuler = new Vector3(10f, 0f, 0f), Ads = new Vector3(0f, 0.01f, 0f) } },
+            { "widow",  new Fit { RightPos = new Vector3(0f, -0.03f, 0.04f), Ads = new Vector3(0.0054f, 0.025f, 0f) } },
+            { "ripper", new Fit { RightPos = new Vector3(0f, 0.04f, 0.07f), RightEuler = new Vector3(10f, 0f, 0f), Ads = new Vector3(-0.0051f, 0.0145f, 0f) } },
             { "brute",  new Fit { RightPos = new Vector3(0f, 0.01f, 0f) } },
             { "blast",  new Fit { LeftPos = new Vector3(0f, -0.06f, 0f) } },
             { "v9",     new Fit { Hip = new Vector3(0f, 0.03f, -0.02f) } },

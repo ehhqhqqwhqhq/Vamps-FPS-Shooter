@@ -97,31 +97,38 @@ namespace Vamp.UI.Menus
                                     + "  ·  +" + ProgressionService.WeaponXpPerKill + " XP PER KILL, +" + ProgressionService.WeaponXpPerHeadshot + " PER HEADSHOT", 14);
             Bar(_details, needed > 0 ? into / (float)needed : 1f, needed > 0 ? into + " / " + needed + " XP" : "MAX LEVEL");
             UIKit.Divider(_details);
-            UIKit.Caption(_details, "CAMOS", 14);
+            UIKit.Caption(_details, "CAMOS  ·  A NEW CAMO EVERY LEVEL FROM 2 TO 20 (SHOP CAMOS WORK ON EVERY WEAPON)", 14);
 
             var grid = UIKit.Node("Camos", _details);
-            UIKit.Size(grid, 420f);
-            var g = grid.gameObject.AddComponent<GridLayoutGroup>();
-            g.cellSize = new Vector2(180f, 120f);
-            g.spacing = new Vector2(10f, 10f);
+            var camos = new System.Collections.Generic.List<CosmeticItem>();
             foreach (var camo in CosmeticCatalog.OfType(CosmeticType.WeaponSkin))
+                if (camo.Source != UnlockSource.Shop) camos.Add(camo);
+            camos.Sort((a, b) => a.UnlockLevel.CompareTo(b.UnlockLevel));
+            int rows = (camos.Count + 4) / 5;
+            UIKit.Size(grid, rows * 88f);
+            var g = grid.gameObject.AddComponent<GridLayoutGroup>();
+            g.cellSize = new Vector2(108f, 80f);
+            g.spacing = new Vector2(8f, 8f);
+            g.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            g.constraintCount = 5;
+            foreach (var camo in camos)
             {
                 bool unlocked = prog.IsCamoUnlocked(w.id, camo.Id);
                 var cell = UIKit.Panel(grid, camo.Id, new Color(0.06f, 0.06f, 0.07f, 0.95f));
-                UIKit.VList(cell.transform, 4f, 8);
+                UIKit.VList(cell.transform, 2f, 6);
                 var sw = new GameObject("Swatch", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
                 sw.transform.SetParent(cell.transform, false);
-                UIKit.Size(sw, 56f);
+                UIKit.Size(sw, 30f);
                 var tex = !string.IsNullOrEmpty(camo.Texture) ? Resources.Load<Texture2D>("Camos/" + camo.Texture) : null;
                 sw.texture = tex;
                 sw.uvRect = new Rect(0f, 0f, 1f, 0.3f);
                 Color c = tex != null ? Color.white : camo.Id == "skin_default" ? new Color(0.16f, 0.16f, 0.17f) : camo.Color;
                 sw.color = unlocked ? c : new Color(c.r * 0.3f, c.g * 0.3f, c.b * 0.3f, 1f);
-                UIKit.Size(UIKit.Label(cell.transform, camo.Name, 14, unlocked ? UIKit.Text : UIKit.TextFaint, TextAnchor.MiddleLeft), 20f);
+                UIKit.Size(UIKit.Label(cell.transform, camo.Name, 11, unlocked ? UIKit.Text : UIKit.TextFaint, TextAnchor.MiddleLeft), 16f);
                 string req = unlocked ? "UNLOCKED"
                            : camo.Source == UnlockSource.Shop ? "RANKED SHOP"
-                           : "WEAPON LEVEL " + camo.UnlockLevel;
-                UIKit.Size(UIKit.Label(cell.transform, req, 11, unlocked ? UIKit.Good : UIKit.TextDim, TextAnchor.MiddleLeft), 16f);
+                           : "LEVEL " + camo.UnlockLevel;
+                UIKit.Size(UIKit.Label(cell.transform, req, 10, unlocked ? UIKit.Good : UIKit.TextDim, TextAnchor.MiddleLeft), 14f);
             }
         }
     }

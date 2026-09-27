@@ -78,6 +78,8 @@ namespace Vamp.Progression
         public string gloves = "glove_tactical";
         /// <summary>Weapon id → total weapon XP (weapon levels unlock camos for that weapon).</summary>
         public List<IdCount> weapon_xp = new List<IdCount>();
+        /// <summary>One-time gifts already given to this account.</summary>
+        public List<string> claimed_gifts = new List<string>();
 
         // ---- Ranked (online)
         public int rank_points = 0;

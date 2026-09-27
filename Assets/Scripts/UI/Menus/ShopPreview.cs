@@ -16,6 +16,7 @@ namespace Vamp.UI.Menus
         private CosmeticItem _item;
         private Camera _cam;
         private Transform _gun, _muzzle;
+        private Characters.CharacterRig _rig;
         private WeaponData _weapon;
         private float _timer;
         private Vector3 _center;
@@ -79,6 +80,25 @@ namespace Vamp.UI.Menus
                 _cam.nearClipPlane = 0.02f;
                 return;
             }
+            if (item.Type == CosmeticType.CharacterSkin)
+            {
+                // The character standing with a rifle, slowly turning, wearing this skin (red team rim).
+                _rig = Characters.CharacterRig.Spawn(transform);
+                if (_rig != null)
+                {
+                    _rig.transform.localPosition = new Vector3(0f, -0.95f, 0f);
+                    _rig.SetSkin(item.Id);
+                    _rig.SetTint(new Color(0.9f, 0.18f, 0.2f), 0.15f);
+                    var w = Game.Weapons != null ? Game.Weapons.Get("havoc") : null;
+                    if (w != null) _rig.SetWeapon(w);
+                    foreach (var r in _rig.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                }
+                AddLight(new Vector3(0f, 1.5f, -1.2f), new Color(1f, 0.97f, 0.92f), 2.5f, 6f);
+                camGo.transform.localPosition = new Vector3(0f, 0.0f, -3.4f);
+                camGo.transform.LookAt(transform.position + new Vector3(0f, -0.08f, 0f));
+                _cam.fieldOfView = 29f;
+                return;
+            }
             if (item.Type == CosmeticType.KillEffect)
             {
                 camGo.transform.localPosition = new Vector3(0f, 0.1f, -6.2f);
@@ -129,6 +149,16 @@ namespace Vamp.UI.Menus
             _timer -= dt;
             switch (_item.Type)
             {
+                case CosmeticType.CharacterSkin:
+                    if (_rig != null)
+                    {
+                        _rig.transform.localRotation = Quaternion.Euler(0f, 180f + Mathf.Sin(Time.unscaledTime * 0.45f) * 55f, 0f);
+                        _rig.Velocity = Vector3.zero;
+                        _rig.AimDirection = _rig.transform.forward;
+                        _rig.Grounded = true;
+                        _rig.Pose(Mathf.Max(0.001f, dt));
+                    }
+                    break;
                 case CosmeticType.WeaponSkin:
                     if (_gun != null) _gun.localRotation = Quaternion.Euler(Mathf.Sin(Time.unscaledTime * 0.7f) * 6f, 90f + Mathf.Sin(Time.unscaledTime * 0.5f) * 25f, 0f);
                     break;

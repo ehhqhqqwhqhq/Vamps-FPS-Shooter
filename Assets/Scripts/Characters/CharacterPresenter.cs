@@ -69,14 +69,26 @@ namespace Vamp.Characters
         }
         public bool HasCharacter { get { return _rig != null; } }
 
+        /// <summary>Character skin id (cosmetic).</summary>
+        public string Skin = "char_default";
+
+        public void SetSkin(string skinId)
+        {
+            if (string.IsNullOrEmpty(skinId)) skinId = "char_default";
+            if (Skin == skinId && _rig != null && _rig.Skin == skinId) return;
+            Skin = skinId;
+            if (_rig != null) _rig.SetSkin(skinId);
+        }
+
         /// <summary>Adds the character; returns false (and adds nothing) when the prefab is unavailable.</summary>
-        public static CharacterPresenter Attach(GameObject owner, bool localView, Color tint, float emission = 0f)
+        public static CharacterPresenter Attach(GameObject owner, bool localView, Color tint, float emission = 0f, string skin = null)
         {
             if (Resources.Load<GameObject>("VampCharacter") == null) return null;
             var p = owner.AddComponent<CharacterPresenter>();
             p.LocalView = localView;
             p.Tint = tint;
             p.TintEmission = emission;
+            if (!string.IsNullOrEmpty(skin)) p.Skin = skin;
             p.Build();
             return p;
         }
@@ -103,6 +115,8 @@ namespace Vamp.Characters
             if (_rig != null) return;
             _rig = CharacterRig.Spawn(transform);
             if (_rig == null) return;
+            if (LocalView && Source == null && Skin == "char_default") Skin = CharacterSkins.Local;
+            _rig.SetSkin(Skin);
             _rig.SetTint(Tint, TintEmission);
             if (LocalView)
             {

@@ -9,7 +9,7 @@ using Vamp.UI.Menus;
 namespace Vamp.UI
 {
     /// <summary>
-    /// In-match menu (ESC): RESUME · SCOREBOARD tip · SETTINGS (the full settings screen) · LEAVE MATCH · QUIT.
+    /// In-match menu (ESC): RESUME · CHANGE LOADOUT (not ranked / arenas) · SETTINGS (the full settings screen) · LEAVE MATCH · QUIT.
     /// Offline matches pause time; online matches would keep running.
     /// </summary>
     public sealed class PauseMenu : MonoBehaviour, IScreenHost
@@ -121,6 +121,16 @@ namespace Vamp.UI
         {
             private readonly PauseMenu _menu;
             public PauseScreen(PauseMenu menu) { _menu = menu; }
+            private bool _loadoutOpen;
+
+            public override void OnShow()
+            {
+                base.OnShow();
+                if (!_loadoutOpen) return;
+                _loadoutOpen = false;
+                string msg = LoadoutChange.Commit();
+                if (msg != null) Toast("LOADOUT", msg);
+            }
 
             protected override void OnBuild(RectTransform root)
             {
@@ -128,6 +138,8 @@ namespace Vamp.UI
                 string sub = m != null ? m.Config.ModeLabel + "  ·  " + m.Map.DisplayName : null;
                 var col = Page(root, "PAUSED", sub, 560f, 140f);
                 UIKit.Button(col, "RESUME", () => _menu.Close(), UIKit.ButtonStyle.Menu, 32, 58f);
+                if (LoadoutChange.Allowed)
+                    UIKit.Button(col, "CHANGE LOADOUT", () => { _loadoutOpen = true; Host.Push(new LoadoutScreen()); }, UIKit.ButtonStyle.Menu, 32, 58f);
                 UIKit.Button(col, "SETTINGS", () => Host.Push(new SettingsScreen()), UIKit.ButtonStyle.Menu, 32, 58f);
                 if (m != null && m.Config.mode == GameMode.Training)
                     UIKit.Button(col, "RESTART TRAINING", () => { Time.timeScale = 1f; m.Rematch(); }, UIKit.ButtonStyle.Menu, 32, 58f);

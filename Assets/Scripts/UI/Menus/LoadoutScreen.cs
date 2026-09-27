@@ -92,7 +92,9 @@ namespace Vamp.UI.Menus
 
             UIKit.Spacer(_details, 4f);
             UIKit.Caption(_details, "CAMO (COSMETIC)", 14);
-            var skins = CosmeticCatalog.OfType(CosmeticType.WeaponSkin);
+            var skins = new List<CosmeticItem>(CosmeticCatalog.OfType(CosmeticType.WeaponSkin));
+            skins.Sort((a, b) => a.Source == UnlockSource.Shop != (b.Source == UnlockSource.Shop)
+                                 ? (a.Source == UnlockSource.Shop ? 1 : -1) : a.UnlockLevel.CompareTo(b.UnlockLevel));
             var names = new List<string>();
             int idx = 0;
             string current = prog.Profile.loadout.SkinFor(w.id);
